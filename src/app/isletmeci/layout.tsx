@@ -32,6 +32,9 @@ export default function IsletmeciLayout({ children }: { children: React.ReactNod
             <div className="text-xs font-extrabold tracking-widest text-white/45">MENÜ</div>
             <div className="mt-3 space-y-2">
               <a href="/isletmeci/isletmem" className="block rounded-2xl border border-white/10 bg-[#151A24] px-5 py-4 text-sm font-extrabold text-white hover:bg-white/10">İşletmelerim</a>
+              <a href="/isletmeci/kampanyalarim" className="block rounded-2xl border border-white/10 bg-[#151A24] px-5 py-4 text-sm font-extrabold text-white hover:bg-white/10">
+                Kampanyalarım
+              </a>
             </div>
           </div>
 

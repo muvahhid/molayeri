@@ -1,4 +1,5 @@
 "use client";
+import { useWizardStepGuard } from "@/lib/wizard/stepGuard";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,9 @@ async function processPhoto(file: File): Promise<{ blob: Blob; sizeKB: number }>
 }
 
 export default function Step4FotograflarPage() {
-  const router = useRouter();
+  
+  useWizardStepGuard(4);
+const router = useRouter();
   const [items, setItems] = React.useState<PhotoItem[]>([]);
   const [err, setErr] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);

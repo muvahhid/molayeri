@@ -1,4 +1,5 @@
 "use client";
+import { useWizardStepGuard } from "@/lib/wizard/stepGuard";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,9 @@ function normalizeTitle(s: string) {
 }
 
 export default function Step2IsletmeBilgileriPage() {
-  const router = useRouter();
+  
+  useWizardStepGuard(2);
+const router = useRouter();
   const { state, setBusiness } = useWizard();
 
   const [q, setQ] = React.useState(state.business.addressText || "");

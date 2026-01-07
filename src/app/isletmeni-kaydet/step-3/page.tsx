@@ -1,4 +1,5 @@
 "use client";
+import { useWizardStepGuard } from "@/lib/wizard/stepGuard";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,9 @@ function typeLabelTR(t: FeatureDoc["type"]) {
 }
 
 export default function Step3KategoriOzellikPage() {
-  const router = useRouter();
+  
+  useWizardStepGuard(3);
+const router = useRouter();
   const { state, toggleCategory, setActiveCategory, setFeatureValue } = useWizard();
 
   const [cats, setCats] = React.useState<CategoryDoc[]>([]);

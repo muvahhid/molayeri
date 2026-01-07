@@ -1,4 +1,5 @@
 "use client";
+import { useWizardStepGuard } from "@/lib/wizard/stepGuard";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,9 @@ function valueTR(v: any) {
 }
 
 export default function Step5OzetBasvuruPage() {
-  const router = useRouter();
+  
+  useWizardStepGuard(5);
+const router = useRouter();
   const { state } = useWizard();
   const [open, setOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);

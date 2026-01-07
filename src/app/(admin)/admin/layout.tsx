@@ -5,11 +5,13 @@ import { LogoutButton } from "@/components/session/LogoutButton";
 import { AdminGuard } from "@/components/guards/AdminGuard";
 
 const nav = [
+
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/kategoriler", label: "Kategoriler" },
   { href: "/admin/ozellikler", label: "Özellikler" },
   { href: "/admin/kategori-ozellikleri", label: "Kategori-Özellikleri" },,
     { href: "/admin/basvurular", label: "Başvurular" }
+
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

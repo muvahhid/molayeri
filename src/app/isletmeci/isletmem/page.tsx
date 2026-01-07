@@ -10,7 +10,6 @@ import {
   onSnapshot,
   query,
   where,
-  limit,
   doc,
   updateDoc,
   serverTimestamp,
@@ -27,21 +26,15 @@ type AppRow = {
   photos?: Photo[];
 };
 
-function readSessionUser() {
+function readSessionUid(): string {
   try {
     const raw = window.localStorage.getItem("molayeri_session_v1");
-    if (!raw) return { uid: "", label: "" };
-    const x = JSON.parse(raw) as any;
-    const uid = String(x?.uid || "").trim();
-    const label = String(x?.name || x?.fullName || x?.email || "").trim();
-    return { uid, label };
+    if (!raw) return "";
+    const s = JSON.parse(raw) as any;
+    return String(s?.uid || "").trim();
   } catch {
-    return { uid: "", label: "" };
+    return "";
   }
-}
-
-function readSessionUid(): string {
-  return readSessionUser().uid;
 }
 
 async function fileToCoverJpeg160kb(file: File) {
@@ -97,10 +90,10 @@ async function fileToCoverJpeg160kb(file: File) {
   return { bytes: new Uint8Array(buf), contentType: "image/jpeg" as const };
 }
 
-export default function IsletmemPage() {
+export default function IsletmelerimPage() {
   const [uid, setUid] = React.useState("");
-  const [userLabel, setUserLabel] = React.useState("");
-  const [row, setRow] = React.useState<AppRow | null>(null);
+  const [apps, setApps] = React.useState<AppRow[]>([]);
+  const [activeId, setActiveId] = React.useState<string>("");
 
   const [editing, setEditing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -111,9 +104,7 @@ export default function IsletmemPage() {
   const [uploading, setUploading] = React.useState(false);
 
   React.useEffect(() => {
-    const u = readSessionUser();
-    setUid(u.uid);
-    setUserLabel(u.label);
+    setUid(readSessionUid());
   }, []);
 
   React.useEffect(() => {
@@ -122,20 +113,30 @@ export default function IsletmemPage() {
     const qy = query(
       collection(db, "applications"),
       where("status", "==", "approved"),
-      where("user.uid", "==", uid),
-      limit(1)
+      where("user.uid", "==", uid)
     );
 
     return onSnapshot(qy, (snap) => {
-      const d = snap.docs[0];
-      const next = d ? ({ id: d.id, ...(d.data() as any) }) : null;
-      setRow(next);
-      if (next && !editing) {
-        setName(next.business?.name || "");
-        setDesc(next.business?.description || "");
-      }
+      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as AppRow[];
+      list.sort((a, b) => String(a.business?.name || "").localeCompare(String(b.business?.name || ""), "tr"));
+      setApps(list);
+
+      setActiveId((prev) => {
+        if (prev && list.some((x) => x.id === prev)) return prev;
+        return list[0]?.id || "";
+      });
     });
-  }, [uid, editing]);
+  }, [uid]);
+
+  const row = React.useMemo(() => apps.find((x) => x.id === activeId) || null, [apps, activeId]);
+
+  React.useEffect(() => {
+    if (!row) return;
+    if (!editing) {
+      setName(row.business?.name || "");
+      setDesc(row.business?.description || "");
+    }
+  }, [row, editing]);
 
   const photos = (row?.photos || []) as Photo[];
   const cover = photos.find((p) => p.isCover) || photos[0];
@@ -160,13 +161,14 @@ export default function IsletmemPage() {
 
   async function passiveMine() {
     if (!row || saving) return;
-    if (!confirm("İşletmeni pasif etmek istiyor musun?")) return;
+    if (!confirm("Bu işletmeyi pasif etmek istiyor musun?")) return;
     setSaving(true);
     try {
       await updateDoc(doc(db, "applications", row.id), {
         status: "passive",
         updatedAt: serverTimestamp(),
       });
+      setEditing(false);
     } catch (e) {
       console.error(e);
       alert("İşlem başarısız.");
@@ -259,13 +261,10 @@ export default function IsletmemPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
-        
         <div>
           <div className="text-2xl font-black">İşletmelerim</div>
           <div className="mt-1 text-sm text-white/60">Onaylı işletmelerin burada görünür.</div>
         </div>
-        
-      
         <div className="ml-auto">
           <a href="/isletmeni-kaydet/step-2?new=1">
             <Button variant="primary" className="px-6 py-3 rounded-2xl">Yeni İşletme Ekle</Button>
@@ -277,153 +276,188 @@ export default function IsletmemPage() {
         <Card className="p-6">
           <div className="text-white/70">Giriş yap.</div>
         </Card>
-      ) : !row ? (
+      ) : apps.length === 0 ? (
         <Card className="p-6">
-          <div className="text-white/70">Onaylı işletme bulunamadı.</div>
-          <div className="mt-2 text-xs text-white/45">Admin başvuruyu “Kabul Et” yapınca burada görünür.</div>
+          <div className="text-white/70">Onaylı işletmen yok.</div>
+          <div className="mt-2 text-xs text-white/45">Başvurun onaylanınca burada görünür.</div>
         </Card>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-          <Card className="p-6">
-            <div className="flex items-center gap-2">
-              <div className="text-lg font-black">{row.business?.name || "-"}</div>
-              <Badge variant="active">ONAYLI</Badge>
-            </div>
-
-            <div className="mt-2 text-sm text-white/60">{row.business?.addressText || "-"}</div>
-
-            {!editing ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-                {row.business?.description || "—"}
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-xs font-extrabold tracking-widest text-white/45">İŞLETME İSMİ</div>
-                  <input
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-[#151A24] px-4 py-3 text-sm text-white outline-none"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="İşletme adı"
-                  />
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-xs font-extrabold tracking-widest text-white/45">TANITIM</div>
-                  <textarea
-                    className="mt-2 h-[120px] w-full resize-none rounded-2xl border border-white/10 bg-[#151A24] px-4 py-3 text-sm text-white outline-none"
-                    value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
-                    placeholder="Tanıtım"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="mt-5 flex items-center gap-2">
-              {!editing ? (
-                <>
-                  <Button variant="primary" className="px-6 py-3 rounded-2xl" onClick={() => setEditing(true)}>
-                    Güncelle
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="px-6 py-3 rounded-2xl text-white/70 hover:text-white"
-                    onClick={passiveMine}
-                    disabled={saving}
+        <>
+          <Card className="p-4">
+            <div className="text-xs font-extrabold tracking-widest text-white/45">İŞLETMELERİN</div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {apps.map((a) => {
+                const selected = a.id === activeId;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => setActiveId(a.id)}
+                    className={
+                      "rounded-2xl border px-4 py-4 text-left transition " +
+                      (selected
+                        ? "border-[#D9A400] bg-[#151A24]"
+                        : "border-white/10 bg-white/5 hover:bg-white/10")
+                    }
                   >
-                    Pasif Et
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="primary" className="px-6 py-3 rounded-2xl" onClick={saveChanges} disabled={saving}>
-                    {saving ? "..." : "Kaydet"}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="px-6 py-3 rounded-2xl"
-                    onClick={() => {
-                      setEditing(false);
-                      setName(row.business?.name || "");
-                      setDesc(row.business?.description || "");
-                    }}
-                    disabled={saving}
-                  >
-                    Vazgeç
-                  </Button>
-                </>
-              )}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-black text-white/90 line-clamp-1">{a.business?.name || "-"}</div>
+                      <Badge variant="active">ONAYLI</Badge>
+                    </div>
+                    <div className="mt-2 text-xs text-white/55 line-clamp-2">{a.business?.addressText || "-"}</div>
+                  </button>
+                );
+              })}
             </div>
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-extrabold">Fotoğraflar</div>
-                <div className="mt-1 text-xs text-white/50">3–6 fotoğraf. Vitrin seçebilirsin.</div>
-              </div>
+          {row ? (
+            <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
+              <Card className="p-6">
+                <div className="flex items-center gap-2">
+                  <div className="text-lg font-black">{row.business?.name || "-"}</div>
+                  <Badge variant="active">ONAYLI</Badge>
+                </div>
 
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => onPickFiles(e.target.files)}
-                  disabled={uploading || saving || photos.length >= 6}
-                />
-                <span>
-                  <Button variant="primary" className="px-4 py-3 rounded-2xl" disabled={uploading || saving || photos.length >= 6}>
-                    {uploading ? "Yükleniyor..." : "Foto Ekle"}
-                  </Button>
-                </span>
-              </label>
-            </div>
+                <div className="mt-2 text-sm text-white/60">{row.business?.addressText || "-"}</div>
 
-            {cover ? (
-              <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-[#151A24]">
-                <img src={cover.url} alt="" className="h-48 w-full object-cover" />
-              </div>
-            ) : (
-              <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-                Fotoğraf yok.
-              </div>
-            )}
+                {!editing ? (
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+                    {row.business?.description || "—"}
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-extrabold tracking-widest text-white/45">İŞLETME İSMİ</div>
+                      <input
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-[#151A24] px-4 py-3 text-sm text-white outline-none"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="İşletme adı"
+                      />
+                    </div>
 
-            {!!photos.length ? (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {photos.map((p) => (
-                  <div key={p.url} className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#151A24]">
-                    <img src={p.url} alt="" className="h-24 w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0" />
-                    <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between gap-1">
-                      <button
-                        className="rounded-xl bg-black/60 px-2 py-1 text-[11px] font-bold text-white/90"
-                        onClick={() => setCoverPhoto(p.url)}
-                        disabled={saving}
-                      >
-                        {p.isCover ? "Vitrin" : "Vitrin Yap"}
-                      </button>
-                      <button
-                        className="rounded-xl bg-black/60 px-2 py-1 text-[11px] font-bold text-white/90"
-                        onClick={() => removePhoto(p)}
-                        disabled={saving}
-                      >
-                        Sil
-                      </button>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-extrabold tracking-widest text-white/45">TANITIM</div>
+                      <textarea
+                        className="mt-2 h-[120px] w-full resize-none rounded-2xl border border-white/10 bg-[#151A24] px-4 py-3 text-sm text-white outline-none"
+                        value={desc}
+                        onChange={(e) => setDesc(e.target.value)}
+                        placeholder="Tanıtım"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : null}
+                )}
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm font-extrabold">Video</div>
-              <div className="mt-1 text-xs text-white/55">Yakında</div>
+                <div className="mt-5 flex items-center gap-2">
+                  {!editing ? (
+                    <>
+                      <Button variant="primary" className="px-6 py-3 rounded-2xl" onClick={() => setEditing(true)}>
+                        Güncelle
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="px-6 py-3 rounded-2xl text-white/70 hover:text-white"
+                        onClick={passiveMine}
+                        disabled={saving}
+                      >
+                        Pasif Et
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="primary" className="px-6 py-3 rounded-2xl" onClick={saveChanges} disabled={saving}>
+                        {saving ? "..." : "Kaydet"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="px-6 py-3 rounded-2xl"
+                        onClick={() => {
+                          setEditing(false);
+                          setName(row.business?.name || "");
+                          setDesc(row.business?.description || "");
+                        }}
+                        disabled={saving}
+                      >
+                        Vazgeç
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold">Fotoğraflar</div>
+                    <div className="mt-1 text-xs text-white/50">3–6 fotoğraf. Vitrin seçebilirsin.</div>
+                  </div>
+
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => onPickFiles(e.target.files)}
+                      disabled={uploading || saving || photos.length >= 6}
+                    />
+                    <span>
+                      <Button
+                        variant="primary"
+                        className="px-4 py-3 rounded-2xl"
+                        disabled={uploading || saving || photos.length >= 6}
+                      >
+                        {uploading ? "Yükleniyor..." : "Foto Ekle"}
+                      </Button>
+                    </span>
+                  </label>
+                </div>
+
+                {cover ? (
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-[#151A24]">
+                    <img src={cover.url} alt="" className="h-48 w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+                    Fotoğraf yok.
+                  </div>
+                )}
+
+                {!!photos.length ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {photos.map((p) => (
+                      <div key={p.url} className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#151A24]">
+                        <img src={p.url} alt="" className="h-24 w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0" />
+                        <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between gap-1">
+                          <button
+                            className="rounded-xl bg-black/60 px-2 py-1 text-[11px] font-bold text-white/90"
+                            onClick={() => setCoverPhoto(p.url)}
+                            disabled={saving}
+                          >
+                            {p.isCover ? "Vitrin" : "Vitrin Yap"}
+                          </button>
+                          <button
+                            className="rounded-xl bg-black/60 px-2 py-1 text-[11px] font-bold text-white/90"
+                            onClick={() => removePhoto(p)}
+                            disabled={saving}
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-sm font-extrabold">Video</div>
+                  <div className="mt-1 text-xs text-white/55">Yakında</div>
+                </div>
+              </Card>
             </div>
-          </Card>
-        </div>
+          ) : null}
+        </>
       )}
     </div>
   );
