@@ -165,10 +165,7 @@ export default function KategoriOzellikleriPage() {
                   {selectedCat ? `Seçili: ${selectedCat.nameTR}` : "Kategori seç"}
                 </div>
               </div>
-              <Button variant="secondary" disabled>
-                category_features
-              </Button>
-            </div>
+</div>
 
             <div className="mt-5 relative">
               <Input
@@ -201,7 +198,7 @@ export default function KategoriOzellikleriPage() {
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="mt-6">
             <div className="space-y-3">
               {featLoading ? <div className="text-white/60">Özellikler yükleniyor…</div> : null}
               {linkLoading ? <div className="text-white/60">Bağlantılar yükleniyor…</div> : null}
@@ -252,8 +249,8 @@ export default function KategoriOzellikleriPage() {
                       <Input
                         label="Sıralama"
                         placeholder="0"
-                        defaultValue={String(link.order ?? 0)}
-                        onBlur={(e) => onChangeOrder(link, e.target.value)}
+                        value={String(link.order ?? 0)}
+                        onChange={(e) => onChangeOrder(link, e.target.value)}
                       />
                     </div>
                   </div>

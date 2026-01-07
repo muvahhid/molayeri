@@ -247,7 +247,7 @@ export default function OzelliklerPage() {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="mt-6">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
             <div className="grid grid-cols-[1.2fr_160px_120px_120px_240px] gap-3 px-5 py-4 text-xs font-bold tracking-widest text-white/40">
               <div>AD</div>
