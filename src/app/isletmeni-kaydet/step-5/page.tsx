@@ -76,7 +76,19 @@ export default function Step5OzetBasvuruPage() {
   }
 
   React.useEffect(() => {
-    const u1 = subscribeCategories((r) => setCats(r));
+    try {
+      const raw = window.localStorage.getItem("molayeri_session_v1");
+      const ss = raw ? JSON.parse(raw) : null;
+      const uid = String(ss?.uid || "").trim();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+    } catch {
+      window.location.href = "/login";
+      return;
+    }
+const u1 = subscribeCategories((r) => setCats(r));
     const u2 = subscribeFeatures((r) => setFeatures(r));
     return () => { u1(); u2(); };
   }, []);

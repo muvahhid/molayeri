@@ -30,7 +30,19 @@ export default function Step3KategoriOzellikPage() {
   const [err, setErr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const u1 = subscribeCategories((r) => setCats(r.filter((x) => x.isActive)));
+    try {
+      const raw = window.localStorage.getItem("molayeri_session_v1");
+      const ss = raw ? JSON.parse(raw) : null;
+      const uid = String(ss?.uid || "").trim();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+    } catch {
+      window.location.href = "/login";
+      return;
+    }
+const u1 = subscribeCategories((r) => setCats(r.filter((x) => x.isActive)));
     const u2 = subscribeFeatures((r) => setFeatures(r.filter((x) => x.isActive)));
     return () => { u1(); u2(); };
   }, []);

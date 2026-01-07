@@ -21,7 +21,28 @@ export default function Step2IsletmeBilgileriPage() {
   const [err, setErr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setToken(Math.random().toString(36).slice(2));
+    // new=1 => yepyeni işletme kaydı (öncekiler dolu gelmesin)
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("new") === "1") {
+        // wizard provider localStorage anahtarını senin projendeki ile aynı tuttuk
+        // (molayeri_wizard_v1 varsa temizle)
+        window.localStorage.removeItem("molayeri_wizard_v1");
+      }
+    } catch {}
+try {
+      const raw = window.localStorage.getItem("molayeri_session_v1");
+      const ss = raw ? JSON.parse(raw) : null;
+      const uid = String(ss?.uid || "").trim();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+    } catch {
+      window.location.href = "/login";
+      return;
+    }
+setToken(Math.random().toString(36).slice(2));
   }, []);
 
   async function searchPlaces(v: string) {

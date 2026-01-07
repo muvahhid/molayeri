@@ -85,7 +85,19 @@ export default function Step4FotograflarPage() {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
-    return () => {
+    try {
+      const raw = window.localStorage.getItem("molayeri_session_v1");
+      const ss = raw ? JSON.parse(raw) : null;
+      const uid = String(ss?.uid || "").trim();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+    } catch {
+      window.location.href = "/login";
+      return;
+    }
+return () => {
       // cleanup blob urls
       items.forEach((x) => URL.revokeObjectURL(x.url));
     };
