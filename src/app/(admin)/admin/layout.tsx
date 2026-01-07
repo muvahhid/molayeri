@@ -11,7 +11,7 @@ const nav = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[radial-gradient(900px_500px_at_50%_-20%,rgba(217,164,0,0.12),transparent),radial-gradient(900px_500px_at_0%_100%,rgba(255,255,255,0.06),transparent),linear-gradient(180deg,#060A12,#070B14)] text-white">
-      <div className="mx-auto max-w-[1200px] px-5 py-6">
+      <div className="mx-auto max-w-[1440px] px-5 py-6">
         <header className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]" />

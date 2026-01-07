@@ -119,7 +119,7 @@ export default function KategorilerPage() {
 
         <CardContent>
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-            <div className="grid grid-cols-[1.2fr_120px_120px_220px] gap-3 px-5 py-4 text-xs font-bold tracking-widest text-white/40">
+            <div className="grid grid-cols-[1.2fr_120px_120px_360px] gap-3 px-5 py-4 text-xs font-bold tracking-widest text-white/40">
               <div>AD</div>
               <div>SIRA</div>
               <div>DURUM</div>
@@ -133,7 +133,7 @@ export default function KategorilerPage() {
               <div className="px-5 py-6 text-white/60">Henüz kategori yok.</div>
             ) : (
               rows.map((r) => (
-                <div key={r.id} className="grid grid-cols-[1.2fr_120px_120px_220px] items-center gap-3 px-5 py-4">
+                <div key={r.id} className="grid grid-cols-[1.2fr_120px_120px_360px] items-center gap-3 px-5 py-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-extrabold text-white">{r.nameTR}</div>
                     <div className="mt-1 truncate text-xs text-white/45">{r.slug}</div>
@@ -145,10 +145,10 @@ export default function KategorilerPage() {
                     {r.isActive ? <Badge variant="active">AKTİF</Badge> : <Badge variant="inactive">PASİF</Badge>}
                   </div>
 
-                  <div className="flex items-center justify-end gap-2">
-                    <Switch checked={!!r.isActive} onCheckedChange={(v) => onToggleActive(r, v)} />
-                    <Button onClick={() => openEdit(r)}>Düzenle</Button>
-                    <Button variant="ghost" onClick={() => onDelete(r)} className="text-white/70 hover:text-white">
+                  <div className="flex items-center justify-end gap-4">
+                    <Switch className="shrink-0" checked={!!r.isActive} onCheckedChange={(v) => onToggleActive(r, v)} />
+                    <Button className="shrink-0" onClick={() => openEdit(r)}>Düzenle</Button>
+                    <Button className="shrink-0" variant="ghost" onClick={() => onDelete(r)} className="text-white/70 hover:text-white">
                       Sil
                     </Button>
                   </div>
@@ -197,7 +197,7 @@ export default function KategorilerPage() {
               <div className="text-sm font-extrabold text-white">Aktif mi?</div>
               <div className="mt-1 text-xs text-white/55">Pasif yaparsan kullanıcı tarafında görünmez.</div>
             </div>
-            <Switch checked={form.isActive} onCheckedChange={(v) => setForm((x) => ({ ...x, isActive: v }))} />
+            <Switch className="shrink-0" checked={form.isActive} onCheckedChange={(v) => setForm((x) => ({ ...x, isActive: v }))} />
           </div>
         </div>
       </Modal>
