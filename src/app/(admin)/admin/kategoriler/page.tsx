@@ -148,7 +148,7 @@ export default function KategorilerPage() {
                   <div className="flex items-center justify-end gap-4">
                     <Switch className="shrink-0" checked={!!r.isActive} onCheckedChange={(v) => onToggleActive(r, v)} />
                     <Button className="shrink-0" onClick={() => openEdit(r)}>Düzenle</Button>
-                    <Button className="shrink-0" variant="ghost" onClick={() => onDelete(r)} className="text-white/70 hover:text-white">
+                    <Button variant="ghost" onClick={() => onDelete(r)} className="shrink-0 text-white/70 hover:text-white">
                       Sil
                     </Button>
                   </div>

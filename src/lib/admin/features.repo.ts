@@ -43,10 +43,10 @@ export type FeatureDoc = {
 
 function keyifyTR(input: string) {
   const s = (input || "").trim().toLowerCase();
-  const map = { "ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u" };
+  const map: Record<string, string> = { "ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u" };
   const out = s
     .split("")
-    .map((ch) => (map[ch] ? map[ch] : ch))
+    .map((ch) => (map[ch] ?? ch))
     .join("")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
