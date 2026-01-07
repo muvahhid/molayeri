@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 
+import { LogoutButton } from "@/components/session/LogoutButton";
+import { AdminGuard } from "@/components/guards/AdminGuard";
+
 const nav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/kategoriler", label: "Kategoriler" },
   { href: "/admin/ozellikler", label: "Özellikler" },
-  { href: "/admin/kategori-ozellikleri", label: "Kategori-Özellikleri" },
+  { href: "/admin/kategori-ozellikleri", label: "Kategori-Özellikleri" },,
+    { href: "/admin/basvurular", label: "Başvurular" }
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div>
               <div className="text-lg font-black tracking-tight">Molayeri Admin</div>
               <div className="text-xs text-white/50">Premium panel</div>
+          <div className="ml-auto"><LogoutButton compact /></div>
             </div>
           </div>
           <div className="h-10 w-48 rounded-2xl border border-white/10 bg-white/5" />
@@ -28,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="p-5">
               <div className="mb-3 text-xs font-bold tracking-widest text-white/40">MENÜ</div>
               <nav className="flex flex-col gap-2">
-                {nav.map((x) => (
+                {nav.filter((x): x is { href: string; label: string } => !!x).map((x) => (
                   <Link
                     key={x.href}
                     href={x.href}
@@ -44,12 +49,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               <div className="mt-6 rounded-2xl border border-[#D9A400]/20 bg-[#D9A400]/10 p-4">
                 <div className="text-sm font-extrabold text-[#D9A400]">Marka</div>
-                <div className="mt-1 text-xs text-white/60">#D9A400 • Koyu premium</div>
-              </div>
+                <div className="mt-1 text-xs text-white/60">#D9A400 • Koyu premium
+              <a href="/isletmeci/isletmem" className="block rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-extrabold text-white hover:bg-white/10">İşletmeci Paneli</a>
+            </div>
+          </div>
             </div>
           </aside>
 
-          <main className="min-w-0">{children}</main>
+          <main className="min-w-0"><AdminGuard>{children}</AdminGuard></main>
         </div>
       </div>
     </div>

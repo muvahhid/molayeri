@@ -2,87 +2,77 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useWizard } from "../wizard.provider";
+import { registerEmailPassword, setSession } from "@/lib/auth/users.auth";
 
-function DarkField(props: React.ComponentProps<typeof Input>) {
-  return (
-    <Input
-      {...props}
-      className={"bg-white/5 border-white/10 text-white placeholder:text-white/35 focus:border-[#D9A400]/40 focus:ring-[#D9A400]/15 " + (props.className || "")}
-    />
-  );
-}
-
-export default function Step1UyelikPage() {
+export default function Step1KayitPage() {
   const router = useRouter();
   const { state, setUser } = useWizard();
-  const [err, setErr] = React.useState<string | null>(null);
 
-  function next() {
-    const u = state.user;
-    if (!u.firstName.trim()) return setErr("İsim zorunlu.");
-    if (!u.lastName.trim()) return setErr("Soyisim zorunlu.");
-    if (!u.email.trim()) return setErr("Email zorunlu.");
-    if (!u.phone.trim()) return setErr("Telefon zorunlu.");
-    if (!u.emailVerified) return setErr("Email doğrulaması gerekli.");
+  const [firstName, setFirstName] = React.useState(state.user.firstName || "");
+  const [lastName, setLastName] = React.useState(state.user.lastName || "");
+  const [email, setEmail] = React.useState(state.user.email || "");
+  const [phone, setPhone] = React.useState(state.user.phone || "");
+  const [pass, setPass] = React.useState("");
+  const [err, setErr] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  async function next() {
+    const e = email.trim().toLowerCase();
+    if (!firstName.trim() || !lastName.trim() || !e || !phone.trim() || pass.length < 6) {
+      setErr("Tüm alanlar + şifre (min 6).");
+      return;
+    }
     setErr(null);
-    router.push("/isletmeni-kaydet/step-2");
+    setLoading(true);
+
+    try {
+      const nameTR = (firstName + " " + lastName).trim();
+      const s = await registerEmailPassword({ email: e, password: pass, nameTR, phone });
+
+      setSession(s);
+      setUser({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: e,
+        phone: phone.trim(),
+        emailVerified: false,
+      });
+
+      router.push("/isletmeni-kaydet/step-2");
+    } catch (e) {
+      console.error(e);
+      setErr("Kayıt hatası.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="px-6 pb-6">
       <div className="text-2xl font-black">Üyelik</div>
-      <div className="mt-2 text-sm text-white/60">İlk kez kayıt oluyorsun.</div>
+      <div className="mt-2 text-sm text-white/60">Hesap oluştur.</div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <DarkField
-          label="İsim"
-          placeholder="Örn: Muharrem"
-          value={state.user.firstName}
-          onChange={(e) => setUser({ firstName: e.target.value })}
-        />
-        <DarkField
-          label="Soyisim"
-          placeholder="Örn: Akkaya"
-          value={state.user.lastName}
-          onChange={(e) => setUser({ lastName: e.target.value })}
-        />
-      </div>
-
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <DarkField
-          label="Email"
-          placeholder="ornek@mail.com"
-          value={state.user.email}
-          onChange={(e) => setUser({ email: e.target.value })}
-        />
-        <DarkField
-          label="Telefon"
-          placeholder="05xx xxx xx xx"
-          value={state.user.phone}
-          onChange={(e) => setUser({ phone: e.target.value })}
-        />
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-extrabold">Email doğrulama</div>
-            <div className="mt-1 text-xs text-white/55">Şimdilik onay anahtarı. Sonra gerçek doğrulama.</div>
-          </div>
-          <Switch checked={state.user.emailVerified} onCheckedChange={(v) => setUser({ emailVerified: v })} />
+      <Card className="mt-5 p-6 space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input label="İsim" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <Input label="Soyisim" value={lastName} onChange={(e) => setLastName(e.target.value)} />
         </div>
-      </div>
+        <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input label="Telefon" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Input label="Şifre" type="password" placeholder="min 6" value={pass} onChange={(e) => setPass(e.target.value)} />
 
-      {err ? <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
+        {err ? <div className="text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
 
-      <div className="mt-6 flex items-center justify-end">
-        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]">
-          İleri: İşletme Bilgileri
-        </Button>
-      </div>
+        <div className="flex items-center justify-between pt-2">
+          <Button variant="secondary" onClick={() => router.push("/login")}>Geri</Button>
+          <Button variant="primary" className="px-8 py-4 rounded-[22px]" onClick={next} disabled={loading}>
+            {loading ? "..." : "İleri: İşletme Bilgileri"}
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }

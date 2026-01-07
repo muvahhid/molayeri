@@ -6,11 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { useWizard } from "../wizard.provider";
 
+import { createPendingApplication } from "@/lib/wizard/applications.repo";
+
 import { storage } from "@/lib/firebase.client";
 import { ref as sRef, listAll, getDownloadURL } from "firebase/storage";
 
 import { subscribeCategories, CategoryDoc } from "@/lib/admin/categories.repo";
 import { subscribeFeatures, FeatureDoc } from "@/lib/admin/features.repo";
+import { auth } from "@/lib/firebase.client";
 
 type PhotoView = { url: string; isCover: boolean };
 
@@ -28,11 +31,49 @@ export default function Step5OzetBasvuruPage() {
   const router = useRouter();
   const { state } = useWizard();
   const [open, setOpen] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const [cats, setCats] = React.useState<CategoryDoc[]>([]);
   const [features, setFeatures] = React.useState<FeatureDoc[]>([]);
   const [photos, setPhotos] = React.useState<PhotoView[]>([]);
   const [loadingPhotos, setLoadingPhotos] = React.useState(false);
+
+  async function submitApplication() {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      alert("Lütfen giriş yap.");
+      return;
+    }
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const uploadSessionId = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_upload_session") : null;
+      const payload = {
+        uid,
+        firstName: state.user.firstName,
+        lastName: state.user.lastName,
+        email: state.user.email,
+        phone: state.user.phone,
+        businessName: state.business.name,
+        addressText: state.business.addressText,
+        lat: state.business.lat ?? null,
+        lng: state.business.lng ?? null,
+        description: state.business.description,
+        selectedCategoryIds: state.selectedCategoryIds || [],
+        featureValues: state.featureValues || {},
+        photos: (photos || []).map((p) => ({ url: p.url, isCover: !!p.isCover })).slice(0, 6),
+        uploadSessionId,
+      };
+
+      await createPendingApplication(payload);
+      setOpen(true);
+    } catch (e) {
+      console.error(e);
+      alert("Başvuru kaydı başarısız.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   React.useEffect(() => {
     const u1 = subscribeCategories((r) => setCats(r));
@@ -225,7 +266,7 @@ export default function Step5OzetBasvuruPage() {
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="secondary" onClick={() => router.back()}>Geri</Button>
-        <Button variant="primary" className="px-8 py-4 rounded-[22px]" onClick={() => setOpen(true)}>
+        <Button variant="primary" className="px-8 py-4 rounded-[22px]" onClick={submitApplication}>
           Başvuruyu Yap
         </Button>
       </div>
@@ -236,13 +277,7 @@ export default function Step5OzetBasvuruPage() {
         onClose={() => setOpen(false)}
         footer={
           <div className="flex justify-end gap-2">
-            <Button
-              variant="primary"
-              onClick={() => {
-                setOpen(false);
-                router.push("/login");
-              }}
-            >
+            <Button variant="primary" disabled={submitting} onClick={() => { setOpen(false); router.push("/login"); }}>
               Tamam
             </Button>
           </div>
