@@ -540,11 +540,11 @@ export default function KampanyalarimPage() {
 
       {/* white premium content area */}
       <div className="rounded-[26px] bg-white p-6 text-[#0B1220] shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
           {/* LEFT */}
           <div className="space-y-5">
             {/* selectors - geniş, ferah */}
-            <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] p-5">
+            <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] w-full p-4">
               <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
                 <div>
                   <div className="text-xs font-extrabold tracking-widest text-black/55">İŞLETME</div>
@@ -682,18 +682,7 @@ export default function KampanyalarimPage() {
               <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-extrabold tracking-widest text-black/55">RENK</div>
-                  <div
-                    className={cls(
-                      "rounded-full border px-3 py-1 text-xs font-extrabold",
-                      previewColor.bg,
-                      previewColor.border,
-                      previewColor.text
-                    )}
-                    title="Önizleme"
-                  >
-                    ÖNİZLEME
-                  </div>
-                </div>
+</div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {COLORS.map((c) => (
@@ -728,7 +717,7 @@ export default function KampanyalarimPage() {
           </div>
 
           {/* RIGHT */}
-          <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] p-5">
+          <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] w-full p-4">
             <div className="flex items-center justify-between">
               <div className="text-base font-extrabold">Kayıtlı Kampanyalar</div>
               <div className="text-xs text-black/45">
@@ -740,7 +729,7 @@ export default function KampanyalarimPage() {
               {!selectedBusinessId ? (
                 <div className="p-4 text-sm text-black/55">Önce işletme seç.</div>
               ) : !myCampaigns.length ? (
-                <div className="p-4 text-sm text-black/55">Kampanya yok.</div>
+                <div className="p-4 text-sm text-black/55 w-full">Kampanya yok.</div>
               ) : (
                 <div className="space-y-2">
                   {myCampaigns.map((r) => {
