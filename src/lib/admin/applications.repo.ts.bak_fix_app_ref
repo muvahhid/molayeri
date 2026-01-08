@@ -64,7 +64,7 @@ export async function approveApplication(appId: string, uid: string) {
     status: "approved",
     updatedAt: serverTimestamp(),
   });
-  await setUserRole(uid || "", "isletmeci", true);
+  await setUserRole(uid || app?.user?.uid || "", "isletmeci", true);
 }
 
 export async function passiveApplication(appId: string, uid: string) {
@@ -107,7 +107,7 @@ export async function approveApplicationAndSyncBusiness(appId: string, uid: stri
     updatedAt: serverTimestamp(),
   });
 
-  await setUserRole(uid || "", "isletmeci", true);
+  await setUserRole(uid || app?.user?.uid || "", "isletmeci", true);
 
   const bizRef = doc(db, "businesses", appId);
 
