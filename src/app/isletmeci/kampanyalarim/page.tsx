@@ -32,6 +32,8 @@ function readSession() {
   }
 }
 
+const MAX_ACTIVE = 2;
+
 const COLORS = [
   { key: "yellow", name: "Sarı", bg: "bg-[#FFF3C9]", border: "border-[#F2D27A]", text: "text-[#6A4D00]" },
   { key: "blue", name: "Mavi", bg: "bg-[#E8F0FF]", border: "border-[#BBD1FF]", text: "text-[#193A8A]" },
@@ -330,7 +332,7 @@ export default function KampanyalarimPage() {
 
   async function toggleActive(row: Camp, next: boolean) {
     if (saving) return;
-    if (next && activeCount >= 3) return alert("En fazla 3 kampanya aktif edebilirsin.");
+    if (next && activeCount >= MAX_ACTIVE) return alert(`En fazla ${MAX_ACTIVE} kampanya aktif edebilirsin.`);
     setSaving(true);
     try {
       await updateDoc(doc(db, "campaigns", row.id), { isActive: next, updatedAt: serverTimestamp() });
@@ -368,7 +370,7 @@ export default function KampanyalarimPage() {
         <ProgressRing value={myCampaigns.length} max={100} />
       </div>
 
-      <div className="rounded-[26px] bg-white p-6 text-[#0B1220] shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
+      <div className="rounded-[26px] bg-white pl-6 pr-[10px] py-6 text-[#0B1220] shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           {/* LEFT */}
           <div className="space-y-5">
@@ -529,7 +531,7 @@ export default function KampanyalarimPage() {
 
               <div className="mt-4 flex items-center justify-between gap-3">
                 <div className="text-xs text-black/55">
-                  Aktif seçtiklerin app’de görünür. (Maks 3)
+                  Aktif seçtiklerin app’de görünür. (Maks 2)
                 </div>
                 <button
                   type="button"
@@ -549,10 +551,10 @@ export default function KampanyalarimPage() {
               <div>
                 <div className="text-lg font-black">Kayıtlı Kampanyalar</div>
                 <div className="mt-1 text-xs text-black/55">
-                  İşletmene uygulanır. En fazla 3 tanesini aktif edebilirsin.
+                  İşletmene uygulanır. En fazla {MAX_ACTIVE} tanesini aktif edebilirsin.
                 </div>
               </div>
-              <div className="text-xs font-extrabold text-black/60">{activeCount}/3 aktif</div>
+              <div className="text-xs font-extrabold text-black/60">{activeCount}/{MAX_ACTIVE} aktif</div>
             </div>
 
             <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl border border-black/10 bg-white p-3">
@@ -622,7 +624,7 @@ export default function KampanyalarimPage() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4 text-xs text-black/55">
-              Not: App’de sadece <b>aktif</b> kampanyalar gösterilir (maks 3).
+              Not: App’de sadece <b>aktif</b> kampanyalar gösterilir (maks 2).
             </div>
           </div>
         </div>
