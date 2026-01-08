@@ -1,486 +1,318 @@
 "use client";
 
 import * as React from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
 import { db } from "@/lib/firebase.client";
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
-  query,
-  where,
   orderBy,
+  query,
   serverTimestamp,
-  addDoc,
   updateDoc,
-  deleteDoc,
-  limit,
+  where,
 } from "firebase/firestore";
 
-/**
- * Kampanya modeli (Firestore: campaigns)
- * - uid: kullanıcı uid
- * - businessAppId: applications doc id (işletme kaydı)
- * - categoryId?: string (varsa)
- * - categorySlug?: string (varsa)
- * - text: string (etiket metni, app'de gösterilecek)
- * - value?: number | null  (opsiyonel)
- * - unit?: string | null   (opsiyonel)
- * - color: one of COLORS key
- * - isActive: boolean (app’de max 2)
- * - createdAt/updatedAt
- */
+function cls(...a: Array<string | false | null | undefined>) {
+  return a.filter(Boolean).join(" ");
+}
 
-type SessionShape = { uid?: string; email?: string; name?: string };
-
-type AppRow = {
-  id: string;
-  status: "pending" | "approved" | "passive";
-  user?: { uid?: string; email?: string; name?: string };
-  business?: { name?: string };
-  categoryIds?: string[];
-  categorySlugs?: string[];
-  categories?: string[]; // legacy
-};
-
-type CategoryRow = { id: string; nameTR?: string; slug?: string; order?: number; isActive?: boolean };
-
-type CampaignRow = {
-  id: string;
-  uid: string;
-  businessAppId: string;
-  categoryId?: string;
-  categorySlug?: string;
-  text: string;
-  value?: number | null;
-  unit?: string | null;
-  color: ColorKey;
-  isActive: boolean;
-};
-
-type ColorKey = "sari" | "mavi" | "yesil" | "kirmizi" | "mor" | "pembe" | "turkuaz" | "turuncu" | "gri" | "beyaz";
-
-const COLORS: { key: ColorKey; label: string; bg: string; border: string; text: string }[] = [
-  { key: "sari", label: "Sarı", bg: "bg-[#F5D27A]", border: "border-[#E0B84A]", text: "text-[#111]" },
-  { key: "mavi", label: "Mavi", bg: "bg-[#BFD7FF]", border: "border-[#86B2FF]", text: "text-[#0B1220]" },
-  { key: "yesil", label: "Yeşil", bg: "bg-[#CDEFD0]", border: "border-[#87D58D]", text: "text-[#0B1220]" },
-  { key: "kirmizi", label: "Kırmızı", bg: "bg-[#F6C0C0]", border: "border-[#E98E8E]", text: "text-[#1B0B0B]" },
-  { key: "mor", label: "Mor", bg: "bg-[#D8CCFF]", border: "border-[#B6A3FF]", text: "text-[#120B20]" },
-  { key: "pembe", label: "Pembe", bg: "bg-[#F7CBE6]", border: "border-[#EFA3D3]", text: "text-[#200B17]" },
-  { key: "turkuaz", label: "Turkuaz", bg: "bg-[#C7F1F0]", border: "border-[#86D9D6]", text: "text-[#0B1A1A]" },
-  { key: "turuncu", label: "Turuncu", bg: "bg-[#F6D2B7]", border: "border-[#E9B186]", text: "text-[#20140B]" },
-  { key: "gri", label: "Gri", bg: "bg-[#E2E6EE]", border: "border-[#C9D0DD]", text: "text-[#0B1220]" },
-  { key: "beyaz", label: "Beyaz", bg: "bg-white", border: "border-[#E5E7EB]", text: "text-[#0B1220]" },
-];
-
-function readSession(): SessionShape {
+function readSession() {
   try {
     const raw = window.localStorage.getItem("molayeri_session_v1");
-    if (!raw) return {};
-    const s = JSON.parse(raw);
-    return {
-      uid: s?.uid ? String(s.uid) : undefined,
-      email: s?.email ? String(s.email) : undefined,
-      name: s?.name ? String(s.name) : undefined,
-    };
+    if (!raw) return { uid: "", name: "" };
+    const s = JSON.parse(raw) as any;
+    const uid = String(s?.uid || "").trim();
+    const name = String(s?.name || s?.fullName || s?.email || "").trim();
+    return { uid, name };
   } catch {
-    return {};
+    return { uid: "", name: "" };
   }
 }
 
-function cls(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(" ");
-}
+const COLORS = [
+  { key: "yellow", name: "Sarı", bg: "bg-[#FFF3C9]", border: "border-[#F2D27A]", text: "text-[#6A4D00]" },
+  { key: "blue", name: "Mavi", bg: "bg-[#E8F0FF]", border: "border-[#BBD1FF]", text: "text-[#193A8A]" },
+  { key: "green", name: "Yeşil", bg: "bg-[#E9FFF2]", border: "border-[#B7F0CC]", text: "text-[#0B5B2A]" },
+  { key: "red", name: "Kırmızı", bg: "bg-[#FFE8EA]", border: "border-[#FFB8C0]", text: "text-[#7A0D1B]" },
+  { key: "purple", name: "Mor", bg: "bg-[#F2ECFF]", border: "border-[#D3C4FF]", text: "text-[#3E1E8A]" },
+  { key: "orange", name: "Turuncu", bg: "bg-[#FFEDE2]", border: "border-[#FFC7A6]", text: "text-[#7A2A00]" },
+  { key: "teal", name: "Turkuaz", bg: "bg-[#E6FFFD]", border: "border-[#AEEBE6]", text: "text-[#0A4A46]" },
+  { key: "gray", name: "Gri", bg: "bg-[#F1F3F5]", border: "border-[#D8DEE4]", text: "text-[#22303C]" },
+  { key: "pink", name: "Pembe", bg: "bg-[#FFE8F3]", border: "border-[#FFB8DD]", text: "text-[#7A0D46]" },
+  { key: "lime", name: "Lime", bg: "bg-[#F3FFD8]", border: "border-[#D7F29A]", text: "text-[#3C5B00]" },
+] as const;
 
 function ProgressRing({ value, max }: { value: number; max: number }) {
-  const r = 9;
+  const v = Math.max(0, Math.min(value, max));
+  const pct = max === 0 ? 0 : v / max;
+  const r = 16;
   const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, max ? value / max : 0));
   const dash = c * pct;
   const gap = c - dash;
 
   return (
     <div className="flex items-center gap-2">
-      <svg width="26" height="26" viewBox="0 0 26 26" className="shrink-0">
-        <circle cx="13" cy="13" r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+      <svg width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r={r} fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="4" />
         <circle
-          cx="13"
-          cy="13"
+          cx="20"
+          cy="20"
           r={r}
           fill="none"
           stroke="#D9A400"
-          strokeWidth="3"
+          strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${gap}`}
-          transform="rotate(-90 13 13)"
+          transform="rotate(-90 20 20)"
         />
       </svg>
-      <div className="text-xs text-white/60">
-        {value}/{max}
+      <div className="text-xs font-extrabold text-white/70">
+        {v}/{max}
       </div>
     </div>
   );
 }
 
-/** Şablonlar: net, kısa, ölçülü. (app etiketi için 28-32 char hedef) */
-function getTemplates(categorySlug: string) {
-  const c = (categorySlug || "").toLowerCase();
+type Cat = { id: string; nameTR?: string; slug?: string; order?: number; isActive?: boolean };
+type Biz = {
+  id: string; // application id
+  business?: { name?: string };
+  categoryIds?: string[];
+  categorySlugs?: string[];
+  categories?: string[];
+};
 
-  const T: Record<string, string[]> = {
-    yakit: [
-      "Yakıt %3 indirim",
-      "Yakıt %5 indirim",
-      "Yakıt %7 indirim",
-      "Benzin 1 TL/L indirim",
-      "Motorin 1 TL/L indirim",
-      "LPG 0.5 TL/L indirim",
-      "Benzin 2 TL/L indirim",
-      "Motorin 2 TL/L indirim",
-      "LPG 1 TL/L indirim",
-      "Market 200 TL üzeri %5",
-      "Market 300 TL üzeri %7",
-      "Kahve + yakıtta %5",
-      "Oto yıkama %20",
-      "Lastik hava ücretsiz",
-      "Cam suyu ücretsiz",
-      "Tuvalet ücretsiz",
-      "7/24 açık",
-      "Fiş ile %5 market",
-      "İkinci ürüne %50 (market)",
-      "Puan: 1 TL = 1 puan",
-    ],
-    yemek: [
-      "2 al 1 öde (menü)",
-      "%10 indirim (menü)",
-      "%15 indirim (menü)",
-      "Çorba ücretsiz (menü)",
-      "İçecek ücretsiz (menü)",
-      "Tatlı %50 indirim",
-      "Kahvaltı %10 indirim",
-      "Aile menüsü %15 indirim",
-      "Çocuk menüsü %20 indirim",
-      "2. çay ücretsiz",
-      "Sınırsız çay (kişi başı)",
-      "Ücretsiz su",
-      "Ücretsiz ekmek",
-      "Paket servis %10",
-      "Online sipariş %10",
-      "Öğle menüsü %10",
-      "Akşam menüsü %10",
-      "3 kişiye 4. %50",
-      "4 kişiye tatlı hediye",
-      "Kampanya: 19:00 sonrası %10",
-    ],
-    sarj: [
-      "Şarj %10 indirim",
-      "Şarj %15 indirim",
-      "İlk 10 dk ücretsiz",
-      "İlk 15 dk ücretsiz",
-      "Gece tarifesi %20",
-      "Kahve hediye (şarj)",
-      "Market %10 (şarj fişi)",
-      "2. şarj %10",
-      "Aylık paket %10",
-      "Üyeye %15",
-      "Hızlı şarj %10",
-      "AC şarj %10",
-      "DC şarj %10",
-      "Bekleme ücreti yok",
-      "Rezervasyon ücretsiz",
-      "Fiş ile %5 indirim",
-      "İlk kullanım %20",
-      "Hafta içi %10",
-      "Hafta sonu %10",
-      "Sadakat: 5. şarj %50",
-    ],
-    market: [
-      "%10 indirim",
-      "%15 indirim",
-      "2 al 1 öde",
-      "3 al 2 öde",
-      "2. ürüne %50",
-      "200 TL üzeri %5",
-      "300 TL üzeri %7",
-      "500 TL üzeri %10",
-      "Kahve %20",
-      "Sandviç %20",
-      "Su 10'lu %10",
-      "Atıştırmalık %15",
-      "Çikolata %15",
-      "Deterjan %10",
-      "Bebek ürünleri %10",
-      "Meyve-sebze %10",
-      "Saat 21 sonrası %10",
-      "Hafta içi %10",
-      "Hafta sonu %10",
-      "Sadakat: 10. alışveriş %20",
-    ],
-    otel: [
-      "Konaklama %10 indirim",
-      "Konaklama %15 indirim",
-      "2 geceye 3. %50",
-      "3 geceye 4. %50",
-      "Ücretsiz kahvaltı",
-      "Ücretsiz otopark",
-      "Geç çıkış ücretsiz",
-      "Erken giriş ücretsiz",
-      "Çocuk ücretsiz",
-      "Aile indirimi %10",
-      "Hafta içi %15",
-      "Hafta sonu %10",
-      "Sezon dışı %20",
-      "1 gece + yemek %10",
-      "SPA %20 indirim",
-      "Havuz ücretsiz",
-      "Mini bar %10",
-      "Oda yükseltme %20",
-      "Ücretsiz iptal",
-      "Sadakat: 5. konaklama %30",
-    ],
-    "servis-asist": [
-      "İşçilik %10 indirim",
-      "İşçilik %15 indirim",
-      "Yağ değişimi %10",
-      "Lastik değişimi %10",
-      "Rot-balans %10",
-      "Arıza tespit ücretsiz",
-      "Kontrol ücretsiz",
-      "Akü %10 indirim",
-      "Silecek %20 indirim",
-      "Cam suyu ücretsiz",
-      "Oto yıkama %20",
-      "Kupon: 2. işlem %10",
-      "Hızlı servis %10",
-      "Randevu önceliği",
-      "Yol yardım %10",
-      "Çekici %10",
-      "Kış bakımı %10",
-      "Yaz bakımı %10",
-      "Filtre seti %10",
-      "Sadakat: 5. servis %20",
-    ],
-    kafe: [
-      "2 al 1 öde (kahve)",
-      "%10 indirim",
-      "%15 indirim",
-      "2. kahve %50",
-      "Tatlı %20",
-      "Kurabiye hediye",
-      "Çay 2. ücretsiz",
-      "Filtre kahve %20",
-      "Latte %10",
-      "Soğuk kahve %10",
-      "Sandviç %20",
-      "Pasta %20",
-      "Saat 18 sonrası %10",
-      "Öğrenci %10",
-      "Aile %10",
-      "Take-away %10",
-      "Online sipariş %10",
-      "Sadakat: 5. kahve ücretsiz",
-      "Sadakat: 10. kahve %50",
-      "Kampanya: 3 ürün %15",
-    ],
-    alisveris: [
-      "%10 indirim",
-      "%15 indirim",
-      "2 al 1 öde",
-      "3 al 2 öde",
-      "2. ürüne %50",
-      "500 TL üzeri %5",
-      "1000 TL üzeri %10",
-      "1500 TL üzeri %15",
-      "Ücretsiz kargo",
-      "Kargo %50",
-      "Kupon 50 TL",
-      "Kupon 100 TL",
-      "Aile indirimi %10",
-      "Öğrenci %10",
-      "Hafta içi %10",
-      "Hafta sonu %10",
-      "Seçili ürün %20",
-      "Outlet %30",
-      "Sadakat: 5. alışveriş %10",
-      "Sadakat: 10. alışveriş %20",
-    ],
-  };
+type Camp = {
+  id: string;
+  user: { uid: string };
+  businessId: string;
+  categoryId?: string;
+  categorySlug?: string;
+  text: string;
+  value?: number | null;
+  unit?: string | null;
+  colorKey: string;
+  isActive: boolean;
+  createdAt?: any;
+};
 
-  return T[c] || [];
-}
-
-function normalizeText(s: string) {
-  return (s || "").replace(/\s+/g, " ").trim();
-}
+const DEFAULT_TEMPLATES: Record<string, string[]> = {
+  benzinlik: [
+    "Yakıt %3 indirim",
+    "Yakıt %5 indirim",
+    "Otogaz %5 indirim",
+    "2 al 1 öde (oto yıkama)",
+    "Kahve ücretsiz",
+    "Çay ücretsiz",
+    "Lastik hava ücretsiz",
+    "Cam suyu ücretsiz",
+    "Market %10 indirim",
+    "Gece indirimi %3",
+  ],
+  yemek: [
+    "2 al 1 öde",
+    "Menü %10 indirim",
+    "Çorba ücretsiz",
+    "Çay ücretsiz",
+    "Kahve %20 indirim",
+    "Tatlı ücretsiz",
+    "Aile menüsü %10",
+    "Öğrenci indirimi %10",
+    "Paket servis %10",
+    "İkinci ürün %50",
+  ],
+  otel: [
+    "1 gece %10 indirim",
+    "2 gece %15 indirim",
+    "Kahvaltı ücretsiz",
+    "Erken rezervasyon %10",
+    "Geç çıkış ücretsiz",
+    "Çocuk ücretsiz",
+    "Oda yükseltme ücretsiz",
+    "Hafta içi %10",
+    "Hafta sonu %5",
+    "SPA %20 indirim",
+  ],
+  eczane: [
+    "%5 indirim",
+    "%10 indirim",
+    "Vitamin %15 indirim",
+    "Cilt bakım %15 indirim",
+    "Bebek ürün %10",
+    "Öğrenci %5",
+    "Kampanya paketi %10",
+    "İkinci ürün %30",
+    "Ölçüm ücretsiz",
+    "Maske %20 indirim",
+  ],
+  avm: [
+    "%10 indirim",
+    "2 al 1 öde",
+    "Kahve %20 indirim",
+    "Park ücretsiz",
+    "Sinema %10 indirim",
+    "Çocuk etkinliği ücretsiz",
+    "Fastfood %10",
+    "Giyim %15",
+    "Elektronik %5",
+    "Hafta sonu kampanya",
+  ],
+  diger: [
+    "%10 indirim",
+    "2 al 1 öde",
+    "İkinci ürün %50",
+    "Ücretsiz ikram",
+    "İlk alışveriş %10",
+    "Sadakat indirimi %5",
+    "Hafta içi %10",
+    "Hafta sonu %5",
+    "Öğrenci %10",
+    "Aile indirimi %10",
+  ],
+};
 
 export default function KampanyalarimPage() {
-  const [uid, setUid] = React.useState<string>("");
+  const [{ uid }, setSess] = React.useState({ uid: "" });
 
-  const [businesses, setBusinesses] = React.useState<AppRow[]>([]);
-  const [categories, setCategories] = React.useState<CategoryRow[]>([]);
-  const [campaigns, setCampaigns] = React.useState<CampaignRow[]>([]);
+  const [categories, setCategories] = React.useState<Cat[]>([]);
+  const [businesses, setBusinesses] = React.useState<Biz[]>([]);
 
-  const [selectedBusinessId, setSelectedBusinessId] = React.useState<string>("");
-  const [selectedCategoryKey, setSelectedCategoryKey] = React.useState<string>(""); // id or slug
+  const [selectedBusinessId, setSelectedBusinessId] = React.useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState("");
+
+  const [tplQuery, setTplQuery] = React.useState("");
+  const [text, setText] = React.useState("");
+  const [valueStr, setValueStr] = React.useState("");
+  const [unit, setUnit] = React.useState("");
+  const [colorKey, setColorKey] = React.useState<(typeof COLORS)[number]["key"]>("yellow");
+
+  const [rows, setRows] = React.useState<Camp[]>([]);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => setSess(readSession()), []);
+
+  // categories
+  React.useEffect(() => {
+    const qy = query(collection(db, "categories"), orderBy("order", "asc"));
+    return onSnapshot(qy, (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any[];
+      setCategories(list.filter((x) => x));
+    });
+  }, []);
+
+  // businesses = approved applications for user
+  React.useEffect(() => {
+    if (!uid) return;
+    const qy = query(collection(db, "applications"), where("status", "==", "approved"), where("user.uid", "==", uid));
+    return onSnapshot(qy, (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any[];
+      const cleaned = list.map((a) => ({
+        id: a.id,
+        business: a.business || {},
+        categoryIds: Array.isArray(a.categoryIds) ? a.categoryIds : Array.isArray(a.business?.categoryIds) ? a.business.categoryIds : [],
+        categorySlugs: Array.isArray(a.categorySlugs) ? a.categorySlugs : Array.isArray(a.business?.categorySlugs) ? a.business.categorySlugs : [],
+        categories: Array.isArray(a.categories) ? a.categories : Array.isArray(a.business?.categories) ? a.business.categories : [],
+      })) as Biz[];
+
+      setBusinesses(cleaned);
+
+      // default select first business
+      if (!selectedBusinessId && cleaned[0]?.id) setSelectedBusinessId(cleaned[0].id);
+    });
+  }, [uid, selectedBusinessId]);
 
   const selectedBusiness = React.useMemo(
-    () => businesses.find((b) => b.id === selectedBusinessId) || null,
+    () => (businesses || []).find((b) => b.id === selectedBusinessId) || null,
     [businesses, selectedBusinessId]
   );
 
-  // işletmeye göre izinli kategori filtre
+  // only business categories
   const visibleCategories = React.useMemo(() => {
-    const all = categories || [];
-    const ids = Array.isArray(selectedBusiness?.categoryIds) ? selectedBusiness?.categoryIds || [] : [];
-    const slugs =
-      Array.isArray(selectedBusiness?.categorySlugs) ? selectedBusiness?.categorySlugs || [] :
-      Array.isArray(selectedBusiness?.categories) ? selectedBusiness?.categories || [] : [];
+    const ids = (selectedBusiness?.categoryIds || []).map(String);
+    const slugs = [
+      ...(selectedBusiness?.categorySlugs || []).map(String),
+      ...(selectedBusiness?.categories || []).map(String),
+    ];
 
-    if (!ids.length && !slugs.length) return all;
+    if (!ids.length && !slugs.length) return categories || [];
 
-    const slugSet = new Set(slugs.map((x) => String(x).toLowerCase()));
-    const idSet = new Set(ids.map((x) => String(x)));
-
-    return all.filter((c) => {
-      const idOk = c?.id && idSet.has(String(c.id));
-      const slugOk = c?.slug && slugSet.has(String(c.slug).toLowerCase());
+    return (categories || []).filter((c) => {
+      const idOk = ids.includes(String(c.id));
+      const slugOk = slugs.includes(String(c.slug || ""));
       return idOk || slugOk;
     });
   }, [categories, selectedBusiness]);
 
-  // kampanya filtre (seçili işletme)
-  const myCampaigns = React.useMemo(() => {
-    return (campaigns || []).filter((x) => x.businessAppId === selectedBusinessId);
-  }, [campaigns, selectedBusinessId]);
-
-  const activeCount = React.useMemo(() => myCampaigns.filter((x) => !!x.isActive).length, [myCampaigns]);
-
-  // UI: şablon arama + yeni kampanya form
-  const [tplQuery, setTplQuery] = React.useState("");
-  const [text, setText] = React.useState("");
-  const [valueStr, setValueStr] = React.useState(""); // boş başlar
-  const [unit, setUnit] = React.useState<string>(""); // opsiyonel
-  const [color, setColor] = React.useState<ColorKey>("sari");
-  const [saving, setSaving] = React.useState(false);
-
-  // session
-  React.useEffect(() => {
-    const s = readSession();
-    setUid(s.uid || "");
-  }, []);
-
-  // businesses (approved)
-  React.useEffect(() => {
-    if (!uid) return;
-
-    const qy = query(
-      collection(db, "applications"),
-      where("status", "==", "approved"),
-      where("user.uid", "==", uid),
-      orderBy("updatedAt", "desc"),
-      limit(25)
-    );
-
-    return onSnapshot(qy, (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as AppRow[];
-      setBusinesses(rows);
-
-      // ilk gelişte default seç
-      if (!selectedBusinessId && rows.length) {
-        setSelectedBusinessId(rows[0].id);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid]);
-
-  // categories
-  React.useEffect(() => {
-    const qy = query(collection(db, "categories"), orderBy("order", "asc"), orderBy("nameTR", "asc"));
-    return onSnapshot(qy, (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as CategoryRow[];
-      setCategories(rows);
-    });
-  }, []);
-
-  // campaigns (user)
-  React.useEffect(() => {
-    if (!uid) return;
-    const qy = query(collection(db, "campaigns"), where("uid", "==", uid), orderBy("createdAt", "desc"), limit(200));
-    return onSnapshot(qy, (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as CampaignRow[];
-      setCampaigns(rows);
-    });
-  }, [uid]);
-
-  // visibleCategories oluşunca: default category seç
+  // default select first visible category
   React.useEffect(() => {
     if (!selectedBusinessId) return;
-    if (selectedCategoryKey) return;
-    if (!visibleCategories.length) return;
+    if (selectedCategoryId) return;
+    const first = (visibleCategories || [])[0];
+    if (first?.id) setSelectedCategoryId(String(first.id));
+  }, [selectedBusinessId, selectedCategoryId, visibleCategories.length]);
 
-    // ilk kategori id seç
-    const first = visibleCategories[0];
-    if (first?.id) setSelectedCategoryKey(first.id);
-  }, [selectedBusinessId, selectedCategoryKey, visibleCategories]);
+  const selectedCategory = React.useMemo(
+    () => (categories || []).find((c) => c.id === selectedCategoryId) || null,
+    [categories, selectedCategoryId]
+  );
+  const selectedCategorySlug = (selectedCategory?.slug || "").toString();
 
-  // seçili kategori row
-  const selectedCategory = React.useMemo(() => {
-    if (!selectedCategoryKey) return null;
-    return visibleCategories.find((c) => c.id === selectedCategoryKey || c.slug === selectedCategoryKey) || null;
-  }, [visibleCategories, selectedCategoryKey]);
-
-  const selectedCategorySlug = (selectedCategory?.slug || "").toLowerCase();
-
-  // templates
-  const templates = React.useMemo(() => {
-    const list = getTemplates(selectedCategorySlug);
-    const q = tplQuery.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((x) => x.toLowerCase().includes(q));
-  }, [selectedCategorySlug, tplQuery]);
-
-  function applyTemplate(t: string) {
-    setText(t);
-    setValueStr(""); // template sadece metin; kullanıcı isterse değer ekler
-    setUnit("");
-  }
-
-  async function saveCampaign() {
+  // campaigns for selected business
+  React.useEffect(() => {
     if (!uid || !selectedBusinessId) return;
-    if (saving) return;
+    const qy = query(
+      collection(db, "campaigns"),
+      where("user.uid", "==", uid),
+      where("businessId", "==", selectedBusinessId),
+      orderBy("createdAt", "desc")
+    );
+    return onSnapshot(
+      qy,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any[];
+        setRows(list);
+      },
+      (e) => {
+        console.error(e);
+        setRows([]);
+      }
+    );
+  }, [uid, selectedBusinessId]);
 
-    const t = normalizeText(text);
-    if (!t) {
-      alert("Kampanya metni yaz.");
-      return;
-    }
+  const myCampaigns = React.useMemo(() => rows || [], [rows]);
+  const activeCount = React.useMemo(() => myCampaigns.filter((x) => x.isActive).length, [myCampaigns]);
 
-    // limit 100 (işletme başına)
-    if (myCampaigns.length >= 100) {
-      alert("Maksimum 100 kampanya.");
-      return;
-    }
+  const templates = React.useMemo(() => {
+    const arr = DEFAULT_TEMPLATES[selectedCategorySlug] || DEFAULT_TEMPLATES["diger"] || [];
+    const q = (tplQuery || "").trim().toLowerCase();
+    if (!q) return arr;
+    return arr.filter((t) => t.toLowerCase().includes(q));
+  }, [tplQuery, selectedCategorySlug]);
 
-    // value/unit opsiyonel
-    const hasValue = valueStr.trim() !== "";
-    const parsed = hasValue ? Number(valueStr) : null;
-    if (hasValue && (Number.isNaN(parsed) || !Number.isFinite(parsed))) {
-      alert("Değer geçersiz.");
-      return;
-    }
+  async function addCampaign() {
+    if (!uid || !selectedBusinessId || !selectedCategoryId) return;
+    const t = (text || "").trim();
+    if (!t) return alert("Kampanya metni yaz.");
+
+    if (myCampaigns.length >= 100) return alert("Kampanya sınırı doldu (100).");
+
+    const num = (valueStr || "").trim() ? Number(valueStr) : null;
+    const unitOut = (unit || "").trim() || null;
 
     setSaving(true);
     try {
       await addDoc(collection(db, "campaigns"), {
-        uid,
-        businessAppId: selectedBusinessId,
-        categoryId: selectedCategory?.id || "",
-        categorySlug: selectedCategory?.slug || "",
+        user: { uid },
+        businessId: selectedBusinessId,
+        categoryId: selectedCategoryId,
+        categorySlug: selectedCategorySlug || null,
         text: t,
-        value: hasValue ? parsed : null,
-        unit: unit ? unit : null,
-        color,
+        value: Number.isFinite(num as any) ? num : null,
+        unit: unitOut,
+        colorKey,
         isActive: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -488,7 +320,6 @@ export default function KampanyalarimPage() {
       setText("");
       setValueStr("");
       setUnit("");
-      setColor("sari");
     } catch (e) {
       console.error(e);
       alert("Kaydetme başarısız.");
@@ -497,39 +328,38 @@ export default function KampanyalarimPage() {
     }
   }
 
-  async function toggleActive(row: CampaignRow, next: boolean) {
-    // max 2 active
-    if (next && activeCount >= 2 && !row.isActive) {
-      alert("App’de en fazla 2 kampanya aktif olabilir.");
-      return;
-    }
-
+  async function toggleActive(row: Camp, next: boolean) {
+    if (saving) return;
+    if (next && activeCount >= 3) return alert("En fazla 3 kampanya aktif edebilirsin.");
+    setSaving(true);
     try {
-      await updateDoc(doc(db, "campaigns", row.id), {
-        isActive: next,
-        updatedAt: serverTimestamp(),
-      });
+      await updateDoc(doc(db, "campaigns", row.id), { isActive: next, updatedAt: serverTimestamp() });
     } catch (e) {
       console.error(e);
-      alert("Güncelleme başarısız.");
+      alert("İşlem başarısız.");
+    } finally {
+      setSaving(false);
     }
   }
 
-  async function remove(row: CampaignRow) {
-    if (!confirm("Kampanya silinsin mi?")) return;
+  async function removeRow(row: Camp) {
+    if (saving) return;
+    if (!confirm("Silinsin mi?")) return;
+    setSaving(true);
     try {
       await deleteDoc(doc(db, "campaigns", row.id));
     } catch (e) {
       console.error(e);
       alert("Silme başarısız.");
+    } finally {
+      setSaving(false);
     }
   }
 
-  const previewColor = COLORS.find((c) => c.key === color) || COLORS[0];
+  const previewColor = COLORS.find((c) => c.key === colorKey) || COLORS[0];
 
   return (
     <div className="space-y-4">
-      {/* header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-2xl font-black">Kampanyalarım</div>
@@ -538,22 +368,20 @@ export default function KampanyalarimPage() {
         <ProgressRing value={myCampaigns.length} max={100} />
       </div>
 
-      {/* white premium content area */}
       <div className="rounded-[26px] bg-white p-6 text-[#0B1220] shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
-        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           {/* LEFT */}
           <div className="space-y-5">
-            {/* selectors - geniş, ferah */}
-            <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] w-full p-4">
+            <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] p-5">
               <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
                 <div>
                   <div className="text-xs font-extrabold tracking-widest text-black/55">İŞLETME</div>
                   <select
-                    className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold outline-none"
+                    className="mt-2 w-full h-12 rounded-2xl border border-black/10 bg-white px-5 text-[15px] font-extrabold outline-none shadow-sm focus:ring-2 focus:ring-black/10"
                     value={selectedBusinessId}
                     onChange={(e) => {
                       setSelectedBusinessId(e.target.value);
-                      setSelectedCategoryKey(""); // işletme değişince kategori reset
+                      setSelectedCategoryId("");
                       setTplQuery("");
                       setText("");
                       setValueStr("");
@@ -563,7 +391,7 @@ export default function KampanyalarimPage() {
                     {!businesses.length ? <option value="">İşletme yok</option> : null}
                     {businesses.map((b) => (
                       <option key={b.id} value={b.id}>
-                        {(b.business?.name || "İşletme").toString().slice(0, 32)}
+                        {(b.business?.name || "İşletme").toString().slice(0, 42)}
                       </option>
                     ))}
                   </select>
@@ -572,10 +400,10 @@ export default function KampanyalarimPage() {
                 <div>
                   <div className="text-xs font-extrabold tracking-widest text-black/55">KATEGORİ</div>
                   <select
-                    className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold outline-none"
-                    value={selectedCategoryKey}
+                    className="mt-2 w-full h-12 rounded-2xl border border-black/10 bg-white px-5 text-[15px] font-extrabold outline-none shadow-sm focus:ring-2 focus:ring-black/10"
+                    value={selectedCategoryId}
                     onChange={(e) => {
-                      setSelectedCategoryKey(e.target.value);
+                      setSelectedCategoryId(e.target.value);
                       setTplQuery("");
                       setText("");
                       setValueStr("");
@@ -602,39 +430,32 @@ export default function KampanyalarimPage() {
               </div>
             </div>
 
-            {/* templates list - scroll geri geldi */}
             <div className="rounded-[18px] border border-black/10 bg-white p-5">
               <div className="text-xs font-extrabold tracking-widest text-black/55">ŞABLONLAR</div>
               <div className="mt-3 max-h-[240px] overflow-auto rounded-2xl border border-black/10 bg-[#FBFBFC] p-2">
-                {!selectedCategorySlug ? (
+                {!selectedCategoryId ? (
                   <div className="p-4 text-sm text-black/55">Önce kategori seç.</div>
                 ) : templates.length ? (
-                  <div className="space-y-1">
-                    {templates.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => applyTemplate(t)}
-                        className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-black/85 hover:bg-black/[0.04]"
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  templates.map((t) => (
+                    <button
+                      key={t}
+                      className="block w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold hover:bg-black/5"
+                      onClick={() => setText(t)}
+                      type="button"
+                    >
+                      {t}
+                    </button>
+                  ))
                 ) : (
-                  <div className="p-4 text-sm text-black/55">Şablon yok.</div>
+                  <div className="p-4 text-sm text-black/55">Sonuç yok.</div>
                 )}
-              </div>
-              <div className="mt-3 text-xs text-black/45">
-                İpucu: Şablona tıkla, metin aşağıya dolsun. İstersen değer ekle.
               </div>
             </div>
 
-            {/* new campaign - SIKIŞIK DEĞİL: metin bloğu + değer/birim bloğu + renk bloğu ayrı */}
-            <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] p-5">
-              <div className="text-base font-extrabold">Yeni Kampanya</div>
+            <div className="rounded-[18px] border border-black/10 bg-white p-5">
+              <div className="text-xs font-extrabold tracking-widest text-black/55">YENİ KAMPANYA</div>
 
-              {/* METİN */}
-              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+              <div className="mt-3 rounded-2xl border border-black/10 bg-[#F7F8FA] p-4">
                 <div className="text-xs font-extrabold tracking-widest text-black/55">KAMPANYA METNİ</div>
                 <input
                   value={text}
@@ -646,18 +467,17 @@ export default function KampanyalarimPage() {
                 <div className="mt-2 text-xs text-black/45">Kısa ve net tut (app etiketi). Maks 42 karakter.</div>
               </div>
 
-              {/* DEĞER & BİRİM (OPSİYONEL) */}
-              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+              <div className="mt-4 rounded-2xl border border-black/10 bg-[#F7F8FA] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-extrabold tracking-widest text-black/55">DEĞER (OPSİYONEL)</div>
-                  <div className="text-xs text-black/45">Boş bırakabilirsin (sadece metin).</div>
+                  <div className="text-xs text-black/45">Boş bırakabilirsin.</div>
                 </div>
 
                 <div className="mt-3 grid gap-3 md:grid-cols-[220px_180px]">
                   <input
                     inputMode="numeric"
                     value={valueStr}
-                    onChange={(e) => setValueStr(e.target.value.replace(/[^d.]/g, ""))}
+                    onChange={(e) => setValueStr(e.target.value.replace(/[^\d.]/g, ""))}
                     placeholder="Değer"
                     className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold outline-none"
                   />
@@ -678,110 +498,131 @@ export default function KampanyalarimPage() {
                 <div className="mt-2 text-xs text-black/45">Örn: “5” + “%” veya “2” + “TL/L”.</div>
               </div>
 
-              {/* RENK */}
-              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+              <div className="mt-4 rounded-2xl border border-black/10 bg-[#F7F8FA] p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-extrabold tracking-widest text-black/55">RENK</div>
-</div>
+                  <div className={cls("rounded-full border px-3 py-1 text-xs font-extrabold", previewColor.bg, previewColor.border, previewColor.text)}>
+                    {COLORS.find((c) => c.key === colorKey)?.name || "Renk"}
+                  </div>
+                </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {COLORS.map((c) => (
                     <button
                       key={c.key}
-                      onClick={() => setColor(c.key)}
+                      type="button"
+                      onClick={() => setColorKey(c.key)}
                       className={cls(
-                        "rounded-full border px-4 py-2 text-sm font-extrabold",
+                        "h-9 rounded-full border px-4 text-xs font-extrabold",
                         c.bg,
                         c.border,
                         c.text,
-                        color === c.key && "ring-2 ring-black/20"
+                        colorKey === c.key ? "ring-2 ring-black/15" : "opacity-90 hover:opacity-100"
                       )}
-                      title={c.label}
+                      title={c.name}
                     >
-                      {c.label}
+                      {c.name}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* ACTIONS */}
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-xs text-black/45">
-                  Maks. 100 kampanya. App’de sadece <b>aktif</b> seçtiklerin görünür (en fazla 2).
+                <div className="text-xs text-black/55">
+                  Aktif seçtiklerin app’de görünür. (Maks 3)
                 </div>
-                <Button variant="primary" className="px-8 py-4 rounded-[22px]" onClick={saveCampaign} disabled={saving || !uid || !selectedBusinessId}>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={addCampaign}
+                  className="rounded-2xl bg-[#D9A400] px-6 py-3 text-sm font-extrabold text-black shadow-sm hover:brightness-105 disabled:opacity-60"
+                >
                   {saving ? "..." : "Kaydet"}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
 
           {/* RIGHT */}
-          <div className="rounded-[18px] border border-black/10 bg-[#F7F8FA] w-full p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-base font-extrabold">Kayıtlı Kampanyalar</div>
-              <div className="text-xs text-black/45">
-                {myCampaigns.length}/100
+          <div className="w-full rounded-[18px] border border-black/10 bg-[#F7F8FA] p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-lg font-black">Kayıtlı Kampanyalar</div>
+                <div className="mt-1 text-xs text-black/55">
+                  İşletmene uygulanır. En fazla 3 tanesini aktif edebilirsin.
+                </div>
               </div>
+              <div className="text-xs font-extrabold text-black/60">{activeCount}/3 aktif</div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-black/10 bg-white p-3">
-              {!selectedBusinessId ? (
-                <div className="p-4 text-sm text-black/55">Önce işletme seç.</div>
-              ) : !myCampaigns.length ? (
-                <div className="p-4 text-sm text-black/55 w-full">Kampanya yok.</div>
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl border border-black/10 bg-white p-3">
+              {!myCampaigns.length ? (
+                <div className="p-4 text-sm text-black/60">Henüz kampanya yok.</div>
               ) : (
-                <div className="space-y-2">
-                  {myCampaigns.map((r) => {
-                    const cc = COLORS.find((x) => x.key === r.color) || COLORS[0];
-                    return (
-                      <div key={r.id} className="rounded-2xl border border-black/10 bg-[#FBFBFC] p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-extrabold text-black/85 truncate">{r.text}</div>
-                            <div className="mt-1 flex items-center gap-2">
-                              <span className={cls("rounded-full border px-2 py-1 text-[11px] font-extrabold", cc.bg, cc.border, cc.text)}>
-                                {cc.label}
-                              </span>
-                              {typeof r.value === "number" && r.unit ? (
-                                <span className="text-[11px] font-extrabold text-black/55">
-                                  {r.value} {r.unit}
-                                </span>
-                              ) : null}
+                myCampaigns.map((r) => {
+                  const col = COLORS.find((c) => c.key === (r.colorKey as any)) || COLORS[0];
+                  return (
+                    <div key={r.id} className="mb-3 rounded-2xl border border-black/10 bg-[#FBFBFC] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className={cls("rounded-full border px-3 py-1 text-xs font-extrabold", col.bg, col.border, col.text)}>
+                              {col.name}
                             </div>
+                            {r.isActive ? (
+                              <div className="rounded-full bg-[#E9FFF2] px-3 py-1 text-xs font-extrabold text-[#0B5B2A] border border-[#B7F0CC]">
+                                AKTİF
+                              </div>
+                            ) : (
+                              <div className="rounded-full bg-[#F1F3F5] px-3 py-1 text-xs font-extrabold text-black/55 border border-black/10">
+                                PASİF
+                              </div>
+                            )}
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <label className="flex items-center gap-2 text-xs font-bold text-black/60">
-                              <input
-                                type="checkbox"
-                                checked={!!r.isActive}
-                                onChange={(e) => toggleActive(r, e.target.checked)}
-                              />
-                              Aktif
-                            </label>
-
-                            <button
-                              onClick={() => remove(r)}
-                              className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-extrabold text-black/60 hover:bg-black/[0.04]"
-                            >
-                              Sil
-                            </button>
+                          <div className="mt-2 text-sm font-extrabold text-black/85 break-words">
+                            {r.text}
                           </div>
+
+                          {r.value != null && r.unit ? (
+                            <div className="mt-1 text-xs text-black/60">
+                              Değer: <span className="font-extrabold">{String(r.value)}</span> {r.unit}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <button
+                            type="button"
+                            className={cls(
+                              "rounded-xl px-3 py-2 text-xs font-extrabold border",
+                              r.isActive ? "bg-[#151A24] text-white border-black/10" : "bg-white text-black border-black/10"
+                            )}
+                            onClick={() => toggleActive(r, !r.isActive)}
+                            disabled={saving}
+                            title="Aktif/Pasif"
+                          >
+                            {r.isActive ? "Pasif Yap" : "Aktif Et"}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="rounded-xl px-3 py-2 text-xs font-extrabold border border-black/10 bg-white text-black/70 hover:text-black"
+                            onClick={() => removeRow(r)}
+                            disabled={saving}
+                          >
+                            Sil
+                          </button>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })
               )}
             </div>
 
-            <div className="mt-3 text-xs text-black/55">
-              Not: App’de “en fazla 2 kampanya” gösterilir. Burada <b>aktif</b> yaptığın kampanyalar görünür.
-            </div>
-
-            <div className="mt-2 text-xs text-black/45">
-              Aktif sayısı: <b>{activeCount}/2</b>
+            <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4 text-xs text-black/55">
+              Not: App’de sadece <b>aktif</b> kampanyalar gösterilir (maks 3).
             </div>
           </div>
         </div>

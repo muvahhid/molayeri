@@ -1,4 +1,4 @@
-import "client-only";
+"use client";
 
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -13,23 +13,6 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
-
-function assertClientEnv() {
-  if (typeof window === "undefined") return;
-  const keys = [
-    "NEXT_PUBLIC_FIREBASE_API_KEY",
-    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-    "NEXT_PUBLIC_FIREBASE_APP_ID",
-  ] as const;
-
-  for (const k of keys) {
-    if (!process.env[k]) throw new Error("Missing env: " + k);
-  }
-}
-
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 

@@ -1,16 +1,5 @@
 import { db } from "@/lib/firebase.client";
-import {
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  collection,
-  where,
-  updateDoc,
-} from "firebase/firestore";
+import { deleteDoc, doc, onSnapshot, query, serverTimestamp, setDoc, collection, where, updateDoc } from "firebase/firestore";
 
 export type CategoryFeatureDoc = {
   id: string;

@@ -104,7 +104,6 @@ return () => {
       // cleanup blob urls
       items.forEach((x) => URL.revokeObjectURL(x.url));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onPick(files: FileList | null) {
@@ -214,7 +213,7 @@ return () => {
         {items.map((p) => (
           <div key={p.id} className="rounded-[22px] border border-white/10 bg-[#151A24] overflow-hidden">
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              
               <img src={p.url} alt="" className="h-44 w-full object-cover" />
               {p.isCover ? (
                 <div className="absolute left-3 top-3">

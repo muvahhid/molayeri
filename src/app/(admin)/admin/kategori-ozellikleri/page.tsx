@@ -51,7 +51,6 @@ export default function KategoriOzellikleriPage() {
       u1();
       u2();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
