@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 
 import {
   subscribeApplications,
-  approveApplication,
+  approveApplicationAndSyncBusiness,
   passiveApplication,
   ApplicationDoc,
 } from "@/lib/admin/applications.repo";
@@ -43,7 +43,7 @@ export default function BasvurularPage() {
     if (busy) return;
     setBusy(r.id);
     try {
-      await approveApplication(r.id, r.user.uid);
+      await approveApplicationAndSyncBusiness(r.id, r.user.uid);
     } finally {
       setBusy(null);
     }

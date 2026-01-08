@@ -11,7 +11,9 @@ const nav = [
   { href: "/admin/kategoriler", label: "Kategoriler" },
   { href: "/admin/ozellikler", label: "Özellikler" },
   { href: "/admin/kategori-ozellikleri", label: "Kategori-Özellikleri" },
+  { href: "/admin/isletmeler", label: "İşletmeler" },
   { href: "/admin/basvurular", label: "Başvurular" },
+  { href: "/admin/uyeler", label: "Üye Yönetim" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

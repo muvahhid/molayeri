@@ -141,8 +141,7 @@ export default function AdminDashboardPage() {
             <div>
               <CardTitle>Dashboard</CardTitle>
                           </div>
-            <Button variant="primary">Yeni Ekle</Button>
-          </div>
+                      </div>
         </CardHeader>
         <CardContent>
 

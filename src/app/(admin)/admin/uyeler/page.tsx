@@ -1,0 +1,301 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { db } from "@/lib/firebase.client";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+  where,
+  DocumentSnapshot,
+} from "firebase/firestore";
+import { AdminGuard } from "@/components/guards/AdminGuard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+type Role = "all" | "user" | "isletmeci" | "pending" | "admin";
+type ActiveFilter = "all" | "active" | "passive";
+type ApprovedFilter = "all" | "approved" | "pending";
+
+const PAGE_SIZE = 50;
+
+function fmtDate(v: any) {
+  try {
+    if (!v) return "";
+    if (typeof v === "string") return v;
+    if (v?.toDate) return new Date(v.toDate()).toLocaleString("tr-TR");
+    if (v?.seconds) return new Date(v.seconds * 1000).toLocaleString("tr-TR");
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+function roleLabel(r: any) {
+  if (r === "admin") return "Admin";
+  if (r === "isletmeci") return "İşletmeci";
+  if (r === "pending") return "Pending";
+  return "User";
+}
+
+export default function AdminUsersListPage() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [cursor, setCursor] = useState<DocumentSnapshot | null>(null);
+  const [cursorStack, setCursorStack] = useState<(DocumentSnapshot | null)[]>([null]);
+
+  const [role, setRole] = useState<Role>("all");
+  const [active, setActive] = useState<ActiveFilter>("all");
+  const [approved, setApproved] = useState<ApprovedFilter>("all");
+  const [search, setSearch] = useState(""); // email exact / uid exact / id exact
+
+  const buildQuery = (after: DocumentSnapshot | null) => {
+    const parts: any[] = [];
+
+    // filtreler (Firestore tarafı)
+    if (role !== "all") parts.push(where("role", "==", role));
+    if (active === "active") parts.push(where("active", "==", true));
+    if (active === "passive") parts.push(where("active", "==", false));
+    if (approved === "approved") parts.push(where("approved", "==", true));
+    // pending için Firestore'da eksik alan sorunu var -> client filtre (aşağıda)
+
+    // arama: en risksiz exact email (email alanı varsa)
+    const t = search.trim().toLowerCase();
+    if (t && t.includes("@")) parts.push(where("email", "==", t));
+    // uid/id exact aramayı listede client filtre ile yapıyoruz (index gerektirmesin)
+
+    const base = query(collection(db, "users"), ...parts, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+    return after ? query(collection(db, "users"), ...parts, orderBy("createdAt", "desc"), startAfter(after), limit(PAGE_SIZE)) : base;
+  };
+
+  const loadPage = async (after: DocumentSnapshot | null, nextPage: number, nextStack: (DocumentSnapshot | null)[]) => {
+    setLoading(true);
+    try {
+      const qy = buildQuery(after);
+      const snap = await getDocs(qy);
+      let data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any), __doc: d }));
+
+      // pending onay filtresi (approved != true)
+      if (approved === "pending") data = data.filter((u) => u?.approved !== true);
+
+      // uid/id exact client filtre (email dışı)
+      const t = search.trim().toLowerCase();
+      if (t && !t.includes("@")) {
+        data = data.filter((u) => {
+          const id = String(u?.id || "").toLowerCase();
+          const uid = String(u?.uid || "").toLowerCase();
+          return id == t || uid == t;
+        });
+      }
+
+      setRows(data);
+      const last = snap.docs.length ? snap.docs[snap.docs.length - 1] : null;
+      setCursor(last);
+      setPage(nextPage);
+      setCursorStack(nextStack);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // filtre değişince başa dön
+    loadPage(null, 1, [null]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, active, approved]);
+
+  return (
+    <AdminGuard>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle>Üye Yönetim</CardTitle>
+                <div className="mt-2 text-sm text-white/60">
+                  Sayfa başına {PAGE_SIZE}. Cursor ile ölçeklenir (500k+).
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Email (exact) veya uid/id (exact)"
+                    className="h-11 w-[320px] rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white/90 outline-none placeholder:text-white/35"
+                  />
+                  <Button
+                    variant="primary"
+                    className="h-11 rounded-2xl px-6"
+                    onClick={() => loadPage(null, 1, [null])}
+                    disabled={loading}
+                  >
+                    Ara / Yenile
+                  </Button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as Role)}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white/85 outline-none"
+                  >
+                    <option value="all">Rol: Tümü</option>
+                    <option value="user">Rol: User</option>
+                    <option value="isletmeci">Rol: İşletmeci</option>
+                    <option value="pending">Rol: Pending</option>
+                    <option value="admin">Rol: Admin</option>
+                  </select>
+
+                  <select
+                    value={active}
+                    onChange={(e) => setActive(e.target.value as ActiveFilter)}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white/85 outline-none"
+                  >
+                    <option value="all">Durum: Tümü</option>
+                    <option value="active">Durum: Aktif</option>
+                    <option value="passive">Durum: Pasif</option>
+                  </select>
+
+                  <select
+                    value={approved}
+                    onChange={(e) => setApproved(e.target.value as ApprovedFilter)}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white/85 outline-none"
+                  >
+                    <option value="all">Onay: Tümü</option>
+                    <option value="approved">Onay: Onaylı</option>
+                    <option value="pending">Onay: Beklemede</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {loading ? (
+              <div className="text-sm text-white/60">Yükleniyor...</div>
+            ) : (
+              <>
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="text-xs text-white/60">Sayfa: <span className="text-white/85 font-semibold">{page}</span></div>
+                  <div className="text-xs text-white/60">Kayıt: <span className="text-white/85 font-semibold">{rows.length}</span></div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5">
+                  <div className="grid grid-cols-[1.2fr_1.2fr_.7fr_.7fr_.9fr] gap-3 px-4 py-3 text-[11px] font-bold tracking-widest text-white/40">
+                    <div>ÜYE</div>
+                    <div>EMAIL / TEL</div>
+                    <div>ROL</div>
+                    <div>DURUM</div>
+                    <div>TARİH</div>
+                  </div>
+
+                  <div className="max-h-[620px] overflow-auto">
+                    {rows.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-white/60">Kayıt yok.</div>
+                    ) : (
+                      rows.map((u) => {
+                        const isActive = u?.active !== false;
+                        const isApproved = u?.approved === true;
+
+                        return (
+                          <Link
+                            key={u.id}
+                            href={`/admin/uyeler/${u.id}`}
+                            className="grid grid-cols-[1.2fr_1.2fr_.7fr_.7fr_.9fr] gap-3 px-4 py-3 border-t border-white/10 hover:bg-white/10 transition"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-white">
+                                {u?.nameTR || u?.displayName || u?.name || "Üye"}
+                              </div>
+                              <div className="truncate text-xs text-white/55">{u?.uid || u?.id}</div>
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="truncate text-sm text-white/80">{u?.email || "—"}</div>
+                              <div className="truncate text-xs text-white/55">{u?.phone || "—"}</div>
+                            </div>
+
+                            <div className="flex items-center">
+                              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/75 ring-1 ring-white/15">
+                                {roleLabel(u?.role)}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                              <span className={["inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                isActive ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/20" : "bg-white/10 text-white/60 ring-white/15"
+                              ].join(" ")}>
+                                {isActive ? "Aktif" : "Pasif"}
+                              </span>
+                              <span className={["inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                isApproved ? "bg-[#D9A400]/15 text-[#D9A400] ring-[#D9A400]/20" : "bg-amber-500/15 text-amber-200 ring-amber-500/20"
+                              ].join(" ")}>
+                                {isApproved ? "Onaylı" : "Beklemede"}
+                              </span>
+                            </div>
+
+                            <div className="text-sm text-white/70">{fmtDate(u?.createdAt)}</div>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    className="rounded-2xl px-5"
+                    onClick={() => loadPage(null, 1, [null])}
+                    disabled={loading}
+                  >
+                    Başa dön
+                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      className="rounded-2xl px-5"
+                      onClick={() => {
+                        if (page <= 1) return;
+                        const nextPage = page - 1;
+                        const nextStack = cursorStack.slice(0, -1);
+                        const prevCursor = nextStack[nextStack.length - 1] ?? null;
+                        loadPage(prevCursor, nextPage, nextStack);
+                      }}
+                      disabled={loading || page <= 1}
+                    >
+                      ‹ Geri
+                    </Button>
+
+                    <Button
+                      variant="primary"
+                      className="rounded-2xl px-7"
+                      onClick={() => {
+                        if (!cursor) return;
+                        const nextPage = page + 1;
+                        const nextStack = cursorStack.concat([cursor]);
+                        loadPage(cursor, nextPage, nextStack);
+                      }}
+                      disabled={loading || !cursor}
+                    >
+                      İleri ›
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </AdminGuard>
+  );
+}

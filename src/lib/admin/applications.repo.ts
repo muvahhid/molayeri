@@ -7,6 +7,8 @@ import {
   query,
   updateDoc,
   serverTimestamp,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 
 export type ApplicationStatus = "pending" | "approved" | "passive";
@@ -48,6 +50,7 @@ export function subscribeApplications(cb: (rows: ApplicationDoc[]) => void) {
 }
 
 async function setUserRole(uid: string, role: "user" | "pending" | "isletmeci" | "admin", approved?: boolean) {
+  if (!uid) return;
   await updateDoc(doc(db, "users", uid), {
     role,
     ...(typeof approved === "boolean" ? { approved } : {}),
@@ -56,17 +59,82 @@ async function setUserRole(uid: string, role: "user" | "pending" | "isletmeci" |
 }
 
 export async function approveApplication(appId: string, uid: string) {
+  const _uid = uid || "";
   await updateDoc(doc(db, "applications", appId), {
     status: "approved",
     updatedAt: serverTimestamp(),
   });
-  await setUserRole(uid, "isletmeci", true);
+  await setUserRole(resolvedUid || app?.user?.uid || "", "isletmeci", true);
 }
 
 export async function passiveApplication(appId: string, uid: string) {
+  const _uid = uid || "";
   await updateDoc(doc(db, "applications", appId), {
     status: "passive",
     updatedAt: serverTimestamp(),
   });
-  await setUserRole(uid, "pending", false);
+  await setUserRole(_uid, "pending", false);
+}
+export type BusinessDoc = {
+  id: string;
+  status: ApplicationStatus;
+  ownerUid: string;
+  ownerEmail: string;
+  name: string;
+  addressText: string;
+  lat: number | null;
+  lng: number | null;
+  description: string;
+  selectedCategoryIds: string[];
+  featureValues: Record<string, any>;
+  photos: { url: string; isCover: boolean }[];
+  applicationId: string;
+  createdAt?: any;
+  updatedAt?: any;
+};
+
+export async function approveApplicationAndSyncBusiness(appId: string, uid: string) {
+  const resolvedUid = uid || "";
+
+  const appRef = doc(db, "applications", appId);
+  const snap = await getDoc(appRef);
+  if (!snap.exists()) throw new Error("Application not found");
+
+  const app = snap.data() as any;
+
+  await updateDoc(appRef, {
+    status: "approved",
+    updatedAt: serverTimestamp(),
+  });
+
+  await setUserRole(resolvedUid || app?.user?.uid || "", "isletmeci", true);
+
+  const bizRef = doc(db, "businesses", appId);
+
+  const business: Partial<BusinessDoc> = {
+    id: appId,
+    status: "approved",
+    ownerUid: resolvedUid || app?.user?.uid || "",
+    ownerEmail: (app?.user?.email || "").toString().trim().toLowerCase(),
+    name: app?.business?.name || "",
+    addressText: app?.business?.addressText || "",
+    lat: app?.business?.lat ?? null,
+    lng: app?.business?.lng ?? null,
+    description: app?.business?.description || "",
+    selectedCategoryIds: app?.selectedCategoryIds || [],
+    featureValues: app?.featureValues || {},
+    photos: app?.photos || [],
+    applicationId: appId,
+    createdAt: app?.createdAt || serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  await setDoc(bizRef, business, { merge: true });
+
+  await updateDoc(appRef, {
+    businessId: appId,
+    updatedAt: serverTimestamp(),
+  });
+
+  return { businessId: appId };
 }
