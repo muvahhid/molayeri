@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase.client";
 import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
+import { TopTabsCard } from "@/components/admin/TopTabsCard";
 
 
 export default function AdminDashboardPage() {
@@ -117,12 +118,6 @@ export default function AdminDashboardPage() {
   const appsView = latestApps.slice(appsPage * PAGE_SIZE, (appsPage + 1) * PAGE_SIZE);
   const usersView = latestUsers.slice(usersPage * PAGE_SIZE, (usersPage + 1) * PAGE_SIZE);
 
-  const TOP_ROWS = 10;
-  const pendingTop = latestApps.filter((a) => a?.status === "pending").slice(0, TOP_ROWS);
-  const approvedTop = latestApps.filter((a) => a?.status === "approved").slice(0, TOP_ROWS);
-
-  const pad = (n: number) => Array.from({ length: Math.max(0, n) });
-
   const fmt = useMemo(() => {
     return (v: any) => {
       // Firestore Timestamp -> Date
@@ -145,122 +140,11 @@ export default function AdminDashboardPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>Dashboard</CardTitle>
-              <div className="mt-2 text-sm text-white/60">Kategoriler • Özellikler • İlişkiler</div>
-            </div>
+                          </div>
             <Button variant="primary">Yeni Ekle</Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* 1) Onay bekleyen (pending) */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold tracking-widest text-white/40">BAŞVURULAR</div>
-                  <div className="mt-1 text-sm font-semibold text-white">Onay bekleyen</div>
-                </div>
-                <Badge className="rounded-full bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/20">PENDING</Badge>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {loadingLists ? (
-                  <div className="text-sm text-white/50">Yükleniyor...</div>
-                ) : pendingTop.length === 0 ? (
-                  <>
-                    <div className="text-sm text-white/50">Şimdilik yok.</div>
-                    {pad(TOP_ROWS - 1).map((_, i) => (
-                      <div key={i} className="h-[42px] rounded-xl bg-white/5 ring-1 ring-white/10" />
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {pendingTop.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">
-                            {a?.business?.name || "İşletme"}
-                          </div>
-                          <div className="truncate text-xs text-white/60">
-                            {a?.user?.email || a?.user?.uid || a?.uid || a.id}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-xs text-white/50">{fmt(a?.createdAt)}</div>
-                      </div>
-                    ))}
-                    {pad(TOP_ROWS - pendingTop.length).map((_, i) => (
-                      <div key={i} className="h-[42px] rounded-xl bg-white/5 ring-1 ring-white/10" />
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* 2) Aktif işletmeler (approved) */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold tracking-widest text-white/40">İŞLETMELER</div>
-                  <div className="mt-1 text-sm font-semibold text-white">Aktif (approved)</div>
-                </div>
-                <Badge className="rounded-full bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/20">AKTİF</Badge>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {loadingLists ? (
-                  <div className="text-sm text-white/50">Yükleniyor...</div>
-                ) : approvedTop.length === 0 ? (
-                  <>
-                    <div className="text-sm text-white/50">Şimdilik yok.</div>
-                    {pad(TOP_ROWS - 1).map((_, i) => (
-                      <div key={i} className="h-[42px] rounded-xl bg-white/5 ring-1 ring-white/10" />
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {approvedTop.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">
-                            {a?.business?.name || "İşletme"}
-                          </div>
-                          <div className="truncate text-xs text-white/60">
-                            {a?.user?.email || a?.user?.uid || a?.uid || a.id}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-xs text-white/50">{fmt(a?.createdAt)}</div>
-                      </div>
-                    ))}
-                    {pad(TOP_ROWS - approvedTop.length).map((_, i) => (
-                      <div key={i} className="h-[42px] rounded-xl bg-white/5 ring-1 ring-white/10" />
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* 3) Mesaj Kutusu (şimdilik boş) */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold tracking-widest text-white/40">MESAJ</div>
-                  <div className="mt-1 text-sm font-semibold text-white">Gelen kutusu</div>
-                </div>
-                <Badge className="rounded-full bg-white/10 text-white/70 ring-1 ring-white/10">YAKINDA</Badge>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {pad(TOP_ROWS).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-white/60">—</div>
-                      <div className="truncate text-xs text-white/40">Henüz mesaj yok</div>
-                    </div>
-                    <div className="shrink-0 text-xs text-white/30">—</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {/* İşletmeler Grafiği */}
@@ -322,134 +206,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-white">Son Kaydedilen İşletmeler</div>
-                  <div className="text-xs text-white/50">applications</div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {loadingLists ? (
-                    <div className="text-sm text-white/50">Yükleniyor...</div>
-                  ) : latestApps.length === 0 ? (
-                    <div className="text-sm text-white/50">Kayıt bulunamadı.</div>
-                  ) : (
-                    appsView.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="truncate text-sm font-semibold text-white">
-                              {a?.business?.name || a?.businessName || a?.name || a?.title || "İşletme"}
-                            </div>
-
-                            <span
-                              className={[
-                                "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
-                                a?.status === "approved"
-                                  ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/20"
-                                  : a?.status === "pending"
-                                  ? "bg-amber-500/15 text-amber-200 ring-amber-500/20"
-                                  : "bg-white/10 text-white/60 ring-white/15",
-                              ].join(" ")}
-                            >
-                              {a?.status === "approved"
-                                ? "Aktif"
-                                : a?.status === "pending"
-                                ? "Onay bekliyor"
-                                : "Pasif"}
-                            </span>
-                          </div>
-                          <div className="truncate text-xs text-white/60">
-                            {a?.user?.email || a?.ownerEmail || a?.email || a?.user?.uid || a?.uid || a.id}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-xs text-white/50">
-                          {fmt(a?.createdAt)}
-                        </div>
-                      </div>
-                    ))
-                  )}
-
-
-                {!loadingLists && latestApps.length > 0 && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <button
-                      className="rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/10 disabled:opacity-40"
-                      onClick={() => setAppsPage((p) => Math.max(0, p - 1))}
-                      disabled={appsPage === 0}
-                    >
-                      ‹
-                    </button>
-                    <div className="text-xs text-white/60">
-                      Sayfa {appsPage + 1}/{appsTotalPages}
-                    </div>
-                    <button
-                      className="rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/10 disabled:opacity-40"
-                      onClick={() => setAppsPage((p) => Math.min(appsTotalPages - 1, p + 1))}
-                      disabled={appsPage >= appsTotalPages - 1}
-                    >
-                      ›
-                    </button>
-                  </div>
-                )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-white">Son Üyeler</div>
-                  <div className="text-xs text-white/50">users</div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {loadingLists ? (
-                    <div className="text-sm text-white/50">Yükleniyor...</div>
-                  ) : latestUsers.length === 0 ? (
-                    <div className="text-sm text-white/50">Kayıt bulunamadı.</div>
-                  ) : (
-                    usersView.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">
-                            {u?.displayName || u?.name || "Üye"}
-                          </div>
-                          <div className="truncate text-xs text-white/60">
-                            {u?.email || u?.phone || u.id}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-xs text-white/50">
-                          {fmt(u?.createdAt)}
-                        </div>
-                      </div>
-                    ))
-                  )}
-
-
-                {!loadingLists && latestUsers.length > 0 && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <button
-                      className="rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/10 disabled:opacity-40"
-                      onClick={() => setUsersPage((p) => Math.max(0, p - 1))}
-                      disabled={usersPage === 0}
-                    >
-                      ‹
-                    </button>
-                    <div className="text-xs text-white/60">
-                      Sayfa {usersPage + 1}/{usersTotalPages}
-                    </div>
-                    <button
-                      className="rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/10 disabled:opacity-40"
-                      onClick={() => setUsersPage((p) => Math.min(usersTotalPages - 1, p + 1))}
-                      disabled={usersPage >= usersTotalPages - 1}
-                    >
-                      ›
-                    </button>
-                  </div>
-                )}
-                </div>
-              </div>
-            </div>
+            <div className="mt-6">              <TopTabsCard latestApps={latestApps} latestUsers={latestUsers} loading={loadingLists} fmt={fmt} />            </div>
 
 </CardContent>
       </Card>

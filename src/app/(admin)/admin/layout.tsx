@@ -1,3 +1,4 @@
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
@@ -18,18 +19,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-[radial-gradient(900px_500px_at_50%_-20%,rgba(217,164,0,0.12),transparent),radial-gradient(900px_500px_at_0%_100%,rgba(255,255,255,0.06),transparent),linear-gradient(180deg,#060A12,#070B14)] text-white">
       <div className="mx-auto max-w-[1440px] px-5 py-6">
         <header className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-<div className="flex items-center gap-3 rounded-2xl border border-[#D9A400]/20 bg-white/5 px-4 py-3 shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md">
-            <Image src="/icons/admin.png" alt="Admin" width={34} height={34} className="rounded-xl ring-1 ring-white/10" />
+          {/* Brand */}
+          <div className="flex items-center gap-3 rounded-2xl border border-[#D9A400]/20 bg-white/5 px-4 py-3 shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md">
+            <Image
+              src="/icons/admin.png"
+              alt="Admin"
+              width={34}
+              height={34}
+              className="rounded-xl ring-1 ring-white/10"
+            />
             <div>
               <div className="text-xl font-black tracking-tight text-[#D9A400]">Molayeri Yönetici Paneli</div>
               <div className="text-xs font-bold text-white/70">Premium panel</div>
             </div>
           </div>
-          </div>
 
-          {/* Sağ üst: sadece ikon + çıkış */}
-          <div className="flex items-center gap-3">{/* Asıl logout aksiyonu bunun içinde */}
+          {/* Sağ üst */}
+          <div className="flex items-center gap-3">
             <LogoutButton compact />
           </div>
         </header>
@@ -53,11 +59,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </Link>
                 ))}
               </nav>
-
-              <div className="mt-6 rounded-2xl border border-[#D9A400]/20 bg-[#D9A400]/10 p-4">
-                <div className="text-sm font-extrabold text-[#D9A400]">Marka</div>
-                <div className="mt-1 text-xs text-white/60">#D9A400 • Koyu premium</div>
-              </div>
 
               <a
                 href="/isletmeci/isletmem"
