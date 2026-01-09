@@ -34,7 +34,7 @@ app.get("/places/details", async (req, res) => {
   try {
     if (!KEY) return res.status(500).json({ error: "MISSING_API_KEY" });
 
-    const placeId = String(req.query.placeId || "").trim();
+    const placeId = String(req.query.place_id ?? req.query.placeId ?? "").trim();
     if (!placeId) return res.status(400).json({ error: "MISSING_PLACE_ID" });
 
     const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");

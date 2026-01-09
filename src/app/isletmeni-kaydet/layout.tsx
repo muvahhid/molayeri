@@ -73,15 +73,6 @@ function WizardShell({ children }: { children: React.ReactNode }) {
 
         <div className="rounded-[28px] border border-black/10 bg-[#151A24] text-white shadow-[0_30px_90px_rgba(0,0,0,0.22)]">
           <div className="px-6 pt-6 pb-2">{children}</div>
-
-          <div className="px-6 pb-6 pt-4">
-            <div className="flex items-center justify-between gap-3">
-              <Button variant="secondary" onClick={goPrev} disabled={i === 0}>
-                Geri
-              </Button>
-              <div className="text-xs text-white/60">İleri butonu sayfa içinde</div>
-            </div>
-          </div>
         </div>
 
         <div className="mt-6 text-center text-xs text-black/50">

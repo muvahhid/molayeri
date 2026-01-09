@@ -12,10 +12,11 @@ function normalizeTitle(s: string) {
   return s.replace(/\s+/g, " ").trim().replace(/^./, (c) => c.toUpperCase());
 }
 
+type Selected = { addressText: string; lat: number | null; lng: number | null };
+
 export default function Step2IsletmeBilgileriPage() {
-  
   useWizardStepGuard(2);
-const router = useRouter();
+  const router = useRouter();
   const { state, setBusiness } = useWizard();
 
   const [q, setQ] = React.useState(state.business.addressText || "");
@@ -23,17 +24,19 @@ const router = useRouter();
   const [token, setToken] = React.useState("");
   const [err, setErr] = React.useState<string | null>(null);
 
+  const selectedRef = React.useRef<Selected>({
+    addressText: state.business.addressText || "",
+    lat: state.business.lat,
+    lng: state.business.lng,
+  });
+
   React.useEffect(() => {
-    // new=1 => yepyeni işletme kaydı (öncekiler dolu gelmesin)
     try {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("new") === "1") {
-        // wizard provider localStorage anahtarını senin projendeki ile aynı tuttuk
-        // (molayeri_wizard_v1 varsa temizle)
-        window.localStorage.removeItem("molayeri_wizard_v1");
-      }
+      if (sp.get("new") === "1") window.localStorage.removeItem("molayeri_wizard_v1");
     } catch {}
-try {
+
+    try {
       const raw = window.localStorage.getItem("molayeri_session_v1");
       const ss = raw ? JSON.parse(raw) : null;
       const uid = String(ss?.uid || "").trim();
@@ -45,13 +48,25 @@ try {
       window.location.href = "/login";
       return;
     }
-setToken(Math.random().toString(36).slice(2));
+
+    setToken(Math.random().toString(36).slice(2));
   }, []);
 
+  function clearSelected() {
+    selectedRef.current = { addressText: "", lat: null, lng: null };
+    setBusiness({ addressText: "", lat: null, lng: null });
+  }
+
   async function searchPlaces(v: string) {
-    if (v.length < 6) { setResults([]); return; }
+    if (v.length < 6) {
+      setResults([]);
+      return;
+    }
     try {
-      const r = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(v)}&token=${token}`);
+      const r = await fetch(
+        `/api/places/autocomplete?input=${encodeURIComponent(v)}&token=${encodeURIComponent(token)}`,
+        { cache: "no-store" }
+      );
       const j = await r.json();
       setResults((j.predictions || []).slice(0, 6));
     } catch {
@@ -61,23 +76,37 @@ setToken(Math.random().toString(36).slice(2));
 
   async function selectPlace(item: PlaceItem) {
     try {
-      const r = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}&token=${token}`);
+      const r = await fetch(
+        `/api/places/details?place_id=${encodeURIComponent(item.place_id)}&token=${encodeURIComponent(token)}`,
+        { cache: "no-store" }
+      );
       const j = await r.json();
+
       const g = j.result?.geometry?.location;
       const formatted = j.result?.formatted_address || item.description;
-      setBusiness({
-        addressText: formatted,
-        lat: typeof g?.lat === "number" ? g.lat : null,
-        lng: typeof g?.lng === "number" ? g.lng : null,
-      });
+
+      const latNum = Number(g?.lat);
+      const lngNum = Number(g?.lng);
+      const lat = Number.isFinite(latNum) ? latNum : null;
+      const lng = Number.isFinite(lngNum) ? lngNum : null;
+
+      selectedRef.current = { addressText: formatted, lat, lng };
+      setBusiness({ addressText: formatted, lat, lng });
+
       setQ(formatted);
       setResults([]);
+      setErr(null);
     } catch {}
   }
 
   function next() {
     if (!state.business.name.trim()) return setErr("İşletme adı zorunlu.");
-    if (!state.business.addressText || state.business.lat === null || state.business.lng === null) return setErr("Adres listeden seçilmeli.");
+
+    const s = selectedRef.current;
+    if (!s.addressText || s.lat === null || s.lng === null) {
+      return setErr("Adres listeden seçilmeli.");
+    }
+
     setErr(null);
     router.push("/isletmeni-kaydet/step-3");
   }
@@ -93,7 +122,9 @@ setToken(Math.random().toString(36).slice(2));
           placeholder="ÖRN: MOLAYERİ AKARYAKIT"
           value={state.business.name}
           maxLength={30}
-          onChange={(e) => setBusiness({ name: e.target.value.toUpperCase().replace(/\s+/g, " ").trimStart() })}
+          onChange={(e) =>
+            setBusiness({ name: e.target.value.toUpperCase().replace(/\s+/g, " ").trimStart() })
+          }
           hint="En fazla 30 karakter."
         />
 
@@ -105,7 +136,11 @@ setToken(Math.random().toString(36).slice(2));
             onChange={async (e) => {
               const v = e.target.value;
               setQ(v);
-              if (v.length < 6) { setResults([]); return; }
+              clearSelected();
+              if (v.length < 6) {
+                setResults([]);
+                return;
+              }
               await searchPlaces(v);
             }}
           />
@@ -116,7 +151,11 @@ setToken(Math.random().toString(36).slice(2));
                 <button
                   key={r.place_id}
                   type="button"
-                  onMouseDown={() => selectPlace(r)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void selectPlace(r);
+                  }}
                   className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-white/5"
                 >
                   {r.description}
@@ -139,7 +178,8 @@ setToken(Math.random().toString(36).slice(2));
             placeholder="Kısa işletme tanıtımı"
             maxLength={200}
             value={state.business.description}
-            onChange={(e) => setBusiness({ description: normalizeTitle(e.target.value) })}
+            onChange={(e) => setBusiness({ description: e.target.value })}
+            onBlur={(e) => setBusiness({ description: normalizeTitle(e.target.value) })}
           />
           <div className="mt-2 text-xs text-white/60">En fazla 200 karakter.</div>
         </label>
@@ -148,8 +188,12 @@ setToken(Math.random().toString(36).slice(2));
       {err ? <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
 
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="secondary" onClick={() => router.back()}>Geri</Button>
-        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]">İleri: Kategori & Özellikler</Button>
+        <Button variant="secondary" onClick={() => router.back()}>
+          Geri
+        </Button>
+        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]">
+          İleri: Kategori & Özellikler
+        </Button>
       </div>
     </div>
   );
