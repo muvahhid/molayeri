@@ -68,12 +68,24 @@ export async function approveApplication(appId: string, uid: string) {
 }
 
 export async function passiveApplication(appId: string, uid: string) {
-  const _uid = uid || "";
+  // 1) application -> passive
   await updateDoc(doc(db, "applications", appId), {
     status: "passive",
     updatedAt: serverTimestamp(),
   });
-  await setUserRole(_uid, "pending", false);
+
+  // 2) user role -> pending (istersen user yaparız, şimdilik pending)
+  await setUserRole(uid || "", "pending", false);
+
+  // 3) business varsa -> passive
+  const bizRef = doc(db, "businesses", appId);
+  const bizSnap = await getDoc(bizRef);
+  if (bizSnap.exists()) {
+    await updateDoc(bizRef, {
+      status: "passive",
+      updatedAt: serverTimestamp(),
+    });
+  }
 }
 export type BusinessDoc = {
   id: string;
