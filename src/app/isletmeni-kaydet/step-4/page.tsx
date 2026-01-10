@@ -5,16 +5,24 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { storage } from "@/lib/firebase.client";
+import {
+  ref as sRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+
 type PhotoItem = {
   id: string;
-  file: Blob;
-  url: string;      // preview
+  url: string;      // downloadURL (storage)
   isCover: boolean;
   sizeKB: number;
 };
 
 function uid() {
-  return Math.random().toString(36).slice(2);
+  const c = ((uid as any)._c = (((uid as any)._c || 0) + 1));
+  return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + "_" + c;
 }
 
 async function fileToImage(file: File): Promise<HTMLImageElement> {
@@ -68,7 +76,6 @@ async function processPhoto(file: File): Promise<{ blob: Blob; sizeKB: number }>
     });
   }
 
-  // kaliteyi düşürerek 160KB altına in
   let q = 0.82;
   let blob = await toBlob(q);
   while (blob.size > 160 * 1024 && q > 0.35) {
@@ -79,20 +86,46 @@ async function processPhoto(file: File): Promise<{ blob: Blob; sizeKB: number }>
   return { blob, sizeKB: Math.round(blob.size / 1024) };
 }
 
+function createNewUploadSession() {
+  const k = "molayeri_upload_session";
+  const sid = String(Date.now()) + "_" + Math.random().toString(36).slice(2);
+  window.localStorage.setItem(k, sid);
+  return sid;
+}
+
+function getUploadSession() {
+  return window.localStorage.getItem("molayeri_upload_session") || "";
+}
+
+function writeWizardPhotos(items: PhotoItem[]) {
+  try {
+    const rawW = window.localStorage.getItem("molayeri_wizard_v1");
+    const w = rawW ? JSON.parse(rawW) : {};
+    const photoMeta = items.map((x) => ({ url: x.url, isCover: !!x.isCover }));
+    w.photos = photoMeta;
+    w.step4 = { ...(w.step4 || {}), photos: photoMeta };
+    window.localStorage.setItem("molayeri_wizard_v1", JSON.stringify(w));
+  } catch {}
+}
+
 export default function Step4FotograflarPage() {
-  
   useWizardStepGuard(4);
-const router = useRouter();
+  const router = useRouter();
+
   const [items, setItems] = React.useState<PhotoItem[]>([]);
   const [err, setErr] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const sidRef = React.useRef<string>("");
 
   React.useEffect(() => {
+    // login kontrolü
     try {
       const raw = window.localStorage.getItem("molayeri_session_v1");
       const ss = raw ? JSON.parse(raw) : null;
-      const uid = String(ss?.uid || "").trim();
-      if (!uid) {
+      const u = String(ss?.uid || "").trim();
+      if (!u) {
         window.location.href = "/login";
         return;
       }
@@ -100,11 +133,21 @@ const router = useRouter();
       window.location.href = "/login";
       return;
     }
-return () => {
-      // cleanup blob urls
-      items.forEach((x) => URL.revokeObjectURL(x.url));
-    };
+
+    // upload session garanti (tek sefer, memory'ye sabitle)
+    const sid = String(Date.now()) + "_" + Math.random().toString(36).slice(2);
+    window.localStorage.setItem("molayeri_upload_session", sid);
+    sidRef.current = sid;
   }, []);
+
+  async function uploadOne(blob: Blob, index: number): Promise<string> {
+    const sid = sidRef.current;
+    const fileName = String(Date.now()) + "_" + index + ".jpg";
+    const path = "wizard/photos/" + sid + "/" + fileName;
+    const r = sRef(storage, path);
+    await uploadBytes(r, blob, { contentType: "image/jpeg" });
+    return await getDownloadURL(r);
+  }
 
   async function onPick(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -118,49 +161,67 @@ return () => {
       return;
     }
 
-    const next: PhotoItem[] = [];
-    for (const f of incoming) {
-      if (!f.type.startsWith("image/")) continue;
+    setUploading(true);
 
-      const { blob, sizeKB } = await processPhoto(f);
-      const url = URL.createObjectURL(blob);
+    const added: PhotoItem[] = [];
+    try {
+      for (let i = 0; i < incoming.length; i++) {
+        const f = incoming[i];
+        if (!f.type.startsWith("image/")) continue;
 
-      next.push({
-        id: uid(),
-        file: blob,
-        url,
-        isCover: false,
-        sizeKB,
-      });
-    }
+        const { blob, sizeKB } = await processPhoto(f);
+        const url = await uploadOne(blob, current + i);
 
-    setItems((prev) => {
-      const merged = [...prev, ...next].slice(0, 6);
-      // ilk foto vitrin
-      if (!merged.some((x) => x.isCover) && merged.length > 0) {
-        merged[0] = { ...merged[0], isCover: true };
+        added.push({
+          id: uid(),
+          url,
+          isCover: false,
+          sizeKB,
+        });
       }
-      return merged;
-    });
 
-    if (inputRef.current) inputRef.current.value = "";
+      setItems((prev) => {
+        const merged = [...prev, ...added].slice(0, 6);
+        if (!merged.some((x) => x.isCover) && merged.length > 0) {
+          merged[0] = { ...merged[0], isCover: true };
+        }
+        writeWizardPhotos(merged);
+        return merged;
+      });
+    } catch (e) {
+      console.error(e);
+      setErr("Fotoğraf yüklenemedi. Tekrar dene.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
     setItems((prev) => {
-      const x = prev.find((p) => p.id === id);
-      if (x) URL.revokeObjectURL(x.url);
-
       const filtered = prev.filter((p) => p.id !== id);
       if (filtered.length > 0 && !filtered.some((p) => p.isCover)) {
         filtered[0] = { ...filtered[0], isCover: true };
       }
+      writeWizardPhotos(filtered);
       return filtered;
     });
+
+    // storage silmeyi dene (başarısızsa önemseme)
+    const x = items.find((p) => p.id === id);
+    if (x?.url) {
+      try {
+        await deleteObject(sRef(storage, x.url));
+      } catch {}
+    }
   }
 
   function setCover(id: string) {
-    setItems((prev) => prev.map((p) => ({ ...p, isCover: p.id === id })));
+    setItems((prev) => {
+      const next = prev.map((p) => ({ ...p, isCover: p.id === id }));
+      writeWizardPhotos(next);
+      return next;
+    });
   }
 
   function next() {
@@ -193,18 +254,16 @@ return () => {
           variant="primary"
           className="px-6 py-4 rounded-[22px]"
           onClick={() => inputRef.current?.click()}
-          disabled={items.length >= 6}
+          disabled={items.length >= 6 || uploading}
         >
-          Fotoğraf Yükle
+          {uploading ? "Yükleniyor..." : "Fotoğraf Yükle"}
         </Button>
 
         <Button variant="secondary" className="px-6 py-4 rounded-[22px]" disabled>
           Video Yükle (Yakında)
         </Button>
 
-        <div className="text-xs text-white/60">
-          {items.length}/6
-        </div>
+        <div className="text-xs text-white/60">{items.length}/6</div>
       </div>
 
       {err ? <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
@@ -213,7 +272,6 @@ return () => {
         {items.map((p) => (
           <div key={p.id} className="rounded-[22px] border border-white/10 bg-[#151A24] overflow-hidden">
             <div className="relative">
-              
               <img src={p.url} alt="" className="h-44 w-full object-cover" />
               {p.isCover ? (
                 <div className="absolute left-3 top-3">
@@ -238,10 +296,10 @@ return () => {
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="secondary" onClick={() => router.back()}>
+        <Button variant="secondary" onClick={() => router.back()} disabled={uploading}>
           Geri
         </Button>
-        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]">
+        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]" disabled={uploading}>
           İleri: Özet & Başvuru
         </Button>
       </div>

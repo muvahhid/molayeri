@@ -6,6 +6,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 
 export type UserRole = "user" | "pending" | "isletmeci" | "admin";
@@ -39,16 +40,49 @@ export type CreateApplicationInput = {
 };
 
 export async function createPendingApplication(input: CreateApplicationInput) {
+
+  // boş user alanlarını applications'a yazma
+  const userPayload: any = {
+    uid: input.uid,
+    firstName: (input.firstName || "").trim(),
+    lastName: (input.lastName || "").trim(),
+    email: (input.email || "").trim().toLowerCase(),
+    phone: (input.phone || "").trim(),
+  };
+  // input boşsa users/{uid} içinden tamamla
+  try {
+    const snap = await getDoc(doc(db, "users", input.uid));
+    if (snap.exists()) {
+      const u: any = snap.data();
+
+      // email
+      if (!userPayload.email && u?.email) userPayload.email = String(u.email).trim().toLowerCase();
+
+      // phone
+      if (!userPayload.phone && u?.phone) userPayload.phone = String(u.phone).trim();
+
+      // nameTR -> first/last
+      if ((!userPayload.firstName || !userPayload.lastName) && u?.nameTR) {
+        const full = String(u.nameTR).trim();
+        if (full) {
+          const parts = full.split(/\s+/).filter(Boolean);
+          if (!userPayload.firstName && parts.length >= 1) userPayload.firstName = parts[0];
+          if (!userPayload.lastName && parts.length >= 2) userPayload.lastName = parts.slice(1).join(" ");
+        }
+      }
+    }
+  } catch {}
+
+  // hala boşsa yazma
+  if (!userPayload.firstName) delete userPayload.firstName;
+  if (!userPayload.lastName) delete userPayload.lastName;
+  if (!userPayload.email) delete userPayload.email;
+  if (!userPayload.phone) delete userPayload.phone;
+
   const appRef = await addDoc(collection(db, "applications"), {
     status: "pending" as ApplicationStatus,
 
-    user: {
-      uid: input.uid,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      email: input.email,
-      phone: input.phone,
-    },
+    user: userPayload,
 
     business: {
       name: input.businessName,
@@ -70,21 +104,35 @@ export async function createPendingApplication(input: CreateApplicationInput) {
 
   // users/{email} (geçici: auth yokken email doc id)
   const userDoc = doc(db, "users", input.uid);
-  await setDoc(
-    userDoc,
-    {
-      uid: input.uid,
-      email: (input.email || "").trim().toLowerCase(),
-      phone: input.phone || "",
-      nameTR: [input.firstName, input.lastName].filter(Boolean).join(" ").trim(),
-      role: "pending",
-      approved: false,
-      applicationId: appRef.id,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+
+  // boş gelen alanları user doc'a yazma (mevcut değerleri silmesin)
+  const patch: any = {
+    uid: input.uid,
+    email: (input.email || "").trim().toLowerCase(),
+    phone: input.phone || "",
+    nameTR: [input.firstName, input.lastName].filter(Boolean).join(" ").trim(),
+    role: "pending",
+    approved: false,
+    applicationId: appRef.id,
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
+  };
+  if (!patch.email) delete patch.email;
+  if (!patch.phone) delete patch.phone;
+  if (!patch.nameTR) delete patch.nameTR;
+
+  // mevcut role isletmeci/admin ise, pending'e düşürme
+  try {
+    const snap = await getDoc(userDoc);
+    const current: any = snap.exists() ? snap.data() : null;
+    const currentRole = current?.role;
+    if (currentRole === "isletmeci" || currentRole === "admin") {
+      delete patch.role;
+      delete patch.approved;
+    }
+  } catch {}
+
+  await setDoc(userDoc, patch, { merge: true });
 
   return { applicationId: appRef.id };
 }

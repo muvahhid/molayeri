@@ -9,12 +9,14 @@ import { useWizard } from "../wizard.provider";
 
 import { createPendingApplication } from "@/lib/wizard/applications.repo";
 
+import { doc, getDoc } from "firebase/firestore";
+
 import { storage } from "@/lib/firebase.client";
 import { ref as sRef, listAll, getDownloadURL } from "firebase/storage";
 
 import { subscribeCategories, CategoryDoc } from "@/lib/admin/categories.repo";
 import { subscribeFeatures, FeatureDoc } from "@/lib/admin/features.repo";
-import { auth } from "@/lib/firebase.client";
+import { auth, db } from "@/lib/firebase.client";
 
 type PhotoView = { url: string; isCover: boolean };
 
@@ -40,11 +42,18 @@ const router = useRouter();
   const [features, setFeatures] = React.useState<FeatureDoc[]>([]);
   const [photos, setPhotos] = React.useState<PhotoView[]>([]);
   const [loadingPhotos, setLoadingPhotos] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<string>("");
 
   async function submitApplication() {
     const uid = auth.currentUser?.uid;
     if (!uid) {
       alert("Lütfen giriş yap.");
+      return;
+    }
+
+    // Foto kuralı: Storage'dan gelen listede en az 3 olmalı
+    if ((photos || []).length < 3) {
+      alert("En az 3 fotoğraf yüklemelisin.");
       return;
     }
     if (submitting) return;
@@ -91,12 +100,43 @@ const router = useRouter();
       window.location.href = "/login";
       return;
     }
-const u1 = subscribeCategories((r) => setCats(r));
+// kullanıcı rolünü oku (pending mi, isletmeci mi?)
+    (async () => {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+        const snap = await getDoc(doc(db, "users", uid));
+        const r = snap.exists() ? (snap.data() as any)?.role : "";
+        setUserRole(String(r || ""));
+      } catch {}
+    })();
+
+    const u1 = subscribeCategories((r) => setCats(r));
     const u2 = subscribeFeatures((r) => setFeatures(r));
     return () => { u1(); u2(); };
   }, []);
 
   React.useEffect(() => {
+    // Önce wizard'dan oku (vitrin seçimi burada)
+    try {
+      const rawW = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_wizard_v1") : null;
+      const w = rawW ? JSON.parse(rawW) : null;
+      const wizPhotos = w?.photos || w?.step4?.photos || w?.data?.photos;
+      if (Array.isArray(wizPhotos) && wizPhotos.length > 0) {
+        const list = wizPhotos
+          .slice(0, 6)
+          .map((p) => ({ url: String(p?.url || "").trim(), isCover: !!p?.isCover }))
+          .filter((x) => x.url);
+
+        if (list.length > 0) {
+          if (!list.some((x) => x.isCover)) list[0].isCover = true;
+          setPhotos(list);
+          setLoadingPhotos(false);
+          return;
+        }
+      }
+    } catch {}
+
     const sid = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_upload_session") : null;
     if (!sid) return;
 
@@ -292,7 +332,7 @@ const u1 = subscribeCategories((r) => setCats(r));
         onClose={() => setOpen(false)}
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="primary" disabled={submitting} onClick={() => { setOpen(false); router.push("/login"); }}>
+            <Button variant="primary" disabled={submitting} onClick={() => { setOpen(false); if (userRole === "pending" || !userRole) router.push("/login"); }}>
               Tamam
             </Button>
           </div>

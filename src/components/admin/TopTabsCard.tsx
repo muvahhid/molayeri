@@ -5,6 +5,47 @@ import { Badge } from "@/components/ui/badge";
 
 type TabId = "pending" | "approved" | "passive" | "users" | "messages";
 
+type TabBtnProps = {
+  id: TabId;
+  label: string;
+  active: boolean;
+  onSelect: (id: TabId) => void;
+};
+
+function TabBtn({ id, label, active, onSelect }: TabBtnProps) {
+  return (
+    <button
+      className={[
+        "rounded-2xl px-5 py-2.5 min-w-[140px] text-sm font-extrabold ring-1 transition",
+        active
+          ? "bg-[#D9A400] text-black ring-[#D9A400]/50"
+          : "bg-[#D9A400]/15 text-[#D9A400] ring-[#D9A400]/25 hover:bg-[#D9A400]/25",
+      ].join(" ")}
+      onClick={() => onSelect(id)}
+    >
+      {label}
+    </button>
+  );
+}
+
+function StatusPill({ status }: { status: any }) {
+  return (
+    <span
+      className={[
+        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
+        status === "approved"
+          ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/20"
+          : status === "pending"
+          ? "bg-amber-500/15 text-amber-200 ring-amber-500/20"
+          : "bg-white/10 text-white/60 ring-white/15",
+      ].join(" ")}
+    >
+      {status === "approved" ? "Aktif" : status === "pending" ? "Onay bekliyor" : "Pasif"}
+    </span>
+  );
+}
+
+
 export function TopTabsCard({
   latestApps,
   latestUsers,
@@ -41,47 +82,21 @@ export function TopTabsCard({
   const rows = Math.min(10, Math.max(5, items.length || 5));
   const fillers = Math.max(0, rows - items.length);
 
-  const TabBtn = ({ id, label }: { id: TabId; label: string }) => (
-    <button
-      className={[
-        "rounded-2xl px-5 py-2.5 min-w-[140px] text-sm font-extrabold ring-1 transition",
-        tab === id
-          ? "bg-[#D9A400] text-black ring-[#D9A400]/50"
-          : "bg-[#D9A400]/15 text-[#D9A400] ring-[#D9A400]/25 hover:bg-[#D9A400]/25",
-      ].join(" ")}
-      onClick={() => {
-        setTab(id);
-        setPage(0);
-      }}
-    >
-      {label}
-    </button>
-  );
+  function onSelectTab(id: TabId) {
+    setTab(id);
+    setPage(0);
+  }
 
-  const StatusPill = ({ status }: { status: any }) => (
-    <span
-      className={[
-        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
-        status === "approved"
-          ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/20"
-          : status === "pending"
-          ? "bg-amber-500/15 text-amber-200 ring-amber-500/20"
-          : "bg-white/10 text-white/60 ring-white/15",
-      ].join(" ")}
-    >
-      {status === "approved" ? "Aktif" : status === "pending" ? "Onay bekliyor" : "Pasif"}
-    </span>
-  );
 
   return (
     <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2">
-          <TabBtn id="pending" label="Beklemede" />
-          <TabBtn id="approved" label="Onaylı" />
-          <TabBtn id="passive" label="Red" />
-          <TabBtn id="users" label="Son Üyeler" />
-          <TabBtn id="messages" label="Mesajlarım" />
+          <TabBtn id="pending" label="Beklemede" active={tab==="pending"} onSelect={onSelectTab} />
+          <TabBtn id="approved" label="Onaylı" active={tab==="approved"} onSelect={onSelectTab} />
+          <TabBtn id="passive" label="Red" active={tab==="passive"} onSelect={onSelectTab} />
+          <TabBtn id="users" label="Son Üyeler" active={tab==="users"} onSelect={onSelectTab} />
+          <TabBtn id="messages" label="Mesajlarım" active={tab==="messages"} onSelect={onSelectTab} />
         </div>
 
         <div className="flex items-center gap-3">
