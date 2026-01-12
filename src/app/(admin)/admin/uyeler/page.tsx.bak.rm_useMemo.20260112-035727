@@ -107,7 +107,7 @@ export default function AdminUsersListPage() {
   useEffect(() => {
     // filtre değişince başa dön
     loadPage(null, 1, [null]);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, active, approved]);
 
   return (

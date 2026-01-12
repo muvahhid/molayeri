@@ -14,10 +14,8 @@ export type BusinessDraft = {
   addressText: string;
   lat: number | null;
   lng: number | null;
-  description: string;
-  roadName: string;
+  description: string;  roadName: string;
   roadNote: string;
-  roadCodes: string[];
 };
 
 export type FeatureValue =
@@ -36,23 +34,8 @@ export type WizardState = {
 };
 
 const DEFAULT_STATE: WizardState = {
-  user: {
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    emailVerified: false,
-  },
-  business: {
-    name: "",
-    addressText: "",
-    lat: null,
-    lng: null,
-    description: "",
-    roadName: "",
-    roadNote: "",
-    roadCodes: [],
-  },
+  user: { firstName: "", lastName: "", email: "", phone: "", emailVerified: false },
+  business: { name: "", addressText: "", lat: null, lng: null, description: "" , roadName: "", roadNote: "" },
   selectedCategoryIds: [],
   activeCategoryId: null,
   featureValues: {},
@@ -60,18 +43,10 @@ const DEFAULT_STATE: WizardState = {
 
 const KEY = "molayeri_wizard_v1";
 
-function safeString(v: any) {
-  return typeof v === "string" ? v : "";
-}
-function safeBool(v: any) {
-  return !!v;
-}
-function safeNum(v: any) {
-  return typeof v === "number" && Number.isFinite(v) ? v : null;
-}
-function safeStrArr(v: any) {
-  return Array.isArray(v) ? v.map(String) : [];
-}
+function safeString(v: any) { return typeof v === "string" ? v : ""; }
+function safeBool(v: any) { return !!v; }
+function safeNum(v: any) { return typeof v === "number" && Number.isFinite(v) ? v : null; }
+function safeStrArr(v: any) { return Array.isArray(v) ? v.map(String) : []; }
 
 function loadState(): WizardState {
   try {
@@ -85,17 +60,10 @@ function loadState(): WizardState {
       const x = rawFV[k];
       const t = safeString(x?.type);
       if (t === "bool") fv[k] = { type: "bool", value: safeBool(x?.value) };
-      else if (t === "number")
-        fv[k] = {
-          type: "number",
-          value: typeof x?.value === "number" ? x.value : null,
-        };
-      else if (t === "text")
-        fv[k] = { type: "text", value: safeString(x?.value) };
-      else if (t === "select")
-        fv[k] = { type: "select", value: safeString(x?.value) };
-      else if (t === "multiSelect")
-        fv[k] = { type: "multiSelect", value: safeStrArr(x?.value) };
+      else if (t === "number") fv[k] = { type: "number", value: typeof x?.value === "number" ? x.value : null };
+      else if (t === "text") fv[k] = { type: "text", value: safeString(x?.value) };
+      else if (t === "select") fv[k] = { type: "select", value: safeString(x?.value) };
+      else if (t === "multiSelect") fv[k] = { type: "multiSelect", value: safeStrArr(x?.value) };
     }
 
     const selected = safeStrArr(obj?.selectedCategoryIds).filter(Boolean);
@@ -114,14 +82,13 @@ function loadState(): WizardState {
         lat: safeNum(obj?.business?.lat),
         lng: safeNum(obj?.business?.lng),
         description: safeString(obj?.business?.description),
-        roadName: safeString(obj?.business?.roadName),
+                      roadName: safeString(obj?.business?.roadName),
         roadNote: safeString(obj?.business?.roadNote),
-        roadCodes: safeStrArr(obj?.business?.roadCodes),
-      },
+roadName: safeString(obj?.business?.roadName),
+        roadNote: safeString(obj?.business?.roadNote),
+},
       selectedCategoryIds: selected,
-      activeCategoryId: selected.includes(active)
-        ? active
-        : selected[0] || null,
+      activeCategoryId: selected.includes(active) ? active : (selected[0] || null),
       featureValues: fv,
     };
   } catch {
@@ -130,9 +97,7 @@ function loadState(): WizardState {
 }
 
 function saveState(s: WizardState) {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {}
+  try { window.localStorage.setItem(KEY, JSON.stringify(s)); } catch {}
 }
 
 type Ctx = {
@@ -159,52 +124,29 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     saveState(state);
   }, [state]);
 
-  const api: Ctx = React.useMemo(
-    () => ({
-      state,
-      setUser: (patch) =>
-        setState((prev) => ({ ...prev, user: { ...prev.user, ...patch } })),
-      setBusiness: (patch) =>
-        setState((prev) => ({
-          ...prev,
-          business: { ...prev.business, ...patch },
-        })),
-      toggleCategory: (categoryId, on) =>
-        setState((prev) => {
-          const set = new Set(prev.selectedCategoryIds);
-          if (on) set.add(categoryId);
-          else set.delete(categoryId);
-          const nextSelected = Array.from(set);
-          let nextActive = prev.activeCategoryId;
-          if (on && !nextActive) nextActive = categoryId;
-          if (!on && nextActive === categoryId)
-            nextActive = nextSelected[0] || null;
-          return {
-            ...prev,
-            selectedCategoryIds: nextSelected,
-            activeCategoryId: nextActive,
-          };
-        }),
-      setActiveCategory: (categoryId) =>
-        setState((prev) => ({ ...prev, activeCategoryId: categoryId })),
-      setFeatureValue: (featureId, v) =>
-        setState((prev) => ({
-          ...prev,
-          featureValues: { ...prev.featureValues, [featureId]: v },
-        })),
-      reset: () => {
-        setState(DEFAULT_STATE);
-        try {
-          window.localStorage.removeItem(KEY);
-        } catch {}
-      },
+  const api: Ctx = React.useMemo(() => ({
+    state,
+    setUser: (patch) => setState((prev) => ({ ...prev, user: { ...prev.user, ...patch } })),
+    setBusiness: (patch) => setState((prev) => ({ ...prev, business: { ...prev.business, ...patch } })),
+    toggleCategory: (categoryId, on) => setState((prev) => {
+      const set = new Set(prev.selectedCategoryIds);
+      if (on) set.add(categoryId);
+      else set.delete(categoryId);
+      const nextSelected = Array.from(set);
+      let nextActive = prev.activeCategoryId;
+      if (on && !nextActive) nextActive = categoryId;
+      if (!on && nextActive === categoryId) nextActive = nextSelected[0] || null;
+      return { ...prev, selectedCategoryIds: nextSelected, activeCategoryId: nextActive };
     }),
-    [state],
-  );
+    setActiveCategory: (categoryId) => setState((prev) => ({ ...prev, activeCategoryId: categoryId })),
+    setFeatureValue: (featureId, v) => setState((prev) => ({ ...prev, featureValues: { ...prev.featureValues, [featureId]: v } })),
+    reset: () => {
+      setState(DEFAULT_STATE);
+      try { window.localStorage.removeItem(KEY); } catch {}
+    },
+  }), [state]);
 
-  return (
-    <WizardContext.Provider value={api}>{children}</WizardContext.Provider>
-  );
+  return <WizardContext.Provider value={api}>{children}</WizardContext.Provider>;
 }
 
 export function useWizard() {

@@ -2,6 +2,8 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import AdminGate from "./AdminGate";
+
 
 import { LogoutButton } from "@/components/session/LogoutButton";
 import { AdminGuard } from "@/components/guards/AdminGuard";
@@ -72,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </aside>
 
           <main className="min-w-0">
-            <AdminGuard>{children}</AdminGuard>
+            <AdminGuard><AdminGate>{children}</AdminGate></AdminGuard>
           </main>
         </div>
       </div>

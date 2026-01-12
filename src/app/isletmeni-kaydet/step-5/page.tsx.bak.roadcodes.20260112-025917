@@ -20,26 +20,22 @@ import { auth, db } from "@/lib/firebase.client";
 
 type PhotoView = { url: string; isCover: boolean };
 
-const PROXY_BASE = (process.env.NEXT_PUBLIC_PLACES_PROXY_URL || "").replace(
-  /\/$/,
-  "",
-);
+const PROXY_BASE = (process.env.NEXT_PUBLIC_PLACES_PROXY_URL || "").replace(/\/$/,"");
 
 function valueTR(v: any) {
   if (!v || !v.type) return "";
   if (v.type === "bool") return v.value ? "Evet" : "Hayır";
-  if (v.type === "number")
-    return v.value === null || v.value === "" ? "" : String(v.value);
+  if (v.type === "number") return v.value === null || v.value === "" ? "" : String(v.value);
   if (v.type === "text") return (v.value || "").trim();
   if (v.type === "select") return (v.value || "").trim();
-  if (v.type === "multiSelect")
-    return Array.isArray(v.value) ? v.value.join(", ") : "";
+  if (v.type === "multiSelect") return Array.isArray(v.value) ? v.value.join(", ") : "";
   return "";
 }
 
 export default function Step5OzetBasvuruPage() {
+  
   useWizardStepGuard(5);
-  const router = useRouter();
+const router = useRouter();
   const { state } = useWizard();
   const [open, setOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -65,11 +61,8 @@ export default function Step5OzetBasvuruPage() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const uploadSessionId =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("molayeri_upload_session")
-          : null;
-      // --- ROAD SNAP + ROAD TYPE (proxy) ---
+      const uploadSessionId = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_upload_session") : null;
+            // --- ROAD SNAP + ROAD TYPE (proxy) ---
       let roadLat: number | null = null;
       let roadLng: number | null = null;
       let roadPlaceId: string | null = null;
@@ -79,18 +72,13 @@ export default function Step5OzetBasvuruPage() {
         const lat = state.business.lat ?? null;
         const lng = state.business.lng ?? null;
         if (typeof lat === "number" && typeof lng === "number" && PROXY_BASE) {
-          const r1 = await fetch(
-            `${PROXY_BASE}/roads/nearest?lat=${lat}&lng=${lng}`,
-          );
+          const r1 = await fetch(`${PROXY_BASE}/roads/nearest?lat=${lat}&lng=${lng}`);
           const j1 = await r1.json();
           roadLat = typeof j1?.roadLat === "number" ? j1.roadLat : null;
           roadLng = typeof j1?.roadLng === "number" ? j1.roadLng : null;
-          roadPlaceId =
-            typeof j1?.roadPlaceId === "string" ? j1.roadPlaceId : null;
+          roadPlaceId = typeof j1?.roadPlaceId === "string" ? j1.roadPlaceId : null;
 
-          const r2 = await fetch(
-            `${PROXY_BASE}/osmr/type?lat=${lat}&lng=${lng}`,
-          );
+          const r2 = await fetch(`${PROXY_BASE}/osmr/type?lat=${lat}&lng=${lng}`);
           const j2 = await r2.json();
           roadType = typeof j2?.roadType === "string" ? j2.roadType : null;
         }
@@ -98,7 +86,7 @@ export default function Step5OzetBasvuruPage() {
         // sessiz geç: kayıt yine de devam etsin
       }
 
-      const payload = {
+const payload = {
         uid,
         firstName: state.user.firstName,
         lastName: state.user.lastName,
@@ -115,12 +103,9 @@ export default function Step5OzetBasvuruPage() {
         description: state.business.description,
         roadName: state.business.roadName,
         roadNote: state.business.roadNote,
-        roadCodes: state.business.roadCodes || [],
         selectedCategoryIds: state.selectedCategoryIds || [],
         featureValues: state.featureValues || {},
-        photos: (photos || [])
-          .map((p) => ({ url: p.url, isCover: !!p.isCover }))
-          .slice(0, 6),
+        photos: (photos || []).map((p) => ({ url: p.url, isCover: !!p.isCover })).slice(0, 6),
         uploadSessionId,
       };
 
@@ -147,7 +132,7 @@ export default function Step5OzetBasvuruPage() {
       window.location.href = "/login";
       return;
     }
-    // kullanıcı rolünü oku (pending mi, isletmeci mi?)
+// kullanıcı rolünü oku (pending mi, isletmeci mi?)
     (async () => {
       try {
         const uid = auth.currentUser?.uid;
@@ -160,28 +145,19 @@ export default function Step5OzetBasvuruPage() {
 
     const u1 = subscribeCategories((r) => setCats(r));
     const u2 = subscribeFeatures((r) => setFeatures(r));
-    return () => {
-      u1();
-      u2();
-    };
+    return () => { u1(); u2(); };
   }, []);
 
   React.useEffect(() => {
     // Önce wizard'dan oku (vitrin seçimi burada)
     try {
-      const rawW =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("molayeri_wizard_v1")
-          : null;
+      const rawW = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_wizard_v1") : null;
       const w = rawW ? JSON.parse(rawW) : null;
       const wizPhotos = w?.photos || w?.step4?.photos || w?.data?.photos;
       if (Array.isArray(wizPhotos) && wizPhotos.length > 0) {
         const list = wizPhotos
           .slice(0, 6)
-          .map((p) => ({
-            url: String(p?.url || "").trim(),
-            isCover: !!p?.isCover,
-          }))
+          .map((p) => ({ url: String(p?.url || "").trim(), isCover: !!p?.isCover }))
           .filter((x) => x.url);
 
         if (list.length > 0) {
@@ -193,10 +169,7 @@ export default function Step5OzetBasvuruPage() {
       }
     } catch {}
 
-    const sid =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("molayeri_upload_session")
-        : null;
+    const sid = typeof window !== "undefined" ? window.localStorage.getItem("molayeri_upload_session") : null;
     if (!sid) return;
 
     let alive = true;
@@ -206,13 +179,9 @@ export default function Step5OzetBasvuruPage() {
       try {
         const folder = sRef(storage, `wizard/photos/${sid}`);
         const res = await listAll(folder);
-        const urls = await Promise.all(
-          res.items.map((it) => getDownloadURL(it)),
-        );
+        const urls = await Promise.all(res.items.map((it) => getDownloadURL(it)));
         if (!alive) return;
-        const list = urls
-          .slice(0, 6)
-          .map((u, i) => ({ url: u, isCover: i === 0 }));
+        const list = urls.slice(0, 6).map((u, i) => ({ url: u, isCover: i === 0 }));
         setPhotos(list);
       } catch {
         if (alive) setPhotos([]);
@@ -221,9 +190,7 @@ export default function Step5OzetBasvuruPage() {
       }
     })();
 
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
   const rules = [
@@ -260,31 +227,18 @@ export default function Step5OzetBasvuruPage() {
   return (
     <div className="px-6 pb-6">
       <div className="text-2xl font-black">Özet & Başvuru</div>
-      <div className="mt-2 text-sm text-white/60">
-        Göndermeden önce kontrol et.
-      </div>
+      <div className="mt-2 text-sm text-white/60">Göndermeden önce kontrol et.</div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-[22px] border border-white/10 bg-[#151A24] p-5">
           <div className="text-sm font-extrabold text-white">Üyelik</div>
           <div className="mt-3 space-y-2 text-sm text-white/70">
-            <div>
-              <span className="text-white/45">İsim:</span>{" "}
-              {state.user.firstName} {state.user.lastName}
-            </div>
-            <div>
-              <span className="text-white/45">Email:</span> {state.user.email}
-            </div>
-            <div>
-              <span className="text-white/45">Telefon:</span> {state.user.phone}
-            </div>
+            <div><span className="text-white/45">İsim:</span> {state.user.firstName} {state.user.lastName}</div>
+            <div><span className="text-white/45">Email:</span> {state.user.email}</div>
+            <div><span className="text-white/45">Telefon:</span> {state.user.phone}</div>
             <div className="flex items-center gap-2">
               <span className="text-white/45">Email Doğrulama:</span>
-              {state.user.emailVerified ? (
-                <Badge variant="active">OK</Badge>
-              ) : (
-                <Badge>YOK</Badge>
-              )}
+              {state.user.emailVerified ? <Badge variant="active">OK</Badge> : <Badge>YOK</Badge>}
             </div>
           </div>
         </div>
@@ -292,21 +246,12 @@ export default function Step5OzetBasvuruPage() {
         <div className="rounded-[22px] border border-white/10 bg-[#151A24] p-5">
           <div className="text-sm font-extrabold text-white">İşletme</div>
           <div className="mt-3 space-y-2 text-sm text-white/70">
-            <div>
-              <span className="text-white/45">İsim:</span>{" "}
-              {state.business.name || "-"}
-            </div>
-            <div>
-              <span className="text-white/45">Adres:</span>{" "}
-              {state.business.addressText || "-"}
-            </div>
-            <div>
-              <span className="text-white/45">Tanıtım:</span>{" "}
-              {state.business.description || "-"}
-            </div>
+            <div><span className="text-white/45">İsim:</span> {state.business.name || "-"}</div>
+            <div><span className="text-white/45">Adres:</span> {state.business.addressText || "-"}</div>
+            <div><span className="text-white/45">Tanıtım:</span> {state.business.description || "-"}</div>
             <div>
               <span className="text-white/45">Yol:</span>{" "}
-              {state.business.roadName || state.business.roadNote
+              {(state.business.roadName || state.business.roadNote)
                 ? `${state.business.roadName || "-"} • ${state.business.roadNote || "-"}`
                 : "-"}
             </div>
@@ -317,9 +262,7 @@ export default function Step5OzetBasvuruPage() {
       {/* KATEGORİLER */}
       <div className="mt-4 rounded-[22px] border border-white/10 bg-white/5 p-5">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-extrabold text-white">
-            Seçilen Kategoriler
-          </div>
+          <div className="text-sm font-extrabold text-white">Seçilen Kategoriler</div>
           <div className="text-xs text-white/60">{selectedCats.length}</div>
         </div>
 
@@ -330,9 +273,7 @@ export default function Step5OzetBasvuruPage() {
         ) : (
           <div className="mt-4 flex flex-wrap gap-2">
             {selectedCats.map((c) => (
-              <Badge key={c.id} variant="active">
-                {c.nameTR}
-              </Badge>
+              <Badge key={c.id} variant="active">{c.nameTR}</Badge>
             ))}
           </div>
         )}
@@ -341,9 +282,7 @@ export default function Step5OzetBasvuruPage() {
       {/* ÖZELLİKLER (sadece isim) */}
       <div className="mt-4 rounded-[22px] border border-white/10 bg-white/5 p-5">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-extrabold text-white">
-            Seçilen Özellikler
-          </div>
+          <div className="text-sm font-extrabold text-white">Seçilen Özellikler</div>
           <div className="text-xs text-white/60">{filledFeatureIds.length}</div>
         </div>
 
@@ -371,22 +310,14 @@ export default function Step5OzetBasvuruPage() {
           {/* Fotoğraflar */}
           <div>
             <div className="flex items-center justify-between">
-              <div className="text-sm font-extrabold text-white">
-                Fotoğraflar
-              </div>
-              <div className="text-xs text-white/60">
-                {loadingPhotos ? "Yükleniyor…" : `${photos.length}/6`}
-              </div>
+              <div className="text-sm font-extrabold text-white">Fotoğraflar</div>
+              <div className="text-xs text-white/60">{loadingPhotos ? "Yükleniyor…" : `${photos.length}/6`}</div>
             </div>
 
             {cover ? (
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#151A24]">
                 <div className="relative">
-                  <img
-                    src={cover.url}
-                    alt=""
-                    className="h-44 w-full object-cover"
-                  />
+                  <img src={cover.url} alt="" className="h-44 w-full object-cover" />
                   <div className="absolute left-3 top-3">
                     <Badge variant="active">VİTRİN</Badge>
                   </div>
@@ -401,15 +332,8 @@ export default function Step5OzetBasvuruPage() {
             {photos.length > 0 ? (
               <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
                 {photos.slice(0, 6).map((p, i) => (
-                  <div
-                    key={i}
-                    className="overflow-hidden rounded-xl border border-white/10 bg-[#151A24]"
-                  >
-                    <img
-                      src={p.url}
-                      alt=""
-                      className="h-14 w-full object-cover"
-                    />
+                  <div key={i} className="overflow-hidden rounded-xl border border-white/10 bg-[#151A24]">
+                    <img src={p.url} alt="" className="h-14 w-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -434,14 +358,8 @@ export default function Step5OzetBasvuruPage() {
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="secondary" onClick={() => router.back()}>
-          Geri
-        </Button>
-        <Button
-          variant="primary"
-          className="px-8 py-4 rounded-[22px]"
-          onClick={submitApplication}
-        >
+        <Button variant="secondary" onClick={() => router.back()}>Geri</Button>
+        <Button variant="primary" className="px-8 py-4 rounded-[22px]" onClick={submitApplication}>
           Başvuruyu Yap
         </Button>
       </div>
@@ -452,14 +370,7 @@ export default function Step5OzetBasvuruPage() {
         onClose={() => setOpen(false)}
         footer={
           <div className="flex justify-end gap-2">
-            <Button
-              variant="primary"
-              disabled={submitting}
-              onClick={() => {
-                setOpen(false);
-                if (userRole === "pending" || !userRole) router.push("/login");
-              }}
-            >
+            <Button variant="primary" disabled={submitting} onClick={() => { setOpen(false); if (userRole === "pending" || !userRole) router.push("/login"); }}>
               Tamam
             </Button>
           </div>

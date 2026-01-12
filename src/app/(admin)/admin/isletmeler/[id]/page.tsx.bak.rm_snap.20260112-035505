@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase.client";
 import {
   doc,
+  getDoc,
   serverTimestamp,
   updateDoc,
   collection,
@@ -48,6 +49,7 @@ export default function AdminBusinessDetailPage() {
       setLoading(true);
       try {
         if (!id) return;
+        const snap = await getDoc(doc(db, "businesses", id));
         if (!alive) return;
         setBiz(
           biz && biz.exists()

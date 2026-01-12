@@ -15,20 +15,14 @@ import {
 
 type PhotoItem = {
   id: string;
-  url: string; // downloadURL (storage)
+  url: string;      // downloadURL (storage)
   isCover: boolean;
   sizeKB: number;
 };
 
 function uid() {
-  const c = ((uid as any)._c = ((uid as any)._c || 0) + 1);
-  return (
-    Date.now().toString(36) +
-    "_" +
-    Math.random().toString(36).slice(2) +
-    "_" +
-    c
-  );
+  const c = ((uid as any)._c = (((uid as any)._c || 0) + 1));
+  return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + "_" + c;
 }
 
 async function fileToImage(file: File): Promise<HTMLImageElement> {
@@ -46,9 +40,7 @@ async function fileToImage(file: File): Promise<HTMLImageElement> {
 }
 
 // 16:9 yatay crop + maxW + <=160KB
-async function processPhoto(
-  file: File,
-): Promise<{ blob: Blob; sizeKB: number }> {
+async function processPhoto(file: File): Promise<{ blob: Blob; sizeKB: number }> {
   const img = await fileToImage(file);
 
   const srcW = img.naturalWidth || img.width;
@@ -93,6 +85,18 @@ async function processPhoto(
 
   return { blob, sizeKB: Math.round(blob.size / 1024) };
 }
+
+function createNewUploadSession() {
+  const k = "molayeri_upload_session";
+  const sid = String(Date.now()) + "_" + Math.random().toString(36).slice(2);
+  window.localStorage.setItem(k, sid);
+  return sid;
+}
+
+function getUploadSession() {
+  return window.localStorage.getItem("molayeri_upload_session") || "";
+}
+
 function writeWizardPhotos(items: PhotoItem[]) {
   try {
     const rawW = window.localStorage.getItem("molayeri_wizard_v1");
@@ -255,27 +259,18 @@ export default function Step4FotograflarPage() {
           {uploading ? "Yükleniyor..." : "Fotoğraf Yükle"}
         </Button>
 
-        <Button
-          variant="secondary"
-          className="px-6 py-4 rounded-[22px]"
-          disabled
-        >
+        <Button variant="secondary" className="px-6 py-4 rounded-[22px]" disabled>
           Video Yükle (Yakında)
         </Button>
 
         <div className="text-xs text-white/60">{items.length}/6</div>
       </div>
 
-      {err ? (
-        <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div>
-      ) : null}
+      {err ? <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
-          <div
-            key={p.id}
-            className="rounded-[22px] border border-white/10 bg-[#151A24] overflow-hidden"
-          >
+          <div key={p.id} className="rounded-[22px] border border-white/10 bg-[#151A24] overflow-hidden">
             <div className="relative">
               <img src={p.url} alt="" className="h-44 w-full object-cover" />
               {p.isCover ? (
@@ -289,18 +284,10 @@ export default function Step4FotograflarPage() {
             </div>
 
             <div className="p-4 flex items-center justify-between gap-3">
-              <Button
-                variant="secondary"
-                className="px-4 py-2 rounded-2xl"
-                onClick={() => setCover(p.id)}
-              >
+              <Button variant="secondary" className="px-4 py-2 rounded-2xl" onClick={() => setCover(p.id)}>
                 Vitrin Yap
               </Button>
-              <Button
-                variant="ghost"
-                className="px-4 py-2 rounded-2xl"
-                onClick={() => remove(p.id)}
-              >
+              <Button variant="ghost" className="px-4 py-2 rounded-2xl" onClick={() => remove(p.id)}>
                 Sil
               </Button>
             </div>
@@ -309,19 +296,10 @@ export default function Step4FotograflarPage() {
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <Button
-          variant="secondary"
-          onClick={() => router.back()}
-          disabled={uploading}
-        >
+        <Button variant="secondary" onClick={() => router.back()} disabled={uploading}>
           Geri
         </Button>
-        <Button
-          variant="primary"
-          onClick={next}
-          className="px-8 py-4 rounded-[22px]"
-          disabled={uploading}
-        >
+        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]" disabled={uploading}>
           İleri: Özet & Başvuru
         </Button>
       </div>

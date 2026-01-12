@@ -17,7 +17,6 @@ export type BusinessDraft = {
   description: string;
   roadName: string;
   roadNote: string;
-  roadCodes: string[];
 };
 
 export type FeatureValue =
@@ -51,7 +50,6 @@ const DEFAULT_STATE: WizardState = {
     description: "",
     roadName: "",
     roadNote: "",
-    roadCodes: [],
   },
   selectedCategoryIds: [],
   activeCategoryId: null,
@@ -116,7 +114,6 @@ function loadState(): WizardState {
         description: safeString(obj?.business?.description),
         roadName: safeString(obj?.business?.roadName),
         roadNote: safeString(obj?.business?.roadNote),
-        roadCodes: safeStrArr(obj?.business?.roadCodes),
       },
       selectedCategoryIds: selected,
       activeCategoryId: selected.includes(active)

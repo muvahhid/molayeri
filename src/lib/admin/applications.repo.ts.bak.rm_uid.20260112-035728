@@ -44,19 +44,12 @@ export type ApplicationDoc = {
 export function subscribeApplications(cb: (rows: ApplicationDoc[]) => void) {
   const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snap) => {
-    const rows: ApplicationDoc[] = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as any),
-    }));
+    const rows: ApplicationDoc[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
     cb(rows);
   });
 }
 
-async function setUserRole(
-  uid: string,
-  role: "user" | "pending" | "isletmeci" | "admin",
-  approved?: boolean,
-) {
+async function setUserRole(uid: string, role: "user" | "pending" | "isletmeci" | "admin", approved?: boolean) {
   if (!uid) return;
   await updateDoc(doc(db, "users", uid), {
     role,
@@ -66,6 +59,7 @@ async function setUserRole(
 }
 
 export async function approveApplication(appId: string, uid: string) {
+  const _uid = uid || "";
   await updateDoc(doc(db, "applications", appId), {
     status: "approved",
     updatedAt: serverTimestamp(),
@@ -111,10 +105,7 @@ export type BusinessDoc = {
   updatedAt?: any;
 };
 
-export async function approveApplicationAndSyncBusiness(
-  appId: string,
-  uid: string,
-) {
+export async function approveApplicationAndSyncBusiness(appId: string, uid: string) {
   const resolvedUid = uid || "";
 
   const appRef = doc(db, "applications", appId);

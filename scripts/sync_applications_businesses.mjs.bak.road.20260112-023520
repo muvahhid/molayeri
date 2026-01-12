@@ -71,8 +71,6 @@ const main = async () => {
     const a = doc.data() || {};
     const targetStatus = normStatus(a.status);
 
-
-    const bizSrc = a?.business || a;
     const bizRef = db.collection("businesses").doc(appId);
     const bizSnap = await bizRef.get();
 
@@ -90,7 +88,7 @@ const main = async () => {
         ownerEmail: getOwnerEmail(a),
         updatedAt: now,
         createdAt: now,
-        ...pick(bizSrc, [
+        ...pick(a, [
           "name",
           "addressText",
           "lat",
@@ -99,13 +97,6 @@ const main = async () => {
           "featureValues",
           "photos",
           "description",
-          "roadName",
-          "roadNote",
-          "roadCodes",
-          "roadLat",
-          "roadLng",
-          "roadPlaceId",
-          "roadType",
         ]),
       };
 
@@ -122,37 +113,9 @@ const main = async () => {
     const needsStatus = current !== targetStatus;
     const needsLink = (b.applicationId || "") !== appId;
 
-    const dataPatch = pick(bizSrc, [
-      "name",
-      "addressText",
-      "lat",
-      "lng",
-      "selectedCategoryIds",
-      "featureValues",
-      "photos",
-      "description",
-      "roadName",
-      "roadNote",
-      "roadCodes",
-      "roadLat",
-      "roadLng",
-      "roadPlaceId",
-      "roadType",
-    ]);
-    const needsData = Object.keys(dataPatch).some((k) => {
-      const nv = dataPatch[k];
-      const ov = b?.[k];
-      if (nv === undefined) return false;
-      if (nv === null) return ov !== null && ov !== undefined;
-      if (Array.isArray(nv)) return JSON.stringify(nv) !== JSON.stringify(ov || []);
-      if (typeof nv === "object") return JSON.stringify(nv) !== JSON.stringify(ov || {});
-      return String(nv) !== String(ov ?? "");
-    });
+    if (!needsStatus && !needsLink) continue;
 
-    if (!needsStatus && !needsLink && !needsData) continue;
-
-const patch = {
-      ...dataPatch,
+    const patch = {
       ...(needsStatus ? { status: targetStatus } : {}),
       ...(needsLink ? { applicationId: appId } : {}),
       updatedAt: now,

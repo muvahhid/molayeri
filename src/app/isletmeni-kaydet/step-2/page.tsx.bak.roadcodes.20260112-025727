@@ -9,11 +9,9 @@ import { useWizard } from "../wizard.provider";
 type PlaceItem = { description: string; place_id: string };
 
 function normalizeTitle(s: string) {
-  return s
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^./, (c) => c.toUpperCase());
+  return s.replace(/\s+/g, " ").trim().replace(/^./, (c) => c.toUpperCase());
 }
+
 
 function extractRoadNameFromAddress(addr: string): string {
   const up = String(addr || "").toUpperCase();
@@ -25,43 +23,6 @@ function extractRoadNameFromAddress(addr: string): string {
     up.match(/\bE-?5\b/);
   if (!m) return "";
   return m[0].replace(/\s+/g, "").replace("E-5", "E5");
-}
-
-function extractRoadCodes(input: string): string[] {
-  const src = String(input || "").toUpperCase();
-  const out: string[] = [];
-  const seen = new Set<string>();
-
-  const push = (v: string) => {
-    const x = String(v || "").trim();
-    if (!x) return;
-    if (seen.has(x)) return;
-    seen.add(x);
-    out.push(x);
-  };
-
-  // TEM
-  if (/\bTEM\b/.test(src)) push("TEM");
-
-  // E80, E-80, E 80
-  for (const m of src.matchAll(/\bE\s*-?\s*(\d{2,3})\b/g)) {
-    const n = Number(m[1]);
-    if (Number.isFinite(n)) push(`E${String(n).padStart(2, "0")}`);
-  }
-
-  // D100, D-100, D 100
-  for (const m of src.matchAll(/\bD\s*-?\s*(\d{2,3})\b/g)) {
-    const n = Number(m[1]);
-    if (Number.isFinite(n)) push(`D${String(n).padStart(3, "0")}`);
-  }
-
-  // O-4 / O4 / O 4  -> O-4
-  for (const m of src.matchAll(/\bO\s*-?\s*(\d{1,2})\b/g)) {
-    const n = Number(m[1]);
-    if (Number.isFinite(n)) push(`O-${n}`);
-  }
-
-  return out;
 }
 
 type Selected = { addressText: string; lat: number | null; lng: number | null };
@@ -85,8 +46,7 @@ export default function Step2IsletmeBilgileriPage() {
   React.useEffect(() => {
     try {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("new") === "1")
-        window.localStorage.removeItem("molayeri_wizard_v1");
+      if (sp.get("new") === "1") window.localStorage.removeItem("molayeri_wizard_v1");
     } catch {}
 
     try {
@@ -118,7 +78,7 @@ export default function Step2IsletmeBilgileriPage() {
     try {
       const r = await fetch(
         `/api/places/autocomplete?input=${encodeURIComponent(v)}&token=${encodeURIComponent(token)}`,
-        { cache: "no-store" },
+        { cache: "no-store" }
       );
       const j = await r.json();
       setResults((j.predictions || []).slice(0, 6));
@@ -131,7 +91,7 @@ export default function Step2IsletmeBilgileriPage() {
     try {
       const r = await fetch(
         `/api/places/details?place_id=${encodeURIComponent(item.place_id)}&token=${encodeURIComponent(token)}`,
-        { cache: "no-store" },
+        { cache: "no-store" }
       );
       const j = await r.json();
 
@@ -145,16 +105,8 @@ export default function Step2IsletmeBilgileriPage() {
 
       selectedRef.current = { addressText: formatted, lat, lng };
       const autoRoad = extractRoadNameFromAddress(formatted);
-      const nextRoadName = (state.business.roadName || "").trim()
-        ? state.business.roadName
-        : autoRoad || "";
-      setBusiness({
-        addressText: formatted,
-        lat,
-        lng,
-        roadName: nextRoadName,
-        roadCodes: extractRoadCodes((formatted || "") + " " + nextRoadName),
-      });
+      setBusiness({ addressText: formatted, lat, lng, roadName: (state.business.roadName || "").trim() ? state.business.roadName : (autoRoad || "") });
+
       setQ(formatted);
       setResults([]);
       setErr(null);
@@ -185,12 +137,7 @@ export default function Step2IsletmeBilgileriPage() {
           value={state.business.name}
           maxLength={30}
           onChange={(e) =>
-            setBusiness({
-              name: e.target.value
-                .toUpperCase()
-                .replace(/\s+/g, " ")
-                .trimStart(),
-            })
+            setBusiness({ name: e.target.value.toUpperCase().replace(/\s+/g, " ").trimStart() })
           }
           hint="En fazla 30 karakter."
         />
@@ -232,10 +179,9 @@ export default function Step2IsletmeBilgileriPage() {
           )}
         </div>
 
+
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="mb-3 text-sm font-semibold text-white">
-            İşletme Yol Tarifi
-          </div>
+          <div className="mb-3 text-sm font-semibold text-white">İşletme Yol Tarifi</div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input
               label="Yol İsmi"
@@ -248,7 +194,6 @@ export default function Step2IsletmeBilgileriPage() {
                     .toUpperCase()
                     .replace(/\s+/g, " ")
                     .trimStart(),
-                  roadCodes: extractRoadCodes(e.target.value),
                 })
               }
             />
@@ -260,17 +205,16 @@ export default function Step2IsletmeBilgileriPage() {
               onChange={(e) =>
                 setBusiness({
                   roadNote: e.target.value.replace(/\s+/g, " ").trimStart(),
-                  roadCodes: extractRoadCodes(e.target.value),
                 })
               }
             />
           </div>
           <div className="mt-3 text-xs font-bold text-white/70">
-            *İşletmeniz ana yol üzerinde ise yol ismi yazmanız hayati öneme
-            sahiptir. Kullanıcı deneyimi ve işletmenizin bulunabilirliği ciddi
-            oranda yükselir.
+            *İşletmeniz ana yol üzerinde ise yol ismi yazmanız hayati öneme sahiptir. Kullanıcı deneyimi
+            ve işletmenizin bulunabilirliği ciddi oranda yükselir.
           </div>
         </div>
+
 
         {state.business.addressText ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
@@ -279,38 +223,26 @@ export default function Step2IsletmeBilgileriPage() {
         ) : null}
 
         <label className="block">
-          <div className="mb-2 text-sm font-semibold text-white">
-            Tanıtım Yazısı
-          </div>
+          <div className="mb-2 text-sm font-semibold text-white">Tanıtım Yazısı</div>
           <textarea
             className="w-full h-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/35 outline-none focus:border-[#D9A400]/40 focus:ring-2 focus:ring-[#D9A400]/15 resize-none"
             placeholder="Kısa işletme tanıtımı"
             maxLength={200}
             value={state.business.description}
             onChange={(e) => setBusiness({ description: e.target.value })}
-            onBlur={(e) =>
-              setBusiness({ description: normalizeTitle(e.target.value) })
-            }
+            onBlur={(e) => setBusiness({ description: normalizeTitle(e.target.value) })}
           />
-          <div className="mt-2 text-xs text-white/60">
-            En fazla 200 karakter.
-          </div>
+          <div className="mt-2 text-xs text-white/60">En fazla 200 karakter.</div>
         </label>
       </div>
 
-      {err ? (
-        <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div>
-      ) : null}
+      {err ? <div className="mt-4 text-sm font-bold text-[#FF4D4F]">{err}</div> : null}
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="secondary" onClick={() => router.back()}>
           Geri
         </Button>
-        <Button
-          variant="primary"
-          onClick={next}
-          className="px-8 py-4 rounded-[22px]"
-        >
+        <Button variant="primary" onClick={next} className="px-8 py-4 rounded-[22px]">
           İleri: Kategori & Özellikler
         </Button>
       </div>

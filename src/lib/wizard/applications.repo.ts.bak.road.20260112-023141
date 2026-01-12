@@ -28,14 +28,6 @@ export type CreateApplicationInput = {
   lng: number | null;
   description: string;
 
-  roadName?: string;
-  roadNote?: string;
-  roadLat?: number | null;
-  roadLng?: number | null;
-  roadPlaceId?: string | null;
-  roadType?: string | null;
-
-  roadCodes?: string[];
   // selections
   selectedCategoryIds: string[];
   featureValues: Record<string, any>;
@@ -48,6 +40,7 @@ export type CreateApplicationInput = {
 };
 
 export async function createPendingApplication(input: CreateApplicationInput) {
+
   // boş user alanlarını applications'a yazma
   const userPayload: any = {
     uid: input.uid,
@@ -63,22 +56,18 @@ export async function createPendingApplication(input: CreateApplicationInput) {
       const u: any = snap.data();
 
       // email
-      if (!userPayload.email && u?.email)
-        userPayload.email = String(u.email).trim().toLowerCase();
+      if (!userPayload.email && u?.email) userPayload.email = String(u.email).trim().toLowerCase();
 
       // phone
-      if (!userPayload.phone && u?.phone)
-        userPayload.phone = String(u.phone).trim();
+      if (!userPayload.phone && u?.phone) userPayload.phone = String(u.phone).trim();
 
       // nameTR -> first/last
       if ((!userPayload.firstName || !userPayload.lastName) && u?.nameTR) {
         const full = String(u.nameTR).trim();
         if (full) {
           const parts = full.split(/\s+/).filter(Boolean);
-          if (!userPayload.firstName && parts.length >= 1)
-            userPayload.firstName = parts[0];
-          if (!userPayload.lastName && parts.length >= 2)
-            userPayload.lastName = parts.slice(1).join(" ");
+          if (!userPayload.firstName && parts.length >= 1) userPayload.firstName = parts[0];
+          if (!userPayload.lastName && parts.length >= 2) userPayload.lastName = parts.slice(1).join(" ");
         }
       }
     }
@@ -101,13 +90,6 @@ export async function createPendingApplication(input: CreateApplicationInput) {
       lat: input.lat ?? null,
       lng: input.lng ?? null,
       description: input.description,
-      roadName: (input.roadName || "").trim(),
-      roadNote: (input.roadNote || "").trim(),
-      roadLat: input.roadLat ?? null,
-      roadLng: input.roadLng ?? null,
-      roadPlaceId: input.roadPlaceId ?? null,
-      roadType: input.roadType ?? null,
-      roadCodes: (input.roadCodes || []).filter(Boolean),
     },
 
     selectedCategoryIds: input.selectedCategoryIds || [],
@@ -155,21 +137,14 @@ export async function createPendingApplication(input: CreateApplicationInput) {
   return { applicationId: appRef.id };
 }
 
-export async function setApplicationStatus(
-  applicationId: string,
-  status: ApplicationStatus,
-) {
+export async function setApplicationStatus(applicationId: string, status: ApplicationStatus) {
   await updateDoc(doc(db, "applications", applicationId), {
     status,
     updatedAt: serverTimestamp(),
   });
 }
 
-export async function setUserRoleByEmail(
-  email: string,
-  role: UserRole,
-  approved?: boolean,
-) {
+export async function setUserRoleByEmail(email: string, role: UserRole, approved?: boolean) {
   const id = (email || "").trim().toLowerCase();
   await updateDoc(doc(db, "users", id), {
     role,

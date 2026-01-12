@@ -101,7 +101,6 @@ const main = async () => {
           "description",
           "roadName",
           "roadNote",
-          "roadCodes",
           "roadLat",
           "roadLng",
           "roadPlaceId",
@@ -133,25 +132,14 @@ const main = async () => {
       "description",
       "roadName",
       "roadNote",
-      "roadCodes",
       "roadLat",
       "roadLng",
       "roadPlaceId",
       "roadType",
     ]);
-    const needsData = Object.keys(dataPatch).some((k) => {
-      const nv = dataPatch[k];
-      const ov = b?.[k];
-      if (nv === undefined) return false;
-      if (nv === null) return ov !== null && ov !== undefined;
-      if (Array.isArray(nv)) return JSON.stringify(nv) !== JSON.stringify(ov || []);
-      if (typeof nv === "object") return JSON.stringify(nv) !== JSON.stringify(ov || {});
-      return String(nv) !== String(ov ?? "");
-    });
+    if (!needsStatus && !needsLink) continue;
 
-    if (!needsStatus && !needsLink && !needsData) continue;
-
-const patch = {
+    const patch = {
       ...dataPatch,
       ...(needsStatus ? { status: targetStatus } : {}),
       ...(needsLink ? { applicationId: appId } : {}),
