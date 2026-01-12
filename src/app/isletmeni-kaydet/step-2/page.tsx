@@ -64,6 +64,36 @@ function extractRoadCodes(input: string): string[] {
   return out;
 }
 
+function bearingToText(b: number | null) {
+  if (typeof b !== "number" || !Number.isFinite(b)) return "";
+  const deg = ((b % 360) + 360) % 360;
+  const dirs = [
+    { n: "Kuzey",  a: 0 },
+    { n: "Kuzeydoğu", a: 45 },
+    { n: "Doğu",   a: 90 },
+    { n: "Güneydoğu", a: 135 },
+    { n: "Güney",  a: 180 },
+    { n: "Güneybatı", a: 225 },
+    { n: "Batı",   a: 270 },
+    { n: "Kuzeybatı", a: 315 },
+  ];
+  // en yakın 45'lik dilim
+  const idx = Math.round(deg / 45) % 8;
+  return `${dirs[idx].n} (${Math.round(deg)}°)`;
+}
+
+async function fetchBearing(lat: number, lng: number): Promise<number | null> {
+  try {
+    const r = await fetch(`/api/osmr/bearing?lat=${encodeURIComponent(String(lat))}&lng=${encodeURIComponent(String(lng))}`, { cache: "no-store" });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const b = Number(j?.bearing);
+    return Number.isFinite(b) ? b : null;
+  } catch {
+    return null;
+  }
+}
+
 type Selected = { addressText: string; lat: number | null; lng: number | null };
 
 export default function Step2IsletmeBilgileriPage() {
@@ -107,7 +137,7 @@ export default function Step2IsletmeBilgileriPage() {
 
   function clearSelected() {
     selectedRef.current = { addressText: "", lat: null, lng: null };
-    setBusiness({ addressText: "", lat: null, lng: null });
+    setBusiness({ addressText: "", lat: null, lng: null, bearing: null });
   }
 
   async function searchPlaces(v: string) {
@@ -155,6 +185,12 @@ export default function Step2IsletmeBilgileriPage() {
         roadName: nextRoadName,
         roadCodes: extractRoadCodes((formatted || "") + " " + nextRoadName),
       });
+
+      // ✅ otomatik bearing (yol yönü)
+      if (typeof lat === "number" && typeof lng === "number") {
+        const b = await fetchBearing(lat, lng);
+        if (typeof b === "number") setBusiness({ bearing: b });
+      }
       setQ(formatted);
       setResults([]);
       setErr(null);
@@ -235,6 +271,9 @@ export default function Step2IsletmeBilgileriPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="mb-3 text-sm font-semibold text-white">
             İşletme Yol Tarifi
+          </div>
+          <div className="mb-3 text-xs text-white/60">
+            Otomatik yön: <span className="text-white/80 font-semibold">{bearingToText(state.business.bearing) || "-"}</span>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input

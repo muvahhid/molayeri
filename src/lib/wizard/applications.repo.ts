@@ -27,7 +27,7 @@ export type CreateApplicationInput = {
   lat: number | null;
   lng: number | null;
   description: string;
-
+  bearing: number | null;
   roadName?: string;
   roadNote?: string;
   roadLat?: number | null;

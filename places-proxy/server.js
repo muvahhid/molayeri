@@ -149,5 +149,121 @@ app.get("/roads/nearest", async (req, res) => {
   }
 });
 
+/**
+ * GET /osmr/type?lat=..&lng=..
+ * Overpass ile en yakın highway way'i bulur ve roadType döndürür.
+ */
+app.get("/osmr/type", async (req, res) => {
+  try {
+    const lat = Number(req.query.lat);
+    const lng = Number(req.query.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(400).json({ roadType: null, error: "MISSING_LAT_LNG" });
+    }
+
+    const aroundM = 80; // yakın çevre
+    const q = `
+[out:json][timeout:25];
+(
+  way(around:${aroundM},${lat},${lng})["highway"];
+);
+out tags center 1;
+`;
+
+    const r = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: "data=" + encodeURIComponent(q),
+    });
+
+    if (!r.ok) return res.json({ roadType: "other" });
+
+    const j = await r.json();
+    const els = Array.isArray(j?.elements) ? j.elements : [];
+    // ilk uygun way'i al
+    const way = els.find((e) => e && e.type === "way" && e.tags && e.tags.highway);
+    const roadType = way?.tags?.highway ? String(way.tags.highway) : "other";
+    return res.json({ roadType });
+  } catch {
+    return res.status(500).json({ error: "PROXY_ERROR" });
+  }
+});
+
+/**
+ * GET /osmr/bearing?lat=..&lng=..
+ * En yakın way'in merkezine göre "bearing" döndürür (0-360).
+ */
+
+// ✅ /osmr/bearing
+app.get("/osmr/bearing", async (req, res) => {
+  try {
+    const lat = Number(req.query.lat);
+    const lng = Number(req.query.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(400).json({ bearing: null });
+
+    const overpassQuery = async (q) => {
+      const r = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded;charset=UTF-8" },
+        body: "data=" + encodeURIComponent(q),
+      });
+      if (!r.ok) throw new Error("OVERPASS_" + r.status);
+      return await r.json();
+    };
+
+    // hızlı mesafe yaklaşımı (metre^2) - equirectangular
+    const dist2 = (lat1, lon1, lat2, lon2) => {
+      const R = 6371000;
+      const x = (lon2 - lon1) * Math.cos(((lat1 + lat2) / 2) * Math.PI / 180) * Math.PI / 180;
+      const y = (lat2 - lat1) * Math.PI / 180;
+      return (R * x) * (R * x) + (R * y) * (R * y);
+    };
+
+    const bearingBetween = (lat1, lon1, lat2, lon2) => {
+      const toRad = (d) => d * Math.PI / 180;
+      const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+      const x =
+        Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+        Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+      const brng = Math.atan2(y, x) * 180 / Math.PI;
+      return ((brng % 360) + 360) % 360;
+    };
+
+    const aroundM = 120;
+    const q = `
+[out:json][timeout:25];
+way(around:${aroundM},${lat},${lng})["highway"];
+out geom;
+`;
+
+    const oj = await overpassQuery(q);
+    const ways = (oj.elements || []).filter((e) => e.type === "way" && Array.isArray(e.geometry) && e.geometry.length >= 2);
+    if (!ways.length) return res.json({ bearing: null });
+
+    // En yakın segmenti seç
+    let best = null; // {d2, bearing}
+    for (const w of ways) {
+      const g = w.geometry;
+      for (let i = 0; i < g.length - 1; i++) {
+        const a = g[i], b = g[i + 1];
+        if (!a || !b) continue;
+        const d2a = dist2(lat, lng, a.lat, a.lon);
+        const d2b = dist2(lat, lng, b.lat, b.lon);
+        const d2min = Math.min(d2a, d2b); // segment'e tam projeksiyon yerine pratik min
+        if (!best || d2min < best.d2) {
+          best = { d2: d2min, bearing: bearingBetween(a.lat, a.lon, b.lat, b.lon) };
+        }
+      }
+    }
+
+    return res.json({ bearing: best ? best.bearing : null });
+  } catch (e) {
+    return res.json({ bearing: null });
+  }
+});
+
+
+
 const port = process.env.PORT || 8080;
 app.listen(port, () => console.log("listening", port));
+

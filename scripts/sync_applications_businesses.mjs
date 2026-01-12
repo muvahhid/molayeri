@@ -106,6 +106,7 @@ const main = async () => {
           "roadLng",
           "roadPlaceId",
           "roadType",
+        "bearing",
         ]),
       };
 
@@ -138,6 +139,7 @@ const main = async () => {
       "roadLng",
       "roadPlaceId",
       "roadType",
+    "bearing",
     ]);
     const needsData = Object.keys(dataPatch).some((k) => {
       const nv = dataPatch[k];

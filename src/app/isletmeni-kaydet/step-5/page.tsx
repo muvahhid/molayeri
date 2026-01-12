@@ -113,6 +113,7 @@ export default function Step5OzetBasvuruPage() {
         roadPlaceId,
         roadType,
         description: state.business.description,
+        bearing: state.business.bearing ?? null,
         roadName: state.business.roadName,
         roadNote: state.business.roadNote,
         roadCodes: state.business.roadCodes || [],
