@@ -43,7 +43,6 @@ export default function AdminBusinessDetailPage() {
    
   const [geoLat, setGeoLat] = useState<string>("");
   const [geoLng, setGeoLng] = useState<string>("");
-  const [geoText, setGeoText] = useState<string>("");
   const [geoErr, setGeoErr] = useState<string | null>(null);
 
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
@@ -58,10 +57,9 @@ export default function AdminBusinessDetailPage() {
       const snap = await getDoc(doc(db, "businesses", id));
       if (!alive) return;
       setBiz(snap.exists() ? { id: snap.id, ...(snap.data() as AnyRec) } : null);
-    } catch (e: any) {
+    } catch (e) {
       if (!alive) return;
-      const err: any = e;
-      console.log("business getDoc fail:", err?.code || err?.message || String(err));
+      console.log("business getDoc fail:", e?.code || e?.message || String(e));
       setBiz(null);
     } finally {
       if (alive) setLoading(false);
@@ -102,7 +100,6 @@ export default function AdminBusinessDetailPage() {
 
     setGeoLat(typeof lat === "number" ? String(lat) : "");
     setGeoLng(typeof lng === "number" ? String(lng) : "");
-    setGeoText(typeof lat === "number" && typeof lng === "number" ? `${lat}, ${lng}` : "");
   }, [biz]);
 
 useEffect(() => {
@@ -168,47 +165,6 @@ useEffect(() => {
       alive = false;
     };
   }, [biz]);
-  async function saveGeoPoint() {
-    if (!biz?.id) return;
-
-    const latNum = Number(geoLat);
-    const lngNum = Number(geoLng);
-
-    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-      setGeoErr("Lat/Lng sayı olmalı. Örn: 40.123456, 29.123456");
-      return;
-    }
-    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-      setGeoErr("Koordinat aralığı hatalı.");
-      return;
-    }
-
-    setGeoErr(null);
-    setSaving(true);
-    try {
-      await updateDoc(doc(db, "businesses", biz.id), {
-        geoPoint: new GeoPoint(latNum, lngNum),
-        // geri uyumluluk:
-        lat: latNum,
-        lng: lngNum,
-        updatedAt: serverTimestamp(),
-      });
-
-      setBiz((prev) =>
-        prev
-          ? { ...prev, geoPoint: { lat: latNum, lng: lngNum }, lat: latNum, lng: lngNum }
-          : prev,
-      );
-      console.log("saveGeoPoint OK", { id: biz.id, lat: latNum, lng: lngNum });
-    } catch (e: any) {
-      console.log("saveGeoPoint FAIL:", e?.code || e?.message || String(e));
-      setGeoErr("Kaydedilemedi. Konsolu kontrol et.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-
 
   async function setStatus(status: "approved" | "passive") {
     if (!biz?.id) return;
@@ -230,23 +186,38 @@ useEffect(() => {
       setSaving(false);
     }
 
+  async function saveGeoPoint() {
+    if (!biz?.id) return;
+
+    const lat = Number(geoLat);
+    const lng = Number(geoLng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      setGeoErr("Lat/Lng sayı olmalı. Örn: 40.123456");
+      return;
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setGeoErr("Koordinat aralığı hatalı.");
+      return;
+    }
+
     setGeoErr(null);
     setSaving(true);
     try {
       await updateDoc(doc(db, "businesses", biz.id), {
+        geoPoint: new GeoPoint(lat, lng),
         // geri uyumluluk:
+        lat,
+        lng,
         updatedAt: serverTimestamp(),
       });
-      setBiz((prev) => {
-        const lat2 = Number(geoLat);
-        const lng2 = Number(geoLng);
-        return prev
-          ? { ...prev, geoPoint: { lat: lat2, lng: lng2 }, lat: lat2, lng: lng2 }
-          : prev;
-      });
+      setBiz((prev) =>
+        prev ? { ...prev, geoPoint: { lat, lng }, lat, lng } : prev,
+      );
     } finally {
       setSaving(false);
     }
+  }
   }
 
   useEffect(() => {
@@ -352,20 +323,20 @@ useEffect(() => {
                         İşletmenizi en doğru şekilde listeleyebilmemiz için: Google Haritalar’da yolun üstüne sağ tık → en üstte çıkan koordinatları buraya yapıştırın.
                       </div>
 
-                      <input
-                        className="mt-3 h-11 w-full rounded-xl border border-white/10 bg-[#0b1220] px-3 text-sm text-white outline-none focus:ring-2 focus:ring-white/15"
-                        placeholder="Koordinat (örn: 40.123456, 29.123456)"
-                        value={geoText}
-                        onChange={(e) => {
-                          const t = e.target.value;
-                          setGeoText(t);
-                          const parts = t.trim().split(/[,\s]+/).filter(Boolean);
-                          if (parts.length >= 2) {
-                            setGeoLat(parts[0]);
-                            setGeoLng(parts[1]);
-                          }
-                        }}
-                      />
+                      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <input
+                          className="h-11 w-full rounded-xl border border-white/10 bg-[#0b1220] px-3 text-sm text-white outline-none focus:ring-2 focus:ring-white/15"
+                          placeholder="Lat (örn: 40.123456)"
+                          value={geoLat}
+                          onChange={(e) => setGeoLat(e.target.value)}
+                        />
+                        <input
+                          className="h-11 w-full rounded-xl border border-white/10 bg-[#0b1220] px-3 text-sm text-white outline-none focus:ring-2 focus:ring-white/15"
+                          placeholder="Lng (örn: 29.123456)"
+                          value={geoLng}
+                          onChange={(e) => setGeoLng(e.target.value)}
+                        />
+                      </div>
 
                       {geoErr ? (
                         <div className="mt-2 text-xs text-red-300">{geoErr}</div>
@@ -382,7 +353,9 @@ useEffect(() => {
                           rel="noreferrer"
                           href={
                             geoLat && geoLng
-                              ? `https://www.google.com/maps?q=${encodeURIComponent(geoLat)},${encodeURIComponent(geoLng)}`
+                              ? `https://www.google.com/maps?q=${encodeURIComponent(
+                                  geoLat,
+                                )},${encodeURIComponent(geoLng)}`
                               : "https://www.google.com/maps"
                           }
                         >

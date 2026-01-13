@@ -14,6 +14,7 @@ export type BusinessDraft = {
   addressText: string;
   lat: number | null;
   lng: number | null;
+  geoPoint: { lat: number; lng: number } | null;
   bearing: number | null;
   description: string;
   roadName: string;
@@ -49,6 +50,7 @@ const DEFAULT_STATE: WizardState = {
     addressText: "",
     lat: null,
     lng: null,
+    geoPoint: null,
     bearing: null,
     description: "",
     roadName: "",
@@ -115,6 +117,13 @@ function loadState(): WizardState {
         addressText: safeString(obj?.business?.addressText),
         lat: safeNum(obj?.business?.lat),
         lng: safeNum(obj?.business?.lng),
+        geoPoint:
+          typeof obj?.business?.geoPoint?.lat === "number" &&
+          typeof obj?.business?.geoPoint?.lng === "number" &&
+          Number.isFinite(obj.business.geoPoint.lat) &&
+          Number.isFinite(obj.business.geoPoint.lng)
+            ? { lat: obj.business.geoPoint.lat, lng: obj.business.geoPoint.lng }
+            : null,
         bearing: safeNum(obj?.business?.bearing),
         description: safeString(obj?.business?.description),
         roadName: safeString(obj?.business?.roadName),

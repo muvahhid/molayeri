@@ -43,7 +43,6 @@ export default function AdminBusinessDetailPage() {
    
   const [geoLat, setGeoLat] = useState<string>("");
   const [geoLng, setGeoLng] = useState<string>("");
-  const [geoText, setGeoText] = useState<string>("");
   const [geoErr, setGeoErr] = useState<string | null>(null);
 
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
@@ -58,10 +57,9 @@ export default function AdminBusinessDetailPage() {
       const snap = await getDoc(doc(db, "businesses", id));
       if (!alive) return;
       setBiz(snap.exists() ? { id: snap.id, ...(snap.data() as AnyRec) } : null);
-    } catch (e: any) {
+    } catch (e) {
       if (!alive) return;
-      const err: any = e;
-      console.log("business getDoc fail:", err?.code || err?.message || String(err));
+      console.log("business getDoc fail:", e?.code || e?.message || String(e));
       setBiz(null);
     } finally {
       if (alive) setLoading(false);
@@ -72,38 +70,6 @@ export default function AdminBusinessDetailPage() {
     alive = false;
   };
 }, [id]);
-
-
-  useEffect(() => {
-    if (!biz) return;
-
-    // geoPoint alanı 2 formatta gelebilir:
-    // 1) Firestore GeoPoint: { latitude, longitude }
-    // 2) düz obje: { lat, lng }
-    const gp = (biz as any).geoPoint;
-
-    const lat =
-      typeof gp?.latitude === "number"
-        ? gp.latitude
-        : typeof gp?.lat === "number"
-          ? gp.lat
-          : typeof (biz as any).lat === "number"
-            ? (biz as any).lat
-            : null;
-
-    const lng =
-      typeof gp?.longitude === "number"
-        ? gp.longitude
-        : typeof gp?.lng === "number"
-          ? gp.lng
-          : typeof (biz as any).lng === "number"
-            ? (biz as any).lng
-            : null;
-
-    setGeoLat(typeof lat === "number" ? String(lat) : "");
-    setGeoLng(typeof lng === "number" ? String(lng) : "");
-    setGeoText(typeof lat === "number" && typeof lng === "number" ? `${lat}, ${lng}` : "");
-  }, [biz]);
 
 useEffect(() => {
     let alive = true;
@@ -168,47 +134,6 @@ useEffect(() => {
       alive = false;
     };
   }, [biz]);
-  async function saveGeoPoint() {
-    if (!biz?.id) return;
-
-    const latNum = Number(geoLat);
-    const lngNum = Number(geoLng);
-
-    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-      setGeoErr("Lat/Lng sayı olmalı. Örn: 40.123456, 29.123456");
-      return;
-    }
-    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-      setGeoErr("Koordinat aralığı hatalı.");
-      return;
-    }
-
-    setGeoErr(null);
-    setSaving(true);
-    try {
-      await updateDoc(doc(db, "businesses", biz.id), {
-        geoPoint: new GeoPoint(latNum, lngNum),
-        // geri uyumluluk:
-        lat: latNum,
-        lng: lngNum,
-        updatedAt: serverTimestamp(),
-      });
-
-      setBiz((prev) =>
-        prev
-          ? { ...prev, geoPoint: { lat: latNum, lng: lngNum }, lat: latNum, lng: lngNum }
-          : prev,
-      );
-      console.log("saveGeoPoint OK", { id: biz.id, lat: latNum, lng: lngNum });
-    } catch (e: any) {
-      console.log("saveGeoPoint FAIL:", e?.code || e?.message || String(e));
-      setGeoErr("Kaydedilemedi. Konsolu kontrol et.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-
 
   async function setStatus(status: "approved" | "passive") {
     if (!biz?.id) return;
@@ -229,53 +154,7 @@ useEffect(() => {
     } finally {
       setSaving(false);
     }
-
-    setGeoErr(null);
-    setSaving(true);
-    try {
-      await updateDoc(doc(db, "businesses", biz.id), {
-        // geri uyumluluk:
-        updatedAt: serverTimestamp(),
-      });
-      setBiz((prev) => {
-        const lat2 = Number(geoLat);
-        const lng2 = Number(geoLng);
-        return prev
-          ? { ...prev, geoPoint: { lat: lat2, lng: lng2 }, lat: lat2, lng: lng2 }
-          : prev;
-      });
-    } finally {
-      setSaving(false);
-    }
   }
-
-  useEffect(() => {
-    if (!biz) return;
-
-    // Firestore GeoPoint objesi (latitude/longitude) veya düz {lat,lng} olabilir
-    const gp = biz?.geoPoint;
-    const lat =
-      typeof gp?.latitude === "number"
-        ? gp.latitude
-        : typeof gp?.lat === "number"
-          ? gp.lat
-          : typeof biz?.lat === "number"
-            ? biz.lat
-            : null;
-
-    const lng =
-      typeof gp?.longitude === "number"
-        ? gp.longitude
-        : typeof gp?.lng === "number"
-          ? gp.lng
-          : typeof biz?.lng === "number"
-            ? biz.lng
-            : null;
-
-    if (typeof lat === "number") setGeoLat(String(lat));
-    if (typeof lng === "number") setGeoLng(String(lng));
-  }, [biz]);
-
 
   const statusBadge = useMemo(() => {
     if (!biz) return null;
@@ -342,55 +221,6 @@ useEffect(() => {
                         </div>
                       </div>
                     </div>
-
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="text-sm font-extrabold text-white">
-                        Giriş Noktası (GeoPoint)
-                      </div>
-
-                      <div className="mt-2 text-xs text-white/60">
-                        İşletmenizi en doğru şekilde listeleyebilmemiz için: Google Haritalar’da yolun üstüne sağ tık → en üstte çıkan koordinatları buraya yapıştırın.
-                      </div>
-
-                      <input
-                        className="mt-3 h-11 w-full rounded-xl border border-white/10 bg-[#0b1220] px-3 text-sm text-white outline-none focus:ring-2 focus:ring-white/15"
-                        placeholder="Koordinat (örn: 40.123456, 29.123456)"
-                        value={geoText}
-                        onChange={(e) => {
-                          const t = e.target.value;
-                          setGeoText(t);
-                          const parts = t.trim().split(/[,\s]+/).filter(Boolean);
-                          if (parts.length >= 2) {
-                            setGeoLat(parts[0]);
-                            setGeoLng(parts[1]);
-                          }
-                        }}
-                      />
-
-                      {geoErr ? (
-                        <div className="mt-2 text-xs text-red-300">{geoErr}</div>
-                      ) : null}
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button variant="primary" disabled={saving} onClick={saveGeoPoint}>
-                          GeoPoint Kaydet
-                        </Button>
-
-                        <a
-                          className="text-xs text-white/60 underline"
-                          target="_blank"
-                          rel="noreferrer"
-                          href={
-                            geoLat && geoLng
-                              ? `https://www.google.com/maps?q=${encodeURIComponent(geoLat)},${encodeURIComponent(geoLng)}`
-                              : "https://www.google.com/maps"
-                          }
-                        >
-                          Haritada Aç
-                        </a>
-                      </div>
-                    </div>
-
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       {statusBadge}

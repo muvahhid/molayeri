@@ -285,8 +285,7 @@ export default function Step2IsletmeBilgileriPage() {
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setResults([]);
-                      void selectPlace(r);
+                    void selectPlace(r);
                   }}
                   className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-white/5"
                 >

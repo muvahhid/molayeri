@@ -110,6 +110,7 @@ export default function Step5OzetBasvuruPage() {
         lng: state.business.lng ?? null,
         roadLat,
         roadLng,
+        geoPoint: state.business.geoPoint ?? null,
         roadPlaceId,
         roadType,
         description: state.business.description,

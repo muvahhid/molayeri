@@ -237,13 +237,12 @@ useEffect(() => {
         // geri uyumluluk:
         updatedAt: serverTimestamp(),
       });
-      setBiz((prev) => {
+      setBiz((prev) =>
         const lat2 = Number(geoLat);
         const lng2 = Number(geoLng);
-        return prev
-          ? { ...prev, geoPoint: { lat: lat2, lng: lng2 }, lat: lat2, lng: lng2 }
-          : prev;
-      });
+        setBiz((prev) =>
+          prev ? { ...prev, geoPoint: { lat: lat2, lng: lng2 }, lat: lat2, lng: lng2 } : prev,
+        );
     } finally {
       setSaving(false);
     }

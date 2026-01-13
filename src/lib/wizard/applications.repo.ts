@@ -32,6 +32,7 @@ export type CreateApplicationInput = {
   roadNote?: string;
   roadLat?: number | null;
   roadLng?: number | null;
+  geoPoint?: { lat: number; lng: number } | null;
   roadPlaceId?: string | null;
   roadType?: string | null;
 
@@ -105,6 +106,7 @@ export async function createPendingApplication(input: CreateApplicationInput) {
       roadNote: (input.roadNote || "").trim(),
       roadLat: input.roadLat ?? null,
       roadLng: input.roadLng ?? null,
+      geoPoint: input.geoPoint ?? null,
       roadPlaceId: input.roadPlaceId ?? null,
       roadType: input.roadType ?? null,
       roadCodes: (input.roadCodes || []).filter(Boolean),

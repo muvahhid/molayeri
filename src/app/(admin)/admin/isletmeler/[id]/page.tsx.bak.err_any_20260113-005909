@@ -60,8 +60,7 @@ export default function AdminBusinessDetailPage() {
       setBiz(snap.exists() ? { id: snap.id, ...(snap.data() as AnyRec) } : null);
     } catch (e: any) {
       if (!alive) return;
-      const err: any = e;
-      console.log("business getDoc fail:", err?.code || err?.message || String(err));
+      console.log("business getDoc fail:", e?.code || e?.message || String(e));
       setBiz(null);
     } finally {
       if (alive) setLoading(false);
@@ -237,13 +236,9 @@ useEffect(() => {
         // geri uyumluluk:
         updatedAt: serverTimestamp(),
       });
-      setBiz((prev) => {
-        const lat2 = Number(geoLat);
-        const lng2 = Number(geoLng);
-        return prev
-          ? { ...prev, geoPoint: { lat: lat2, lng: lng2 }, lat: lat2, lng: lng2 }
-          : prev;
-      });
+      setBiz((prev) =>
+        prev ? { ...prev, geoPoint: { lat, lng }, lat, lng } : prev,
+      );
     } finally {
       setSaving(false);
     }
