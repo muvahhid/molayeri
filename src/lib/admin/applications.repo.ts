@@ -1,4 +1,3 @@
-import { db } from "@/lib/firebase.client";
 import {
   collection,
   doc,
@@ -6,45 +5,36 @@ import {
   orderBy,
   query,
   updateDoc,
-  serverTimestamp,
-  getDoc,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
+import { db } from "@/lib/firebase.client";
 
-export type ApplicationStatus = "pending" | "approved" | "passive";
-
+// =====================
+// Types
+// =====================
 export type ApplicationDoc = {
   id: string;
-  status: ApplicationStatus;
-
-  user: {
-    uid: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-  };
-
-  business: {
-    name: string;
-    addressText: string;
-    lat: number | null;
-    lng: number | null;
-    description: string;
-  };
-
-  selectedCategoryIds: string[];
-  featureValues: Record<string, any>;
-  photos: { url: string; isCover: boolean }[];
-
+  status: "pending" | "approved" | "passive";
+  business?: any;
+  user?: any;
   createdAt?: any;
-  updatedAt?: any;
+  photos?: any[];
 };
 
-export function subscribeApplications(cb: (rows: ApplicationDoc[]) => void) {
-  const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
+// =====================
+// Subscribe
+// =====================
+export function subscribeApplications(
+  cb: (rows: ApplicationDoc[]) => void,
+) {
+  const q = query(
+    collection(db, "applications"),
+    orderBy("createdAt", "desc"),
+  );
+
   return onSnapshot(q, (snap) => {
-    const rows: ApplicationDoc[] = snap.docs.map((d) => ({
+    const rows = snap.docs.map((d) => ({
       id: d.id,
       ...(d.data() as any),
     }));
@@ -52,110 +42,86 @@ export function subscribeApplications(cb: (rows: ApplicationDoc[]) => void) {
   });
 }
 
-async function setUserRole(
-  uid: string,
-  role: "user" | "pending" | "isletmeci" | "admin",
-  approved?: boolean,
-) {
-  if (!uid) return;
-  await updateDoc(doc(db, "users", uid), {
-    role,
-    ...(typeof approved === "boolean" ? { approved } : {}),
-    updatedAt: serverTimestamp(),
-  });
-}
-
-export async function approveApplication(appId: string, uid: string) {
-  await updateDoc(doc(db, "applications", appId), {
-    status: "approved",
-    updatedAt: serverTimestamp(),
-  });
-  await setUserRole(uid || "", "isletmeci", true);
-}
-
-export async function passiveApplication(appId: string, uid: string) {
-  // 1) application -> passive
-  await updateDoc(doc(db, "applications", appId), {
-    status: "passive",
-    updatedAt: serverTimestamp(),
-  });
-
-  // 2) user role -> pending (istersen user yaparız, şimdilik pending)
-  await setUserRole(uid || "", "pending", false);
-
-  // 3) business varsa -> passive
-  const bizRef = doc(db, "businesses", appId);
-  const bizSnap = await getDoc(bizRef);
-  if (bizSnap.exists()) {
-    await updateDoc(bizRef, {
-      status: "passive",
-      updatedAt: serverTimestamp(),
-    });
-  }
-}
-export type BusinessDoc = {
-  id: string;
-  status: ApplicationStatus;
-  ownerUid: string;
-  ownerEmail: string;
-  name: string;
-  addressText: string;
-  lat: number | null;
-  lng: number | null;
-  description: string;
-  selectedCategoryIds: string[];
-  featureValues: Record<string, any>;
-  photos: { url: string; isCover: boolean }[];
-  applicationId: string;
-  createdAt?: any;
-  updatedAt?: any;
-};
-
+// =====================
+// Approve + Sync
+// =====================
 export async function approveApplicationAndSyncBusiness(
-  appId: string,
-  uid: string,
+  applicationId: string,
+  userUid?: string,
 ) {
-  const resolvedUid = uid || "";
+  const appRef = doc(db, "applications", applicationId);
+  const bizRef = doc(db, "businesses", applicationId);
 
-  const appRef = doc(db, "applications", appId);
-  const snap = await getDoc(appRef);
-  if (!snap.exists()) throw new Error("Application not found");
-
-  const app = snap.data() as any;
-
+  // application -> approved
   await updateDoc(appRef, {
     status: "approved",
     updatedAt: serverTimestamp(),
   });
 
-  await setUserRole(uid || "", "isletmeci", true);
+  // application.business -> businesses (MANUEL alanlar, otomatik yok)
+  const snap = await (await import("firebase/firestore")).getDoc(appRef);
+  const app = snap.data() as any;
 
-  const bizRef = doc(db, "businesses", appId);
-
-  const business: Partial<BusinessDoc> = {
-    id: appId,
+  const business: any = {
+    id: applicationId,
     status: "approved",
-    ownerUid: resolvedUid || app?.user?.uid || "",
+    ownerUid: userUid || app?.user?.uid || "",
     ownerEmail: (app?.user?.email || "").toString().trim().toLowerCase(),
+
     name: app?.business?.name || "",
     addressText: app?.business?.addressText || "",
     lat: app?.business?.lat ?? null,
     lng: app?.business?.lng ?? null,
+
+    // SADECE MANUEL
+    roadName: (app?.business?.roadName || "").toString().trim(),
+    roadNote: (
+      app?.business?.roadNote ||
+      app?.business?.description ||
+      ""
+    ).toString().trim(),
+    roadCodes: Array.isArray(app?.business?.roadCodes)
+      ? app.business.roadCodes.map(String).filter(Boolean)
+      : [],
+
+    geoPoint:
+      app?.business?.geoPoint &&
+      typeof app.business.geoPoint.lat === "number" &&
+      typeof app.business.geoPoint.lng === "number"
+        ? {
+            lat: app.business.geoPoint.lat,
+            lng: app.business.geoPoint.lng,
+          }
+        : null,
+
+    bearing:
+      typeof app?.business?.bearing === "number"
+        ? app.business.bearing
+        : null,
+
     description: app?.business?.description || "",
+
     selectedCategoryIds: app?.selectedCategoryIds || [],
     featureValues: app?.featureValues || {},
     photos: app?.photos || [],
-    applicationId: appId,
+
+    applicationId,
     createdAt: app?.createdAt || serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
 
   await setDoc(bizRef, business, { merge: true });
+}
 
-  await updateDoc(appRef, {
-    businessId: appId,
+// =====================
+// Passive
+// =====================
+export async function passiveApplication(
+  applicationId: string,
+  userUid?: string,
+) {
+  await updateDoc(doc(db, "applications", applicationId), {
+    status: "passive",
     updatedAt: serverTimestamp(),
   });
-
-  return { businessId: appId };
 }
