@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react' // Suspense EKLENDİ
 import { createBrowserClient } from '@supabase/ssr'
-import { useSearchParams } from 'next/navigation' // <-- URL PARAMETRESİ İÇİN
+import { useSearchParams } from 'next/navigation'
 import { 
   Send, Paperclip, Image as ImageIcon, X, 
   Bold, Italic, List, AlignLeft, User, 
@@ -10,7 +10,7 @@ import {
   MessageSquare, Type, Link as LinkIcon, Eye, Calendar, Clock
 } from 'lucide-react'
 
-// --- ULTRA CLEAN NEUMORPHIC SYSTEM ---
+// --- UI COMPONENTS ---
 const BG_COLOR = "bg-[#eef0f4]"
 const TEXT_MAIN = "text-slate-600"
 const TEXT_MUTED = "text-slate-400"
@@ -33,7 +33,11 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
   if (variant === 'active') style = active
   if (variant === 'solid') style = solid
 
-  return <button onClick={onClick} disabled={disabled} title={title} className={`${base} ${style} ${className}`}>{children}</button>
+  return (
+    <button onClick={onClick} disabled={disabled} title={title} className={`${base} ${style} ${className}`}>
+      {children}
+    </button>
+  )
 }
 
 const NeuInput = ({ ...props }: any) => (
@@ -50,8 +54,9 @@ const ToolbarBtn = ({ icon: Icon, onClick, active }: any) => (
   <button onClick={onClick} className={`p-2 rounded-lg transition-all ${active ? 'bg-slate-200 text-blue-600 shadow-inner' : 'text-slate-500 hover:bg-white hover:text-blue-500 hover:shadow-sm'}`}><Icon className="w-5 h-5"/></button>
 )
 
-export default function MessagesPage() {
-  const searchParams = useSearchParams() // <-- URL OKUMA
+// --- ASIL İÇERİK BİLEŞENİ (Main Logic Buraya Taşındı) ---
+function MessagesContent() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'inbox' | 'compose'>('inbox')
   
   // COMPOSE STATE
@@ -69,14 +74,13 @@ export default function MessagesPage() {
   // INBOX STATE
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedMessage, setSelectedMessage] = useState<any>(null) // <-- SEÇİLİ MESAJ
+  const [selectedMessage, setSelectedMessage] = useState<any>(null)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  // --- URL PARAMETRESİ KONTROLÜ (OTOMATİK DOLDURMA) ---
   useEffect(() => {
     const isCompose = searchParams.get('compose')
     const uid = searchParams.get('uid')
@@ -166,9 +170,8 @@ export default function MessagesPage() {
     }
   }
 
-  // YANITLA FONKSİYONU
   const handleReply = (msg: any) => {
-    setSelectedMessage(null) // Modalı kapat
+    setSelectedMessage(null)
     setActiveTab('compose')
     setTargetType('single')
     setTargetUserId(msg.sender_id)
@@ -179,7 +182,6 @@ export default function MessagesPage() {
   return (
     <div className={`h-full flex flex-col font-sans text-slate-600 ${BG_COLOR} rounded-[40px] overflow-hidden relative`}>
       
-      {/* HEADER & TABS */}
       <div className="pt-8 px-8 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-slate-700 tracking-tight">Mesaj Merkezi</h1>
@@ -194,7 +196,6 @@ export default function MessagesPage() {
 
       <div className="flex-1 overflow-hidden relative p-8">
         
-        {/* --- INBOX TAB --- */}
         {activeTab === 'inbox' && (
           <NeuCard className="h-full flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
@@ -208,7 +209,7 @@ export default function MessagesPage() {
                   messages.map((msg) => (
                     <div 
                       key={msg.id} 
-                      onClick={() => setSelectedMessage(msg)} // <-- TIKLAYINCA SEÇ
+                      onClick={() => setSelectedMessage(msg)}
                       className={`group p-6 rounded-3xl transition-all duration-300 border border-transparent hover:border-white ${BG_COLOR} hover:${SHADOW_OUT} cursor-pointer active:scale-[0.99]`}
                     >
                         <div className="flex justify-between items-start mb-3">
@@ -235,10 +236,8 @@ export default function MessagesPage() {
           </NeuCard>
         )}
 
-        {/* --- COMPOSE TAB --- */}
         {activeTab === 'compose' && (
           <div className="h-full flex flex-col lg:flex-row gap-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            {/* LEFT: Editor Area */}
             <div className="flex-1 flex flex-col gap-6">
               <div className="flex gap-4">
                  {[{ id: 'broadcast_all', icon: Users, label: 'TÜM ÜYELER' }, { id: 'broadcast_business', icon: Store, label: 'İŞLETMELER' }, { id: 'single', icon: User, label: 'TEK KİŞİ' }].map((t) => (
@@ -277,7 +276,6 @@ export default function MessagesPage() {
                  </div>
               </div>
             </div>
-            {/* RIGHT: Sidebar */}
             <div className="w-full lg:w-80 flex flex-col gap-6">
               <NeuCard className="p-6">
                  <h3 className="text-xs font-black text-slate-400 mb-6 uppercase tracking-widest flex items-center gap-2"><Paperclip className="w-4 h-4"/> EKLER</h3>
@@ -292,11 +290,9 @@ export default function MessagesPage() {
         )}
       </div>
 
-      {/* --- MESSAGE DETAIL MODAL --- */}
       {selectedMessage && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
            <div className={`w-full max-w-2xl max-h-[90%] flex flex-col ${BG_COLOR} rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95`}>
-              {/* Modal Header */}
               <div className="p-6 border-b border-slate-300 flex justify-between items-start bg-[#E0E5EC] z-10">
                  <div className="flex gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-slate-200 shadow-inner flex items-center justify-center overflow-hidden">
@@ -313,38 +309,38 @@ export default function MessagesPage() {
                  </div>
                  <NeuButton onClick={() => setSelectedMessage(null)} className="w-10 h-10 !p-0 rounded-full"><X className="w-5 h-5 text-slate-500"/></NeuButton>
               </div>
-              
-              {/* Modal Body */}
               <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50">
                  <div className="prose prose-slate prose-sm max-w-none">
                     {selectedMessage.content.split('\n').map((line:string, i:number) => (
                        <p key={i} className="min-h-[1rem] leading-relaxed">{line}</p>
                     ))}
                  </div>
-                 
-                 {/* Attachments */}
                  {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-slate-200">
                        <h4 className="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-2"><Paperclip className="w-4 h-4"/> Ek Dosyalar</h4>
                        <div className="flex flex-wrap gap-3">
                           {selectedMessage.attachments.map((url:string, i:number) => (
-                             <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all">
-                                <ImageIcon className="w-4 h-4"/> Dosya {i+1}
-                             </a>
+                             <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all"><ImageIcon className="w-4 h-4"/> Dosya {i+1}</a>
                           ))}
                        </div>
                     </div>
                  )}
               </div>
-
-              {/* Modal Footer */}
               <div className="p-6 bg-[#E0E5EC] border-t border-slate-300 flex justify-end gap-3">
                  <NeuButton onClick={() => handleReply(selectedMessage)} variant="solid" className="px-6 py-3"><Reply className="w-4 h-4"/> YANITLA</NeuButton>
               </div>
            </div>
         </div>
       )}
-
     </div>
+  )
+}
+
+// --- ANA SAYFA COMPONENTI (Suspense Koruması) ---
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-500 w-10 h-10"/></div>}>
+      <MessagesContent />
+    </Suspense>
   )
 }
