@@ -9,19 +9,19 @@ import {
 
 // --- NEUMORPHIC UI COMPONENTS ---
 const NeuCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-[#E0E5EC] rounded-[30px] shadow-[9px_9px_16px_rgb(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.5)] ${className}`}>
+  <div className={`bg-white rounded-2xl shadow-sm ${className}`}>
     {children}
   </div>
 )
 
 const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled = false }: any) => {
   const baseStyle = "transition-all duration-200 active:scale-[0.98] rounded-xl font-bold flex items-center justify-center gap-2 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-  const convex = "shadow-[6px_6px_10px_rgb(163,177,198,0.6),-6px_-6px_10px_rgba(255,255,255,0.5)] active:shadow-[inset_4px_4px_8px_rgb(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]"
+  const convex = "shadow-sm active:shadow-sm"
   
-  let colors = "bg-[#E0E5EC] text-slate-600 hover:text-slate-800"
-  if (variant === "primary") colors = "bg-[#E0E5EC] text-blue-600 hover:text-blue-700"
-  if (variant === "danger") colors = "bg-[#E0E5EC] text-red-500 hover:text-red-600"
-  if (variant === "success") colors = "bg-[#E0E5EC] text-green-600 hover:text-green-700"
+  let colors = "bg-white text-slate-600 hover:text-slate-800"
+  if (variant === "primary") colors = "bg-white text-blue-600 hover:text-blue-700"
+  if (variant === "danger") colors = "bg-white text-red-500 hover:text-red-600"
+  if (variant === "success") colors = "bg-white text-green-600 hover:text-green-700"
   if (variant === "solid-blue") colors = "bg-blue-600 text-white shadow-blue-300" 
 
   return (
@@ -33,15 +33,15 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
 
 const NeuInput = ({ label, icon: Icon, ...props }: any) => (
   <div className="group w-full">
-    {label && <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
+    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
     <div className="relative flex items-center">
       {Icon && <Icon className="absolute left-4 text-slate-400 w-4 h-4 transition-colors group-focus-within:text-blue-500" />}
       <input 
         {...props}
-        className={`w-full bg-[#E0E5EC] ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
+        className={`w-full bg-white ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
         border border-transparent focus:border-blue-500/20
-        shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]
-        focus:shadow-[inset_6px_6px_12px_#a3b1c6,inset_-6px_-6px_12px_#ffffff]`}
+        shadow-sm
+        focus:shadow-sm`}
       />
     </div>
   </div>
@@ -159,7 +159,7 @@ export default function CategoriesPage() {
       {/* BAŞLIK */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-700">Kategori Yönetimi</h1>
+          <h1 className="text-3xl font-semibold text-slate-700">Kategori Yönetimi</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Uygulamadaki tüm kategorileri buradan yönet.</p>
         </div>
         <NeuButton onClick={openAddModal} variant="solid-blue" className="px-6 py-3">
@@ -193,7 +193,7 @@ export default function CategoriesPage() {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-black text-slate-700 mb-1">{cat.name}</h3>
+                <h3 className="text-xl font-semibold text-slate-700 mb-1">{cat.name}</h3>
                 <div className="flex items-center gap-1 text-xs font-mono font-bold text-slate-400 bg-slate-200 px-2 py-1 rounded w-fit">
                    <Hash className="w-3 h-3" /> {cat.slug}
                 </div>
@@ -201,7 +201,7 @@ export default function CategoriesPage() {
             ))}
             
             {/* Ekleme Kartı (Alternatif Buton) */}
-            <button onClick={openAddModal} className="border-4 border-dashed border-slate-300 rounded-[30px] flex flex-col items-center justify-center p-6 text-slate-400 hover:text-blue-500 hover:border-blue-400 hover:bg-blue-50/50 transition-all group min-h-[160px]">
+            <button onClick={openAddModal} className="border-4 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-6 text-slate-400 hover:text-blue-500 hover:border-blue-400 hover:bg-blue-50/50 transition-all group min-h-[160px]">
                <div className="w-12 h-12 rounded-full bg-slate-200 group-hover:bg-blue-200 flex items-center justify-center mb-2 transition-colors">
                  <Plus className="w-6 h-6" />
                </div>
@@ -214,10 +214,10 @@ export default function CategoriesPage() {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-[#E0E5EC] w-full max-w-lg rounded-[40px] shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-white/50">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-white/50">
             
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-slate-700">
+              <h2 className="text-2xl font-semibold text-slate-700">
                 {editingCat ? 'Kategoriyi Düzenle' : 'Yeni Kategori'}
               </h2>
               <NeuButton onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full !p-0">
@@ -235,7 +235,7 @@ export default function CategoriesPage() {
               />
               
               <div className="group">
-                <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">SİSTEM KODU (SLUG)</label>
+                <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">SİSTEM KODU (SLUG)</label>
                 <div className="relative flex items-center">
                   <Hash className="absolute left-4 text-slate-400 w-4 h-4" />
                   <input 

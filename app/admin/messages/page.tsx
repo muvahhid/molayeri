@@ -11,14 +11,14 @@ import {
 } from 'lucide-react'
 
 // --- UI COMPONENTS ---
-const BG_COLOR = "bg-[#eef0f4]"
+const BG_COLOR = "bg-white"
 const TEXT_MAIN = "text-slate-600"
 const TEXT_MUTED = "text-slate-400"
-const SHADOW_OUT = "shadow-[10px_10px_20px_#d1d5db,-10px_-10px_20px_#ffffff]"
-const SHADOW_IN = "shadow-[inset_6px_6px_12px_#d1d5db,inset_-6px_-6px_12px_#ffffff]"
+const SHADOW_OUT = "shadow-sm"
+const SHADOW_IN = "shadow-sm"
 
 const NeuCard = ({ children, className = "" }: any) => (
-  <div className={`${BG_COLOR} rounded-[32px] ${SHADOW_OUT} border border-white/50 ${className}`}>
+  <div className={`${BG_COLOR} rounded-2xl ${SHADOW_OUT} border border-white/50 ${className}`}>
     {children}
   </div>
 )
@@ -27,7 +27,7 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
   const base = "transition-all duration-300 ease-out rounded-2xl font-bold flex items-center justify-center gap-2 select-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.96]"
   const primary = `${BG_COLOR} ${TEXT_MAIN} ${SHADOW_OUT} border border-white/60 hover:text-blue-600 hover:-translate-y-0.5`
   const active = `${BG_COLOR} text-blue-600 ${SHADOW_IN} border border-transparent`
-  const solid = `bg-blue-600 text-white shadow-[6px_6px_15px_rgba(37,99,235,0.3),-6px_-6px_15px_rgba(255,255,255,0.8)] hover:bg-blue-700`
+  const solid = `bg-blue-600 text-white shadow-sm hover:bg-blue-700`
   
   let style = primary
   if (variant === 'active') style = active
@@ -180,17 +180,17 @@ function MessagesContent() {
   }
 
   return (
-    <div className={`h-full flex flex-col font-sans text-slate-600 ${BG_COLOR} rounded-[40px] overflow-hidden relative`}>
+    <div className={`h-full flex flex-col font-sans text-slate-600 ${BG_COLOR} rounded-2xl overflow-hidden relative`}>
       
       <div className="pt-8 px-8 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-700 tracking-tight">Mesaj Merkezi</h1>
+          <h1 className="text-4xl font-semibold text-slate-700 tracking-tight">Mesaj Merkezi</h1>
           <p className="text-slate-500 mt-2 font-medium ml-1">Kullanıcı iletişimi ve sistem duyuruları.</p>
         </div>
         
         <div className={`p-2 ${BG_COLOR} rounded-2xl ${SHADOW_IN} flex gap-2`}>
-           <button onClick={() => setActiveTab('inbox')} className={`px-6 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === 'inbox' ? `${BG_COLOR} text-blue-600 shadow-[4px_4px_10px_#d1d5db,-4px_-4px_10px_#ffffff]` : 'text-slate-400 hover:text-slate-600'}`}>Gelen Kutusu</button>
-           <button onClick={() => setActiveTab('compose')} className={`px-6 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === 'compose' ? `${BG_COLOR} text-blue-600 shadow-[4px_4px_10px_#d1d5db,-4px_-4px_10px_#ffffff]` : 'text-slate-400 hover:text-slate-600'}`}>Yeni Mesaj</button>
+           <button onClick={() => setActiveTab('inbox')} className={`px-6 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === 'inbox' ? `${BG_COLOR} text-blue-600 shadow-sm` : 'text-slate-400 hover:text-slate-600'}`}>Gelen Kutusu</button>
+           <button onClick={() => setActiveTab('compose')} className={`px-6 py-3 rounded-xl font-bold text-xs transition-all ${activeTab === 'compose' ? `${BG_COLOR} text-blue-600 shadow-sm` : 'text-slate-400 hover:text-slate-600'}`}>Yeni Mesaj</button>
         </div>
       </div>
 
@@ -218,7 +218,7 @@ function MessagesContent() {
                                 {msg.profiles?.avatar_url ? <img src={msg.profiles.avatar_url} className="w-full h-full object-cover"/> : <User className="w-6 h-6"/>}
                               </div>
                               <div>
-                                <h4 className="font-black text-slate-700 text-lg group-hover:text-blue-600 transition-colors">{msg.profiles?.full_name || 'Bilinmeyen'}</h4>
+                                <h4 className="font-semibold text-slate-700 text-lg group-hover:text-blue-600 transition-colors">{msg.profiles?.full_name || 'Bilinmeyen'}</h4>
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${msg.message_type === 'direct' ? 'bg-blue-400' : 'bg-purple-400'}`}>
                                   {msg.message_type === 'direct' ? 'ÖZEL MESAJ' : 'DUYURU'}
                                 </span>
@@ -251,7 +251,7 @@ function MessagesContent() {
               )}
               <div className="space-y-4 flex-1 flex flex-col">
                  <NeuInput placeholder="Konu Başlığı..." value={subject} onChange={(e:any) => setSubject(e.target.value)} />
-                 <div className={`flex-1 flex flex-col rounded-[24px] ${BG_COLOR} ${SHADOW_IN} overflow-hidden border border-white/50 relative`}>
+                 <div className={`flex-1 flex flex-col rounded-2xl ${BG_COLOR} ${SHADOW_IN} overflow-hidden border border-white/50 relative`}>
                     <div className="flex items-center gap-1 p-3 border-b border-slate-200/50 bg-white/20 backdrop-blur-sm">
                        <ToolbarBtn icon={Bold} onClick={() => insertFormat('**', '**')} />
                        <ToolbarBtn icon={Italic} onClick={() => insertFormat('*', '*')} />
@@ -278,7 +278,7 @@ function MessagesContent() {
             </div>
             <div className="w-full lg:w-80 flex flex-col gap-6">
               <NeuCard className="p-6">
-                 <h3 className="text-xs font-black text-slate-400 mb-6 uppercase tracking-widest flex items-center gap-2"><Paperclip className="w-4 h-4"/> EKLER</h3>
+                 <h3 className="text-xs font-semibold text-slate-400 mb-6 uppercase tracking-widest flex items-center gap-2"><Paperclip className="w-4 h-4"/> EKLER</h3>
                  <input type="file" multiple ref={fileInputRef} className="hidden" onChange={(e) => {if(e.target.files) setFiles(Array.from(e.target.files))}} />
                  <button onClick={() => fileInputRef.current?.click()} className={`w-full py-8 rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-400 transition-all group flex flex-col items-center gap-2`}><div className={`w-12 h-12 rounded-xl ${BG_COLOR} ${SHADOW_OUT} flex items-center justify-center text-slate-400 group-hover:text-blue-500 transition-colors`}><ImageIcon className="w-6 h-6"/></div><span className="text-[10px] font-bold text-slate-400">DOSYA EKLE</span></button>
                  {files.length > 0 && (<div className="mt-4 space-y-2">{files.map((f, i) => (<div key={i} className={`flex items-center justify-between p-3 rounded-xl ${BG_COLOR} ${SHADOW_OUT} border border-white/60`}><span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{f.name}</span><button onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><X className="w-4 h-4"/></button></div>))}</div>)}
@@ -292,14 +292,14 @@ function MessagesContent() {
 
       {selectedMessage && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-           <div className={`w-full max-w-2xl max-h-[90%] flex flex-col ${BG_COLOR} rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95`}>
-              <div className="p-6 border-b border-slate-300 flex justify-between items-start bg-[#E0E5EC] z-10">
+           <div className={`w-full max-w-2xl max-h-[90%] flex flex-col ${BG_COLOR} rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95`}>
+              <div className="p-6 border-b border-slate-300 flex justify-between items-start bg-white z-10">
                  <div className="flex gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-slate-200 shadow-inner flex items-center justify-center overflow-hidden">
                        {selectedMessage.profiles?.avatar_url ? <img src={selectedMessage.profiles.avatar_url} className="w-full h-full object-cover"/> : <User className="w-6 h-6 text-slate-400"/>}
                     </div>
                     <div>
-                       <h2 className="text-xl font-black text-slate-700 leading-tight">{selectedMessage.subject}</h2>
+                       <h2 className="text-xl font-semibold text-slate-700 leading-tight">{selectedMessage.subject}</h2>
                        <div className="text-sm font-bold text-blue-600 mt-1">{selectedMessage.profiles?.full_name || 'Bilinmeyen Gönderici'}</div>
                        <div className="flex items-center gap-3 mt-2 text-xs font-bold text-slate-400">
                           <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(selectedMessage.created_at).toLocaleDateString()}</span>
@@ -317,7 +317,7 @@ function MessagesContent() {
                  </div>
                  {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-slate-200">
-                       <h4 className="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-2"><Paperclip className="w-4 h-4"/> Ek Dosyalar</h4>
+                       <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center gap-2"><Paperclip className="w-4 h-4"/> Ek Dosyalar</h4>
                        <div className="flex flex-wrap gap-3">
                           {selectedMessage.attachments.map((url:string, i:number) => (
                              <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all"><ImageIcon className="w-4 h-4"/> Dosya {i+1}</a>
@@ -326,7 +326,7 @@ function MessagesContent() {
                     </div>
                  )}
               </div>
-              <div className="p-6 bg-[#E0E5EC] border-t border-slate-300 flex justify-end gap-3">
+              <div className="p-6 bg-white border-t border-slate-300 flex justify-end gap-3">
                  <NeuButton onClick={() => handleReply(selectedMessage)} variant="solid" className="px-6 py-3"><Reply className="w-4 h-4"/> YANITLA</NeuButton>
               </div>
            </div>

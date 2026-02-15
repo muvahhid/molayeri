@@ -11,18 +11,18 @@ import {
 
 // --- NEUMORPHIC UI COMPONENTS ---
 const NeuCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-[#E0E5EC] rounded-[30px] shadow-[9px_9px_16px_rgb(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.5)] ${className}`}>
+  <div className={`bg-white rounded-2xl shadow-sm ${className}`}>
     {children}
   </div>
 )
 
 const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled = false }: any) => {
   const baseStyle = "transition-all duration-200 active:scale-[0.98] rounded-xl font-bold flex items-center justify-center gap-2 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-  const convex = "shadow-[6px_6px_10px_rgb(163,177,198,0.6),-6px_-6px_10px_rgba(255,255,255,0.5)] active:shadow-[inset_4px_4px_8px_rgb(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]"
+  const convex = "shadow-sm active:shadow-sm"
   
-  let colors = "bg-[#E0E5EC] text-slate-600 hover:text-slate-800"
-  if (variant === "primary") colors = "bg-[#E0E5EC] text-blue-600 hover:text-blue-700"
-  if (variant === "danger") colors = "bg-[#E0E5EC] text-red-500 hover:text-red-600"
+  let colors = "bg-white text-slate-600 hover:text-slate-800"
+  if (variant === "primary") colors = "bg-white text-blue-600 hover:text-blue-700"
+  if (variant === "danger") colors = "bg-white text-red-500 hover:text-red-600"
   if (variant === "solid-blue") colors = "bg-blue-600 text-white shadow-blue-300" 
 
   return (
@@ -34,15 +34,15 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
 
 const NeuInput = ({ label, icon: Icon, ...props }: any) => (
   <div className="group w-full">
-    {label && <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
+    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
     <div className="relative flex items-center">
       {Icon && <Icon className="absolute left-4 text-slate-400 w-4 h-4 transition-colors group-focus-within:text-blue-500" />}
       <input 
         {...props}
-        className={`w-full bg-[#E0E5EC] ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
+        className={`w-full bg-white ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
         border border-transparent focus:border-blue-500/20
-        shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]
-        focus:shadow-[inset_6px_6px_12px_#a3b1c6,inset_-6px_-6px_12px_#ffffff]`}
+        shadow-sm
+        focus:shadow-sm`}
       />
     </div>
   </div>
@@ -50,12 +50,12 @@ const NeuInput = ({ label, icon: Icon, ...props }: any) => (
 
 const NeuSelect = ({ label, children, ...props }: any) => (
   <div className="group w-full">
-    {label && <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
+    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
     <div className="relative">
       <select 
         {...props}
-        className="w-full bg-[#E0E5EC] pl-4 pr-10 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none appearance-none cursor-pointer
-        shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]"
+        className="w-full bg-white pl-4 pr-10 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none appearance-none cursor-pointer
+        shadow-sm"
       >
         {children}
       </select>
@@ -234,7 +234,7 @@ export default function AllBusinessesPage() {
       {/* BAŞLIK VE İSTATİSTİK */}
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-700">İşletme Yönetimi</h1>
+          <h1 className="text-3xl font-semibold text-slate-700">İşletme Yönetimi</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Veritabanında toplam <span className="text-blue-600 font-bold">{totalCount}</span> kayıt bulundu.</p>
         </div>
         <NeuButton onClick={fetchBusinesses} className="px-4 py-2 text-xs">
@@ -243,7 +243,7 @@ export default function AllBusinessesPage() {
       </div>
 
       {/* --- OPERASYONEL FİLTRE BAR --- */}
-      <div className="bg-[#E0E5EC] p-6 rounded-[30px] shadow-[inset_6px_6px_12px_#a3b1c6,inset_-6px_-6px_12px_#ffffff] mb-8">
+      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           
           <div className="md:col-span-4">
@@ -293,7 +293,7 @@ export default function AllBusinessesPage() {
           {loading ? ( <div className="flex justify-center pt-20"><Loader2 className="animate-spin text-blue-500 w-10 h-10"/></div> ) : 
            businesses.length === 0 ? ( <div className="text-center pt-20 text-slate-400 font-bold">Kriterlere uygun kayıt bulunamadı.</div> ) : (
             <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-[#E0E5EC] z-10 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-300/50">
+              <thead className="sticky top-0 bg-white z-10 text-slate-400 text-[10px] font-semibold uppercase tracking-widest border-b border-slate-300/50">
                 <tr>
                   <th className="pb-4 pl-4">İşletme</th>
                   <th className="pb-4">Kategori & Konum</th>
@@ -306,7 +306,7 @@ export default function AllBusinessesPage() {
                 {businesses.map(biz => (
                   <tr key={biz.id} className="group transition-colors hover:bg-slate-200/40">
                     <td className="py-4 pl-4">
-                      <div className="font-black text-slate-700">{biz.name}</div>
+                      <div className="font-semibold text-slate-700">{biz.name}</div>
                       <div className="text-xs text-slate-500 font-mono">{biz.phone}</div>
                     </td>
                     <td className="py-4">
@@ -320,9 +320,9 @@ export default function AllBusinessesPage() {
                       </div>
                     </td>
                     <td className="py-4">
-                      {biz.status === 'active' && <span className="flex items-center gap-1 text-xs font-black text-green-600"><CheckCircle className="w-4 h-4"/> AKTİF</span>}
-                      {biz.status === 'passive' && <span className="flex items-center gap-1 text-xs font-black text-orange-500"><PauseCircle className="w-4 h-4"/> PASİF</span>}
-                      {biz.status === 'rejected' && <span className="flex items-center gap-1 text-xs font-black text-red-500"><XCircle className="w-4 h-4"/> RED</span>}
+                      {biz.status === 'active' && <span className="flex items-center gap-1 text-xs font-semibold text-green-600"><CheckCircle className="w-4 h-4"/> AKTİF</span>}
+                      {biz.status === 'passive' && <span className="flex items-center gap-1 text-xs font-semibold text-orange-500"><PauseCircle className="w-4 h-4"/> PASİF</span>}
+                      {biz.status === 'rejected' && <span className="flex items-center gap-1 text-xs font-semibold text-red-500"><XCircle className="w-4 h-4"/> RED</span>}
                     </td>
                     <td className="py-4 text-xs font-bold text-slate-500">
                       {new Date(biz.created_at).toLocaleDateString('tr-TR')}
@@ -358,7 +358,7 @@ export default function AllBusinessesPage() {
               <ChevronLeft className="w-4 h-4" /> Önceki
             </NeuButton>
             
-            <span className="font-black text-slate-700 bg-slate-200 px-4 py-2 rounded-lg shadow-inner text-xs">
+            <span className="font-semibold text-slate-700 bg-slate-200 px-4 py-2 rounded-lg shadow-inner text-xs">
               Sayfa {page}
             </span>
 
@@ -376,11 +376,11 @@ export default function AllBusinessesPage() {
       {/* --- DETAY MODALI --- */}
       {selectedBiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-[#E0E5EC] w-full max-w-6xl h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white w-full max-w-6xl h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 bg-[#E0E5EC] z-20 shadow-sm relative border-b border-slate-300">
+            <div className="flex justify-between items-center p-6 bg-white z-20 shadow-sm relative border-b border-slate-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-700">{selectedBiz.name}</h2>
+                <h2 className="text-2xl font-semibold text-slate-700">{selectedBiz.name}</h2>
                 <div className="text-xs font-bold text-slate-400 tracking-wider mt-1">SİSTEM ID: {selectedBiz.id}</div>
               </div>
               <NeuButton onClick={() => setSelectedBiz(null)} className="w-10 h-10 rounded-full !p-0">
@@ -389,9 +389,9 @@ export default function AllBusinessesPage() {
             </div>
 
             {/* Modal Tabs */}
-            <div className="px-8 flex gap-2 bg-[#E0E5EC] pt-4 border-b border-slate-300/50">
+            <div className="px-8 flex gap-2 bg-white pt-4 border-b border-slate-300/50">
                {['genel', 'konum', 'ozellikler', 'sahip'].map(tab => (
-                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-t-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-200 text-blue-600 shadow-inner' : 'text-slate-400 hover:bg-slate-200/50'}`}>{tab}</button>
+                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-t-xl text-xs font-semibold uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-200 text-blue-600 shadow-inner' : 'text-slate-400 hover:bg-slate-200/50'}`}>{tab}</button>
                ))}
             </div>
 
@@ -411,7 +411,7 @@ export default function AllBusinessesPage() {
                                <option value="active">AKTİF</option> <option value="passive">PASİF</option> <option value="rejected">REDDEDİLDİ</option>
                              </NeuSelect>
                           </div>
-                          <div className="group w-full"><label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block">AÇIKLAMA</label><textarea value={editForm.description || ''} onChange={e => setEditForm({...editForm, description: e.target.value})} className="w-full h-32 bg-[#E0E5EC] p-4 rounded-xl text-slate-700 text-sm outline-none shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]" /></div>
+                          <div className="group w-full"><label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block">AÇIKLAMA</label><textarea value={editForm.description || ''} onChange={e => setEditForm({...editForm, description: e.target.value})} className="w-full h-32 bg-white p-4 rounded-xl text-slate-700 text-sm outline-none shadow-sm" /></div>
                        </div>
                        <div className="col-span-4 space-y-6">
                           <NeuInput label="TELEFON" value={editForm.phone} onChange={(e: any) => setEditForm({...editForm, phone: e.target.value})} icon={Phone} />
@@ -427,13 +427,13 @@ export default function AllBusinessesPage() {
                            <NeuInput label="BOYLAM" type="number" value={editForm.lng} onChange={(e: any) => setEditForm({...editForm, lng: parseFloat(e.target.value)})} icon={Globe} />
                            <NeuInput label="YOL ADI" value={editForm.road_name || ''} onChange={(e: any) => setEditForm({...editForm, road_name: e.target.value})} icon={MapPin} />
                            <NeuInput label="YOL NOTU" value={editForm.road_note || ''} onChange={(e: any) => setEditForm({...editForm, road_note: e.target.value})} icon={MapPin} />
-                           <div className="group w-full"><label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block">ADRES METNİ</label><textarea value={editForm.address_text || ''} onChange={e => setEditForm({...editForm, address_text: e.target.value})} className="w-full h-24 bg-[#E0E5EC] p-4 rounded-xl text-slate-700 text-sm outline-none shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]" /></div>
+                           <div className="group w-full"><label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block">ADRES METNİ</label><textarea value={editForm.address_text || ''} onChange={e => setEditForm({...editForm, address_text: e.target.value})} className="w-full h-24 bg-white p-4 rounded-xl text-slate-700 text-sm outline-none shadow-sm" /></div>
                         </div>
-                        <div className="h-full bg-slate-300 rounded-[30px] flex items-center justify-center relative overflow-hidden group shadow-inner">
+                        <div className="h-full bg-slate-300 rounded-2xl flex items-center justify-center relative overflow-hidden group shadow-inner">
                              <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center" />
                              <div className="z-10 text-center">
                                 <MapPin className="w-12 h-12 text-red-500 mx-auto mb-2 drop-shadow-lg" />
-                                <div className="font-black text-slate-600 mb-2">{editForm.lat}, {editForm.lng}</div>
+                                <div className="font-semibold text-slate-600 mb-2">{editForm.lat}, {editForm.lng}</div>
                                 <a href={`https://www.google.com/maps/search/?api=1&query=${editForm.lat},${editForm.lng}`} target="_blank" className="px-4 py-2 bg-white rounded-full text-xs font-bold text-blue-600 shadow hover:scale-105 transition-transform block">Haritada Aç</a>
                              </div>
                         </div>
@@ -442,7 +442,7 @@ export default function AllBusinessesPage() {
                   {activeTab === 'ozellikler' && (
                      <div className="grid grid-cols-4 gap-4">
                         {allFeatures.map(f => (
-                           <div key={f.id} onClick={() => toggleFeature(f.name)} className={`p-4 rounded-xl cursor-pointer flex items-center gap-2 font-bold text-xs transition-all select-none ${bizFeatures.includes(f.name) ? 'bg-blue-500 text-white shadow-lg' : 'bg-[#E0E5EC] text-slate-500 shadow-[5px_5px_10px_#a3b1c6,-5px_-5px_10px_#ffffff] hover:text-slate-700'}`}>
+                           <div key={f.id} onClick={() => toggleFeature(f.name)} className={`p-4 rounded-xl cursor-pointer flex items-center gap-2 font-bold text-xs transition-all select-none ${bizFeatures.includes(f.name) ? 'bg-blue-500 text-white shadow-lg' : 'bg-white text-slate-500 shadow-sm hover:text-slate-700'}`}>
                               {bizFeatures.includes(f.name) ? <CheckCircle className="w-4 h-4"/> : <Wifi className="w-4 h-4 opacity-50"/>} {f.name}
                            </div>
                         ))}
@@ -452,7 +452,7 @@ export default function AllBusinessesPage() {
                      <div className="flex justify-center p-10">
                         <NeuCard className="p-10 text-center max-w-md w-full">
                            <div className="w-20 h-20 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center text-slate-400 shadow-inner"><User className="w-8 h-8"/></div>
-                           <div className="text-2xl font-black text-slate-700">{bizOwner.full_name || 'İsimsiz'}</div>
+                           <div className="text-2xl font-semibold text-slate-700">{bizOwner.full_name || 'İsimsiz'}</div>
                            <div className="text-blue-500 font-bold mb-4">{bizOwner.email}</div>
                            <div className="text-xs font-mono bg-slate-200 p-2 rounded text-slate-500">{bizOwner.id}</div>
                         </NeuCard>
@@ -463,7 +463,7 @@ export default function AllBusinessesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 bg-[#E0E5EC] border-t border-slate-300/50 flex justify-end gap-4 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+            <div className="p-6 bg-white border-t border-slate-300/50 flex justify-end gap-4 z-20 shadow-sm">
               <NeuButton onClick={() => setSelectedBiz(null)} className="px-8 py-3 text-slate-500">VAZGEÇ</NeuButton>
               <NeuButton onClick={handleSaveAll} variant="solid-blue" className="px-8 py-3">KAYDET</NeuButton>
             </div>

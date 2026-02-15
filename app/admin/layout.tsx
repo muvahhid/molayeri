@@ -1,124 +1,226 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
-import { 
-  LayoutDashboard, Users, LogOut, MapPin, Store, 
-  Layers, Tag, ChevronRight, ClipboardCheck, MessageSquare 
+import { usePathname, useRouter } from 'next/navigation'
+import { Fragment, useMemo, useState } from 'react'
+import type { ComponentType } from 'react'
+import {
+  ClipboardCheck,
+  Flag,
+  Layers,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Menu,
+  MessageSquare,
+  Store,
+  Tag,
+  Users,
+  X,
 } from 'lucide-react'
+import { getBrowserSupabase } from '@/lib/browser-client'
+
+type NavItem = {
+  href: string
+  label: string
+  icon: ComponentType<{ size?: number }>
+}
+
+type NavSection = {
+  title: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavSection[] = [
+  {
+    title: 'Genel Bakış',
+    items: [
+      { href: '/admin/dashboard', label: 'Ana Panel', icon: LayoutDashboard },
+      { href: '/admin/approvals', label: 'Onay Merkezi', icon: ClipboardCheck },
+      { href: '/admin/messages', label: 'Mesajlar', icon: MessageSquare },
+      { href: '/admin/reviews', label: 'Yorum Şikayetleri', icon: Flag },
+    ],
+  },
+  {
+    title: 'İşletme Yönetimi',
+    items: [
+      { href: '/admin/businesses', label: 'İşletmeler', icon: Store },
+      { href: '/admin/categories', label: 'Kategoriler', icon: Layers },
+      { href: '/admin/features', label: 'Özellikler', icon: Tag },
+    ],
+  },
+  {
+    title: 'Sistem',
+    items: [{ href: '/admin/users', label: 'Kullanıcılar', icon: Users }],
+  },
+]
+
+function buildTitle(pathname: string): string {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
+        return item.label
+      }
+    }
+  }
+
+  return 'Admin Paneli'
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
-  
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const router = useRouter()
+  const supabase = useMemo(() => getBrowserSupabase(), [])
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const pageTitle = buildTitle(pathname)
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  const menuItemClass = (path: string) => {
-    const isActive = pathname.startsWith(path)
-    const baseStyle = "group relative flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-300 ease-out cursor-pointer font-bold text-sm select-none"
-    
-    if (isActive) {
-      return `${baseStyle} text-blue-600 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_#a3b1c6,inset_-4px_-4px_8px_#ffffff]`
-    }
-    return `${baseStyle} text-slate-500 hover:text-blue-500 hover:shadow-[5px_5px_10px_#a3b1c6,-5px_-5px_10px_#ffffff] hover:-translate-y-0.5`
-  }
-
   return (
-    <div className="h-screen bg-[#E0E5EC] flex font-sans text-slate-700 overflow-hidden selection:bg-blue-200">
-      
-      <aside className="w-72 bg-[#E0E5EC] flex flex-col z-50 shadow-[4px_0_24px_rgba(163,177,198,0.3)] relative">
-        <div className="p-8 pb-4">
-          <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#E0E5EC] shadow-[8px_8px_16px_#a3b1c6,-8px_-8px_16px_#ffffff]">
-            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-300">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-black text-lg tracking-tight text-slate-700 leading-none">MolaYeri</h1>
-              <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Yönetim Paneli</span>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-6 space-y-3 overflow-y-auto py-4 custom-scrollbar">
-          <div className="text-[10px] font-black text-slate-400 pl-4 mb-2 tracking-widest uppercase opacity-60">Genel Bakış</div>
-          
-          <Link href="/admin/dashboard">
-            <div className={menuItemClass('/admin/dashboard')}>
-              <LayoutDashboard className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Ana Panel</span>
-            </div>
+    <div className="min-h-screen p-3 md:p-6 text-slate-700 bg-[radial-gradient(circle_at_6%_8%,rgba(255,145,0,0.18)_0,rgba(255,145,0,0)_33%),radial-gradient(circle_at_94%_4%,rgba(59,130,246,0.12)_0,rgba(59,130,246,0)_31%),linear-gradient(160deg,#e4e9f0_0%,#eef2f8_52%,#e0e5ec_100%)]">
+      <div className="mx-auto max-w-[1460px] min-h-[calc(100vh-1.5rem)] md:min-h-[calc(100vh-3rem)] rounded-[30px] overflow-hidden bg-[#f2f5fb] shadow-[0_26px_70px_-34px_rgba(15,23,42,0.45),0_12px_22px_-14px_rgba(30,64,175,0.2),inset_0_1px_0_rgba(255,255,255,0.9)] flex flex-col lg:flex-row relative">
+        <aside
+          className={`fixed lg:static z-40 top-0 left-0 h-screen lg:h-auto w-[296px] lg:w-[296px] lg:flex-none p-4 bg-[linear-gradient(185deg,#f8faff_0%,#f1f5fe_45%,#edf3fc_100%)] shadow-[22px_0_38px_-28px_rgba(15,23,42,0.45),inset_-1px_0_0_rgba(148,163,184,0.26)] transition-transform duration-300 ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-[105%] lg:translate-x-0'
+          }`}
+        >
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/70 bg-[linear-gradient(150deg,#ffffff_0%,#f2f6ff_100%)] shadow-[0_14px_24px_-18px_rgba(15,23,42,0.5),inset_0_1px_0_rgba(255,255,255,0.95)]"
+          >
+            <span className="w-10 h-10 rounded-[14px] bg-[linear-gradient(145deg,#ffb347_0%,#ff9100_100%)] text-white inline-flex items-center justify-center shadow-[0_10px_16px_-9px_rgba(255,145,0,0.58),inset_0_1px_0_rgba(255,255,255,0.32)]">
+              <MapPin size={18} />
+            </span>
+            <span>
+              <p className="text-[20px] leading-none font-bold text-slate-800">MolaYeri</p>
+              <p className="text-[12px] mt-1 text-slate-500">Yönetim Merkezi</p>
+            </span>
           </Link>
 
-          <Link href="/admin/approvals">
-            <div className={menuItemClass('/admin/approvals')}>
-              <ClipboardCheck className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Onay Merkezi</span>
+          <nav className="mt-3 max-h-[calc(100vh-140px)] lg:max-h-none overflow-y-auto pr-1">
+            {NAV_GROUPS.map((group) => (
+              <Fragment key={group.title}>
+                <p className="mt-5 mb-2 px-2 text-[10px] tracking-[0.2em] uppercase font-semibold text-slate-500">
+                  {group.title}
+                </p>
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`group relative flex items-center gap-3 px-3.5 py-3 mb-2 rounded-2xl text-[15px] font-semibold transition-all duration-200 ${
+                        active
+                          ? 'text-slate-900 bg-[linear-gradient(138deg,#ffffff_0%,#f8efe2_100%)] shadow-[0_16px_22px_-18px_rgba(249,115,22,0.62),inset_0_1px_0_rgba(255,255,255,0.96)]'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 hover:shadow-[0_12px_18px_-16px_rgba(15,23,42,0.55)]'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-1 top-1/2 h-7 w-1.5 -translate-y-1/2 rounded-full transition-opacity ${
+                          active ? 'bg-gradient-to-b from-amber-400 to-orange-500 opacity-100' : 'opacity-0 group-hover:opacity-60'
+                        }`}
+                      />
+                      <span
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all ${
+                          active
+                            ? 'bg-[linear-gradient(145deg,#ffb347_0%,#ff9100_100%)] text-white shadow-[0_12px_16px_-10px_rgba(249,115,22,0.62)]'
+                            : 'bg-white/70 text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] group-hover:text-slate-700'
+                        }`}
+                      >
+                        <Icon size={16} />
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </Fragment>
+            ))}
+
+            <p className="mt-5 mb-2 px-2 text-[10px] tracking-[0.2em] uppercase font-semibold text-slate-500">Hesap</p>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full text-left flex items-center gap-3 px-3.5 py-3 rounded-2xl text-[15px] font-semibold text-rose-700 bg-[linear-gradient(145deg,#fff2f2_0%,#ffe9e9_100%)] shadow-[0_14px_20px_-18px_rgba(190,18,60,0.62),inset_0_1px_0_rgba(255,255,255,0.95)]"
+            >
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(145deg,#fb7185_0%,#e11d48_100%)] text-white shadow-[0_12px_16px_-10px_rgba(225,29,72,0.7)]">
+                <LogOut size={16} />
+              </span>
+              <span>Güvenli Çıkış</span>
+            </button>
+
+            <div className="mt-4 rounded-2xl p-3.5 bg-[linear-gradient(145deg,#ffffff_0%,#f2f6ff_100%)] shadow-[0_14px_20px_-18px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.92)]">
+              <p className="text-[13px] font-semibold text-slate-700">Admin Modu</p>
+              <p className="text-[12px] text-slate-500 mt-1">Kullanıcı, işletme ve içerik akışları tek panelde.</p>
             </div>
-          </Link>
+          </nav>
+        </aside>
 
-          <Link href="/admin/messages">
-            <div className={menuItemClass('/admin/messages')}>
-              <MessageSquare className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Mesajlar</span>
+        <section className="min-w-0 flex flex-col lg:flex-1 bg-[linear-gradient(180deg,#f8faff_0%,#f3f6fc_100%)]">
+          <header className="h-[84px] px-3 md:px-6 flex items-center justify-between gap-3 bg-[linear-gradient(180deg,#f8fbff_0%,#f2f6fd_100%)] border-b border-slate-200/70 shadow-[0_10px_18px_-16px_rgba(15,23,42,0.45)]">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                className="lg:hidden w-9 h-9 rounded-xl bg-white text-slate-600 shadow-[0_10px_16px_-12px_rgba(15,23,42,0.55)] inline-flex items-center justify-center"
+                onClick={() => setMobileOpen((value) => !value)}
+                aria-label="Menüyü aç"
+              >
+                {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
+
+              <div className="min-w-0">
+                <p className="text-[11px] tracking-[0.18em] uppercase font-semibold text-slate-500">Admin Paneli</p>
+                <h1 className="text-[34px] leading-none md:text-[36px] font-bold text-slate-800 truncate">{pageTitle}</h1>
+              </div>
             </div>
-          </Link>
 
-          <div className="text-[10px] font-black text-slate-400 pl-4 mt-6 mb-2 tracking-widest uppercase opacity-60">İşletme Yönetimi</div>
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline-flex items-center gap-2 text-[12px] font-semibold text-emerald-700 px-3 py-2 rounded-full bg-white shadow-[0_10px_16px_-13px_rgba(16,185,129,0.48)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(47,189,142,0.22)]" />
+                Sistem Aktif
+              </span>
 
-          <Link href="/admin/businesses">
-            <div className={menuItemClass('/admin/businesses')}>
-              <Store className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">İşletmeler</span>
+              <Link
+                href="/admin/approvals"
+                className="inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold text-slate-700 px-3 py-2 rounded-full bg-white shadow-[0_10px_16px_-13px_rgba(15,23,42,0.5)]"
+              >
+                <ClipboardCheck size={14} />
+                Bekleyen Onaylar
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold text-rose-700 px-3 py-2 rounded-full bg-white shadow-[0_10px_16px_-13px_rgba(190,24,93,0.42)]"
+              >
+                <LogOut size={14} />
+                Çıkış
+              </button>
             </div>
-          </Link>
+          </header>
 
-          <Link href="/admin/categories">
-            <div className={menuItemClass('/admin/categories')}>
-              <Layers className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Kategoriler</span>
-            </div>
-          </Link>
+          <main className="flex-1 overflow-y-auto p-3 md:p-5">
+            <div className="w-full max-w-[1240px] mx-auto">{children}</div>
+          </main>
+        </section>
+      </div>
 
-          <Link href="/admin/features">
-            <div className={menuItemClass('/admin/features')}>
-              <Tag className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Özellikler</span>
-            </div>
-          </Link>
-
-          <div className="text-[10px] font-black text-slate-400 pl-4 mt-6 mb-2 tracking-widest uppercase opacity-60">Sistem & Kullanıcılar</div>
-
-          <Link href="/admin/users">
-            <div className={menuItemClass('/admin/users')}>
-              <Users className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span className="flex-1">Kullanıcılar</span>
-            </div>
-          </Link>
-        </nav>
-
-        <div className="p-6">
-          <button onClick={handleLogout} className="w-full group flex items-center justify-center gap-3 px-5 py-4 rounded-2xl font-bold text-red-500 transition-all shadow-[6px_6px_12px_#a3b1c6,-6px_-6px_12px_#ffffff] hover:text-red-600 hover:shadow-[inset_4px_4px_8px_#a3b1c6,inset_-4px_-4px_8px_#ffffff] active:scale-95">
-            <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            <span>Güvenli Çıkış</span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 relative overflow-hidden flex flex-col">
-        <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-[#a3b1c6]/10 to-transparent z-10 pointer-events-none" />
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-           {children}
-        </div>
-      </main>
+      {mobileOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 bg-slate-900/38 z-30 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Menüyü kapat"
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,7 +1,18 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  fetchUserRoleById,
+  getDashboardPathForRole,
+  isAdminRole,
+  isMerchantRole,
+} from '@/lib/auth-role'
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const isAdminPath = pathname.startsWith('/admin')
+  const isMerchantPath = pathname.startsWith('/merchant')
+  const isLoginPath = pathname.startsWith('/login')
+
   // 1. Yanıt (Response) nesnesini oluştur
   let response = NextResponse.next({
     request: {
@@ -59,20 +70,41 @@ export async function middleware(request: NextRequest) {
   // 3. Kullanıcı oturumunu kontrol et
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 4. KURAL: Eğer kullanıcı '/admin' paneline girmeye çalışıyorsa ve giriş yapmamışsa
-  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
-    // Onu yaka paça '/login' sayfasına at
+  // 4. KURAL: Korumalı alanlar için giriş zorunlu
+  if ((isAdminPath || isMerchantPath) && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     return NextResponse.redirect(loginUrl)
   }
 
-  // 5. KURAL: Eğer kullanıcı zaten giriş yapmışsa ve '/login' sayfasına girmeye çalışıyorsa
-  if (request.nextUrl.pathname.startsWith('/login') && user) {
-    // Onu direkt panele yönlendir (Tekrar giriş yapmasına gerek yok)
-    const adminUrl = request.nextUrl.clone()
-    adminUrl.pathname = '/admin/dashboard'
-    return NextResponse.redirect(adminUrl)
+  if (!user) {
+    return response
+  }
+
+  const fallbackRole =
+    ((user.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined) || 'user'
+  const role = await fetchUserRoleById(supabase, user.id, fallbackRole)
+  const targetDashboard = getDashboardPathForRole(role)
+
+  // 5. KURAL: Kullanıcı login ekranındaysa doğrudan rol paneline yönlendir
+  if (isLoginPath) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = targetDashboard
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // 6. KURAL: Admin alanı sadece admin
+  if (isAdminPath && !isAdminRole(role)) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = targetDashboard
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // 7. KURAL: İşletmeci alanı sadece işletmeci/pending_business
+  if (isMerchantPath && !isMerchantRole(role)) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = targetDashboard
+    return NextResponse.redirect(redirectUrl)
   }
 
   return response
@@ -82,6 +114,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*', // Admin altındaki her şey
+    '/merchant/:path*', // İşletmeci paneli
     '/login',        // Giriş sayfası
   ],
 }

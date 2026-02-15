@@ -9,18 +9,18 @@ import {
 
 // --- NEUMORPHIC UI COMPONENTS ---
 const NeuCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-[#E0E5EC] rounded-[30px] shadow-[9px_9px_16px_rgb(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.5)] ${className}`}>
+  <div className={`bg-white rounded-2xl shadow-sm ${className}`}>
     {children}
   </div>
 )
 
 const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled = false }: any) => {
   const baseStyle = "transition-all duration-200 active:scale-[0.98] rounded-xl font-bold flex items-center justify-center gap-2 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-  const convex = "shadow-[6px_6px_10px_rgb(163,177,198,0.6),-6px_-6px_10px_rgba(255,255,255,0.5)] active:shadow-[inset_4px_4px_8px_rgb(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]"
+  const convex = "shadow-sm active:shadow-sm"
   
-  let colors = "bg-[#E0E5EC] text-slate-600 hover:text-slate-800"
-  if (variant === "primary") colors = "bg-[#E0E5EC] text-blue-600 hover:text-blue-700"
-  if (variant === "danger") colors = "bg-[#E0E5EC] text-red-500 hover:text-red-600"
+  let colors = "bg-white text-slate-600 hover:text-slate-800"
+  if (variant === "primary") colors = "bg-white text-blue-600 hover:text-blue-700"
+  if (variant === "danger") colors = "bg-white text-red-500 hover:text-red-600"
   if (variant === "solid-blue") colors = "bg-blue-600 text-white shadow-blue-300" 
 
   return (
@@ -32,15 +32,15 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
 
 const NeuInput = ({ label, icon: Icon, ...props }: any) => (
   <div className="group w-full">
-    {label && <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
+    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
     <div className="relative flex items-center">
       {Icon && <Icon className="absolute left-4 text-slate-400 w-4 h-4 transition-colors group-focus-within:text-blue-500" />}
       <input 
         {...props}
-        className={`w-full bg-[#E0E5EC] ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
+        className={`w-full bg-white ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
         border border-transparent focus:border-blue-500/20
-        shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]
-        focus:shadow-[inset_6px_6px_12px_#a3b1c6,inset_-6px_-6px_12px_#ffffff]`}
+        shadow-sm
+        focus:shadow-sm`}
       />
     </div>
   </div>
@@ -48,12 +48,12 @@ const NeuInput = ({ label, icon: Icon, ...props }: any) => (
 
 const NeuSelect = ({ label, children, ...props }: any) => (
   <div className="group w-full">
-    {label && <label className="text-[10px] font-black text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
+    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
     <div className="relative">
       <select 
         {...props}
-        className="w-full bg-[#E0E5EC] pl-4 pr-10 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none appearance-none cursor-pointer
-        shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff]"
+        className="w-full bg-white pl-4 pr-10 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none appearance-none cursor-pointer
+        shadow-sm"
       >
         {children}
       </select>
@@ -207,19 +207,19 @@ export default function FeaturesPage() {
       {/* BAŞLIK */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-700">Özellik Yönetimi</h1>
+          <h1 className="text-3xl font-semibold text-slate-700">Özellik Yönetimi</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Global veya kategori bazlı işletme imkanlarını yönet.</p>
         </div>
       </div>
 
       {/* MOD SEÇİMİ (TABLAR) */}
       <div className="flex justify-center mb-8">
-        <div className="bg-[#E0E5EC] p-1.5 rounded-[20px] shadow-[inset_5px_5px_10px_#a3b1c6,inset_-5px_-5px_10px_#ffffff] flex">
+        <div className="bg-white p-1.5 rounded-2xl shadow-sm flex">
           <button 
             onClick={() => setViewMode('global')}
-            className={`px-8 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2
+            className={`px-8 py-3 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2
               ${viewMode === 'global' 
-                ? 'bg-[#E0E5EC] text-blue-600 shadow-[5px_5px_10px_#a3b1c6,-5px_-5px_10px_#ffffff]' 
+                ? 'bg-white text-blue-600 shadow-sm' 
                 : 'text-slate-400 hover:text-slate-600'}
             `}
           >
@@ -227,9 +227,9 @@ export default function FeaturesPage() {
           </button>
           <button 
              onClick={() => setViewMode('category')}
-             className={`px-8 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2
+             className={`px-8 py-3 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2
               ${viewMode === 'category' 
-                ? 'bg-[#E0E5EC] text-blue-600 shadow-[5px_5px_10px_#a3b1c6,-5px_-5px_10px_#ffffff]' 
+                ? 'bg-white text-blue-600 shadow-sm' 
                 : 'text-slate-400 hover:text-slate-600'}
             `}
           >
@@ -239,7 +239,7 @@ export default function FeaturesPage() {
       </div>
 
       {/* KONTROL PANELI (Filtre + Ekleme) */}
-      <div className="bg-[#E0E5EC] p-6 rounded-[30px] shadow-[inset_6px_6px_12px_#a3b1c6,inset_-6px_-6px_12px_#ffffff] mb-8">
+      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           
           {/* Sol: Kategori Seçimi (Sadece Kategori Modunda) */}
@@ -302,7 +302,7 @@ export default function FeaturesPage() {
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-black text-slate-700 mb-2">{feat.name}</h3>
+                  <h3 className="text-xl font-semibold text-slate-700 mb-2">{feat.name}</h3>
                   
                   <div className="text-xs font-bold text-slate-400">
                     {feat.is_global 
@@ -320,10 +320,10 @@ export default function FeaturesPage() {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-[#E0E5EC] w-full max-w-md rounded-[40px] shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-white/50">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-300 border border-white/50">
             
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-slate-700">
+              <h2 className="text-2xl font-semibold text-slate-700">
                 {editingId ? 'Özelliği Düzenle' : 'Yeni Özellik'}
               </h2>
               <NeuButton onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full !p-0">
@@ -336,7 +336,7 @@ export default function FeaturesPage() {
                   <span className="font-bold text-slate-700">İşlem Türü:</span>{' '}
                   {viewMode === 'global' ? 'Global Özellik Ekleme' : `Kategoriye Özel Ekleme`}
                   {viewMode === 'category' && (
-                     <div className="font-black text-blue-600 mt-1">
+                     <div className="font-semibold text-blue-600 mt-1">
                         👉 {categories.find(c => c.id === selectedCategoryId)?.name}
                      </div>
                   )}
