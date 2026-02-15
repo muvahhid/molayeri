@@ -331,7 +331,7 @@ export default function MerchantCampaignsPage() {
                     />
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    Bu örnekteki kırmızı çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir.
+                    Bu örnekteki kırmızı çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir. Dilediğiniz rengi seçip yayınlayabilirsiniz
                   </p>
                 </section>
               </div>

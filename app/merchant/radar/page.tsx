@@ -54,6 +54,7 @@ const QUICK_TEMPLATES = [
 ]
 const QUICK_EMOJIS = ['🔥', '☕️', '🍔', '⛽️', '📢', '⚡️', '🎁', '👋']
 const MESSAGE_LIMIT = 120
+const SETTINGS_STORAGE_KEY = 'merchant_settings_v1'
 
 function normalizeBusinessType(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim().toLowerCase() : ''
@@ -114,6 +115,34 @@ function sortCategorySlugs(slugs: string[]): string[] {
     .sort((a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b))
 }
 
+function asObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+  return {}
+}
+
+function resolveRadarRuntimeDefaults(raw: unknown): {
+  rangeKm?: number
+  message?: string
+  defaultBusinessId?: string
+} {
+  const root = asObject(raw)
+  const radar = asObject(root.radar)
+  const operations = asObject(root.operations)
+
+  const rangeRaw = Number(radar.defaultRangeKm)
+  const messageRaw = typeof radar.defaultMessage === 'string' ? radar.defaultMessage.trim() : ''
+  const defaultBusinessRaw =
+    typeof operations.defaultBusinessId === 'string' ? operations.defaultBusinessId.trim() : ''
+
+  return {
+    rangeKm: Number.isFinite(rangeRaw) ? Math.max(1, Math.min(50, rangeRaw)) : undefined,
+    message: messageRaw ? messageRaw.slice(0, MESSAGE_LIMIT) : undefined,
+    defaultBusinessId: defaultBusinessRaw || undefined,
+  }
+}
+
 export default function MerchantRadarPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
 
@@ -143,7 +172,10 @@ export default function MerchantRadarPage() {
   const loadBusinesses = async () => {
     setLoading(true)
 
-    const userId = await requireCurrentUserId(supabase)
+    const { data: authData } = await supabase.auth.getUser()
+    const user = authData.user
+    const userId = user?.id || (await requireCurrentUserId(supabase))
+
     if (!userId) {
       setBusinesses([])
       setSelectedBusinessId('')
@@ -151,11 +183,40 @@ export default function MerchantRadarPage() {
       return
     }
 
+    const metadataDefaults = resolveRadarRuntimeDefaults(asObject(user?.user_metadata).merchant_settings)
+    let localDefaults: ReturnType<typeof resolveRadarRuntimeDefaults> | null = null
+    if (typeof window !== 'undefined') {
+      try {
+        const localRaw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
+        if (localRaw) {
+          localDefaults = resolveRadarRuntimeDefaults(JSON.parse(localRaw))
+        }
+      } catch {
+        localDefaults = null
+      }
+    }
+
+    const effectiveDefaults = {
+      rangeKm: metadataDefaults.rangeKm ?? localDefaults?.rangeKm,
+      message: metadataDefaults.message ?? localDefaults?.message,
+      defaultBusinessId: metadataDefaults.defaultBusinessId ?? localDefaults?.defaultBusinessId,
+    }
+
+    if (effectiveDefaults.rangeKm != null) {
+      setRangeKm(effectiveDefaults.rangeKm)
+    }
+    if (effectiveDefaults.message) {
+      setMessage((current) => (current.trim().length > 0 ? current : effectiveDefaults.message || ''))
+    }
+
     const ownedBusinesses = await fetchOwnedBusinesses(supabase, userId)
     setBusinesses(ownedBusinesses)
     setSelectedBusinessId((current) => {
       if (current && ownedBusinesses.some((item) => item.id === current)) {
         return current
+      }
+      if (effectiveDefaults.defaultBusinessId && ownedBusinesses.some((item) => item.id === effectiveDefaults.defaultBusinessId)) {
+        return effectiveDefaults.defaultBusinessId
       }
       return ownedBusinesses[0]?.id || ''
     })

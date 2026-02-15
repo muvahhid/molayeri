@@ -405,7 +405,7 @@ function MerchantConvoysPageContent() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  const [filtersExpanded, setFiltersExpanded] = useState(false)
+  const [filtersExpanded, setFiltersExpanded] = useState(true)
   const [selectedTab, setSelectedTab] = useState<ListTab>('active')
   const [selectedCategory, setSelectedCategory] = useState<(typeof CATEGORY_FILTERS)[number]>('Hepsi')
   const [offerStatusFilter, setOfferStatusFilter] = useState<OfferStatusFilter>('all')
