@@ -223,7 +223,7 @@ function cardToneClass(level: FeedLevel): string {
   return 'border-emerald-200 bg-emerald-50'
 }
 
-async function safeCount(query: Promise<CountResponse>): Promise<number> {
+async function safeCount(query: PromiseLike<CountResponse>): Promise<number> {
   try {
     const { count, error } = await query
     if (error) return 0

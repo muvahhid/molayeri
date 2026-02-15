@@ -129,7 +129,9 @@ function safeStringify(value: unknown): string {
   }
 }
 
-async function safeCount(query: Promise<{ count: number | null; error: { message?: string } | null }>): Promise<number> {
+async function safeCount(
+  query: PromiseLike<{ count: number | null; error: { message?: string } | null }>
+): Promise<number> {
   try {
     const { count, error } = await query
     if (error) return 0

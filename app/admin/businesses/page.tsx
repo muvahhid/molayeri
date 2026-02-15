@@ -274,7 +274,9 @@ function statusTone(status: string | null): string {
   return 'bg-slate-100 border-slate-200 text-slate-600'
 }
 
-async function safeCount(query: Promise<{ count: number | null; error: { message?: string } | null }>): Promise<number> {
+async function safeCount(
+  query: PromiseLike<{ count: number | null; error: { message?: string } | null }>
+): Promise<number> {
   try {
     const { count, error } = await query
     if (error) return 0
