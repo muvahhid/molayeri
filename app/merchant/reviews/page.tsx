@@ -222,13 +222,35 @@ export default function MerchantReviewsPage() {
         .filter(Boolean)
         .join('\n')
 
-      await supabase.from('messages').insert({
-        sender_id: currentUserId,
-        recipient_id: null,
-        subject: `Yorum Şikayet Bildirimi • ${selectedBusinessName}`,
-        content,
-        message_type: 'direct',
-      })
+      const { data: adminRows } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(24)
+
+      const adminIds = (adminRows || [])
+        .map((row) => ((row as { id?: string | null }).id || '').trim())
+        .filter((id): id is string => Boolean(id))
+
+      if (adminIds.length > 0) {
+        await supabase.from('messages').insert(
+          adminIds.map((adminId) => ({
+            sender_id: currentUserId,
+            recipient_id: adminId,
+            subject: `Yorum Şikayet Bildirimi • ${selectedBusinessName}`,
+            content,
+            message_type: 'admin_signal',
+          }))
+        )
+      } else {
+        await supabase.from('messages').insert({
+          sender_id: currentUserId,
+          recipient_id: null,
+          subject: `Yorum Şikayet Bildirimi • ${selectedBusinessName}`,
+          content,
+          message_type: 'admin_signal',
+        })
+      }
     }
 
     setReviews((current) =>

@@ -1,475 +1,1873 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { 
-  Search, Filter, Edit3, Save, Trash2, Power,
-  MapPin, Phone, CheckCircle, XCircle, PauseCircle, Loader2, 
-  Image as ImageIcon, User, Wifi, X, ChevronRight, ChevronLeft,
-  ArrowUpDown, SlidersHorizontal, Calendar, Globe
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Eye,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Phone,
+  RefreshCw,
+  Save,
+  Search,
+  Trash2,
+  UserCircle2,
+  X,
 } from 'lucide-react'
 
-// --- NEUMORPHIC UI COMPONENTS ---
-const NeuCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-white rounded-2xl shadow-sm ${className}`}>
-    {children}
-  </div>
-)
+type GenericRow = Record<string, unknown>
 
-const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled = false }: any) => {
-  const baseStyle = "transition-all duration-200 active:scale-[0.98] rounded-xl font-bold flex items-center justify-center gap-2 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-  const convex = "shadow-sm active:shadow-sm"
-  
-  let colors = "bg-white text-slate-600 hover:text-slate-800"
-  if (variant === "primary") colors = "bg-white text-blue-600 hover:text-blue-700"
-  if (variant === "danger") colors = "bg-white text-red-500 hover:text-red-600"
-  if (variant === "solid-blue") colors = "bg-blue-600 text-white shadow-blue-300" 
-
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variant === 'solid-blue' ? 'shadow-lg hover:bg-blue-700' : convex} ${colors} ${className}`}>
-      {children}
-    </button>
-  )
+type CategoryOption = {
+  id: string
+  name: string
+  slug: string
 }
 
-const NeuInput = ({ label, icon: Icon, ...props }: any) => (
-  <div className="group w-full">
-    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
-    <div className="relative flex items-center">
-      {Icon && <Icon className="absolute left-4 text-slate-400 w-4 h-4 transition-colors group-focus-within:text-blue-500" />}
-      <input 
-        {...props}
-        className={`w-full bg-white ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none transition-all
-        border border-transparent focus:border-blue-500/20
-        shadow-sm
-        focus:shadow-sm`}
-      />
-    </div>
-  </div>
-)
-
-const NeuSelect = ({ label, children, ...props }: any) => (
-  <div className="group w-full">
-    {label && <label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block tracking-widest">{label}</label>}
-    <div className="relative">
-      <select 
-        {...props}
-        className="w-full bg-white pl-4 pr-10 py-3 rounded-xl text-slate-700 font-bold text-sm outline-none appearance-none cursor-pointer
-        shadow-sm"
-      >
-        {children}
-      </select>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-        <ChevronRight className="w-4 h-4 rotate-90" />
-      </div>
-    </div>
-  </div>
-)
-
-// --- TİPLER ---
-type Business = {
+type FeatureOption = {
   id: string
-  owner_id: string
+  name: string
+  is_global: boolean
+  category_id: string | null
+}
+
+type ProfileLite = {
+  id: string
+  full_name: string | null
+  email: string | null
+  avatar_url: string | null
+  role: string | null
+  status: string | null
+}
+
+type BusinessRow = {
+  raw: GenericRow
+  id: string
+  owner_id: string | null
+  name: string | null
+  description: string | null
+  phone: string | null
+  address_text: string | null
+  type: string | null
+  status: string | null
+  lat: number | null
+  lng: number | null
+  road_name: string | null
+  road_note: string | null
+  road_type: string | null
+  road_place_id: string | null
+  image_url: string | null
+  menu_description: string | null
+  is_open: boolean
+  created_at: string | null
+}
+
+type BusinessListItem = {
+  business: BusinessRow
+  owner: ProfileLite | null
+  categories: string[]
+}
+
+type BusinessPhoto = {
+  id: string
+  url: string
+  is_cover: boolean
+  created_at: string | null
+}
+
+type BusinessStore = {
+  id: string
+  name: string | null
+  floor_info: string | null
+}
+
+type DetailState = {
+  business: BusinessRow
+  owner: ProfileLite | null
+  ownerRaw: GenericRow | null
+  categoryIds: string[]
+  featureIds: string[]
+  featureLegacyNames: string[]
+  featureWriteMode: 'id' | 'name' | 'mixed'
+  photos: BusinessPhoto[]
+  stores: BusinessStore[]
+  metrics: {
+    campaignCount: number
+    activeCampaignCount: number
+    reviewCount: number
+    reviewAverage: number | null
+    menuItemCount: number
+  }
+}
+
+type FormState = {
   name: string
   description: string
   phone: string
   address_text: string
   type: string
   status: string
-  lat: number
-  lng: number
-  image_url?: string
-  road_name?: string
-  road_note?: string
-  created_at: string
+  lat: string
+  lng: string
+  road_name: string
+  road_note: string
+  road_type: string
+  road_place_id: string
+  image_url: string
+  menu_description: string
+  is_open: boolean
 }
-type Category = { id: string; name: string; slug: string }
-type Feature = { id: string; name: string; is_global: boolean }
-type Profile = { id: string; email: string; full_name?: string; role: string }
 
-const PAGE_SIZE = 10;
+type SortValue = 'created_desc' | 'created_asc' | 'name_asc' | 'name_desc'
+type BulkStatus = 'active' | 'passive' | 'pending' | 'rejected'
+type TabValue = 'genel' | 'konum' | 'kategori' | 'medya' | 'sahip' | 'ham'
 
-export default function AllBusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [allFeatures, setAllFeatures] = useState<Feature[]>([])
-  
-  // Veri Yönetimi State'leri
-  const [loading, setLoading] = useState(true)
-  const [totalCount, setTotalCount] = useState(0)
-  const [page, setPage] = useState(1)
-  
-  // Filtreler
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [sortOrder, setSortOrder] = useState('newest')
+const PAGE_WINDOW = 10
+const PAGE_SIZE_OPTIONS = [25, 50, 100]
 
-  // Detay Modal State
-  const [selectedBiz, setSelectedBiz] = useState<Business | null>(null)
-  const [editForm, setEditForm] = useState<Partial<Business>>({})
-  const [activeTab, setActiveTab] = useState('genel')
-  const [modalLoading, setModalLoading] = useState(false)
-  const [bizFeatures, setBizFeatures] = useState<string[]>([])
-  const [bizOwner, setBizOwner] = useState<Profile | null>(null)
+const panelCardClass =
+  'rounded-2xl border border-white/80 bg-white/95 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] backdrop-blur'
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replaceAll('ı', 'i')
+    .replaceAll('ğ', 'g')
+    .replaceAll('ü', 'u')
+    .replaceAll('ş', 's')
+    .replaceAll('ö', 'o')
+    .replaceAll('ç', 'c')
+}
+
+function formatDate(raw: string | null | undefined): string {
+  if (!raw) return '-'
+  const dt = new Date(raw)
+  if (Number.isNaN(dt.getTime())) return '-'
+  return dt.toLocaleDateString('tr-TR')
+}
+
+function formatDateTime(raw: string | null | undefined): string {
+  if (!raw) return '-'
+  const dt = new Date(raw)
+  if (Number.isNaN(dt.getTime())) return '-'
+  return dt.toLocaleString('tr-TR')
+}
+
+function parseNumber(raw: unknown): number | null {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string') {
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return null
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  if (size <= 0) return [items]
+  const chunks: T[][] = []
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size))
+  }
+  return chunks
+}
+
+function buildBusinessRow(raw: GenericRow): BusinessRow {
+  return {
+    raw,
+    id: String(raw.id || ''),
+    owner_id: typeof raw.owner_id === 'string' ? raw.owner_id : null,
+    name: typeof raw.name === 'string' ? raw.name : null,
+    description: typeof raw.description === 'string' ? raw.description : null,
+    phone: typeof raw.phone === 'string' ? raw.phone : null,
+    address_text: typeof raw.address_text === 'string' ? raw.address_text : null,
+    type: typeof raw.type === 'string' ? raw.type : null,
+    status: typeof raw.status === 'string' ? raw.status : null,
+    lat: parseNumber(raw.lat),
+    lng: parseNumber(raw.lng),
+    road_name: typeof raw.road_name === 'string' ? raw.road_name : null,
+    road_note: typeof raw.road_note === 'string' ? raw.road_note : null,
+    road_type: typeof raw.road_type === 'string' ? raw.road_type : null,
+    road_place_id: typeof raw.road_place_id === 'string' ? raw.road_place_id : null,
+    image_url: typeof raw.image_url === 'string' ? raw.image_url : null,
+    menu_description: typeof raw.menu_description === 'string' ? raw.menu_description : null,
+    is_open: raw.is_open === false ? false : true,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : null,
+  }
+}
+
+function buildProfileLite(raw: GenericRow): ProfileLite {
+  return {
+    id: String(raw.id || ''),
+    full_name: typeof raw.full_name === 'string' ? raw.full_name : null,
+    email: typeof raw.email === 'string' ? raw.email : null,
+    avatar_url: typeof raw.avatar_url === 'string' ? raw.avatar_url : null,
+    role: typeof raw.role === 'string' ? raw.role : null,
+    status: typeof raw.status === 'string' ? raw.status : null,
+  }
+}
+
+function roleLabel(value: string | null): string {
+  const role = normalizeText(value || '')
+  if (role === 'admin') return 'Admin'
+  if (role === 'isletmeci') return 'İşletmeci'
+  if (role === 'pending_business') return 'Aday İşletmeci'
+  return 'Kullanıcı'
+}
+
+function safeStringify(value: unknown): string {
+  if (value === undefined) return '-'
+  if (value === null) return '-'
+  if (typeof value === 'string') return value || '-'
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+function RawTable({ title, data }: { title: string; data: GenericRow | null }) {
+  const entries = useMemo(() => {
+    if (!data) return [] as Array<{ key: string; value: string }>
+    return Object.keys(data)
+      .sort((a, b) => a.localeCompare(b, 'tr-TR'))
+      .map((key) => ({
+        key,
+        value: safeStringify(data[key]),
+      }))
+  }, [data])
+
+  return (
+    <div className={`${panelCardClass} p-3`}>
+      <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">{title}</p>
+      {entries.length === 0 ? (
+        <p className="text-sm text-slate-500 mt-2">Kayıt yok.</p>
+      ) : (
+        <div className="mt-2 rounded-xl border border-slate-200/80 max-h-[280px] overflow-y-auto">
+          <table className="w-full text-left">
+            <tbody className="divide-y divide-slate-200/70">
+              {entries.map((entry) => (
+                <tr key={entry.key}>
+                  <td className="w-[36%] px-3 py-2 text-[11px] font-semibold text-slate-500 align-top">{entry.key}</td>
+                  <td className="px-3 py-2 text-[12px] text-slate-700 break-all align-top">{entry.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function statusTone(status: string | null): string {
+  const v = normalizeText(status || '')
+  if (v === 'active') return 'bg-emerald-50 border-emerald-200 text-emerald-700'
+  if (v === 'pending') return 'bg-amber-50 border-amber-200 text-amber-700'
+  if (v === 'rejected') return 'bg-rose-50 border-rose-200 text-rose-700'
+  if (v === 'passive') return 'bg-orange-50 border-orange-200 text-orange-700'
+  return 'bg-slate-100 border-slate-200 text-slate-600'
+}
+
+async function safeCount(query: Promise<{ count: number | null; error: { message?: string } | null }>): Promise<number> {
+  try {
+    const { count, error } = await query
+    if (error) return 0
+    return count || 0
+  } catch {
+    return 0
+  }
+}
+
+export default function AdminBusinessesPage() {
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
   )
 
-  useEffect(() => {
-    fetchAuxData()
-  }, [])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    fetchBusinesses()
-  }, [page, filterCategory, filterStatus, sortOrder])
+  const [businesses, setBusinesses] = useState<BusinessListItem[]>([])
+  const [categories, setCategories] = useState<CategoryOption[]>([])
+  const [features, setFeatures] = useState<FeatureOption[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [statusStats, setStatusStats] = useState({
+    active: 0,
+    passive: 0,
+    pending: 0,
+    rejected: 0,
+  })
 
-  const fetchAuxData = async () => {
-    const { data: cats } = await supabase.from('categories').select('*')
-    if (cats) setCategories(cats)
-    const { data: feats } = await supabase.from('features').select('*')
-    if (feats) setAllFeatures(feats)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
+  const [jumpPage, setJumpPage] = useState('')
+
+  const [searchInput, setSearchInput] = useState('')
+  const [searchApplied, setSearchApplied] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [sort, setSort] = useState<SortValue>('created_desc')
+  const [selectedBusinessIds, setSelectedBusinessIds] = useState<string[]>([])
+  const [bulkStatus, setBulkStatus] = useState<BulkStatus>('active')
+  const [bulkProcessing, setBulkProcessing] = useState(false)
+
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detail, setDetail] = useState<DetailState | null>(null)
+  const [form, setForm] = useState<FormState | null>(null)
+  const [editCategoryIds, setEditCategoryIds] = useState<string[]>([])
+  const [editFeatureIds, setEditFeatureIds] = useState<string[]>([])
+  const [featureLegacyNames, setFeatureLegacyNames] = useState<string[]>([])
+  const [featureWriteMode, setFeatureWriteMode] = useState<'id' | 'name' | 'mixed'>('id')
+  const [activeTab, setActiveTab] = useState<TabValue>('genel')
+  const [activePhotoUrl, setActivePhotoUrl] = useState<string | null>(null)
+
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const category of categories) {
+      map.set(category.id, category.name)
+    }
+    return map
+  }, [categories])
+
+  const featureNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const feature of features) {
+      map.set(feature.id, feature.name)
+    }
+    return map
+  }, [features])
+
+  const fetchLookups = async () => {
+    const [categoryRes, featureRes] = await Promise.all([
+      supabase.from('categories').select('id,name,slug').order('name'),
+      supabase.from('features').select('id,name,is_global,category_id').order('name'),
+    ])
+
+    if (!categoryRes.error) {
+      const rows = (categoryRes.data || []) as Array<{ id?: string | null; name?: string | null; slug?: string | null }>
+      setCategories(
+        rows
+          .map((row) => ({
+            id: (row.id || '').trim(),
+            name: (row.name || '').trim(),
+            slug: (row.slug || '').trim(),
+          }))
+          .filter((row) => row.id && row.name)
+      )
+    }
+
+    if (!featureRes.error) {
+      const rows = (featureRes.data || []) as Array<{
+        id?: string | null
+        name?: string | null
+        is_global?: boolean | null
+        category_id?: string | null
+      }>
+      setFeatures(
+        rows
+          .map((row) => ({
+            id: (row.id || '').trim(),
+            name: (row.name || '').trim(),
+            is_global: Boolean(row.is_global),
+            category_id: row.category_id || null,
+          }))
+          .filter((row) => row.id && row.name)
+      )
+    }
   }
 
-  const fetchBusinesses = async () => {
-    setLoading(true)
-    
-    let query = supabase
-      .from('businesses')
-      .select('*', { count: 'exact' })
-      .neq('status', 'pending')
+  const fetchStatusStats = async () => {
+    const [active, passive, pending, rejected] = await Promise.all([
+      safeCount(supabase.from('businesses').select('id', { head: true, count: 'exact' }).eq('status', 'active')),
+      safeCount(supabase.from('businesses').select('id', { head: true, count: 'exact' }).eq('status', 'passive')),
+      safeCount(supabase.from('businesses').select('id', { head: true, count: 'exact' }).eq('status', 'pending')),
+      safeCount(supabase.from('businesses').select('id', { head: true, count: 'exact' }).eq('status', 'rejected')),
+    ])
 
-    if (filterCategory !== 'all') query = query.eq('type', filterCategory)
-    if (filterStatus !== 'all') query = query.eq('status', filterStatus)
-    if (searchTerm.trim() !== '') query = query.ilike('name', `%${searchTerm}%`)
+    setStatusStats({ active, passive, pending, rejected })
+  }
 
-    if (sortOrder === 'newest') query = query.order('created_at', { ascending: false })
-    if (sortOrder === 'oldest') query = query.order('created_at', { ascending: true })
-    if (sortOrder === 'name_asc') query = query.order('name', { ascending: true })
-    if (sortOrder === 'name_desc') query = query.order('name', { ascending: false })
+  const buildSort = (): { column: string; asc: boolean } => {
+    if (sort === 'created_asc') return { column: 'created_at', asc: true }
+    if (sort === 'name_asc') return { column: 'name', asc: true }
+    if (sort === 'name_desc') return { column: 'name', asc: false }
+    return { column: 'created_at', asc: false }
+  }
 
-    const from = (page - 1) * PAGE_SIZE
-    const to = from + PAGE_SIZE - 1
+  const readBusinessFeatures = async (
+    businessId: string
+  ): Promise<{ rows: Array<{ feature_id?: string | null; feature_name?: string | null }>; readMode: 'id' | 'name' | 'mixed' }> => {
+    const mixedRes = await supabase
+      .from('business_features')
+      .select('feature_id,feature_name')
+      .eq('business_id', businessId)
+
+    if (!mixedRes.error) {
+      return {
+        rows: (mixedRes.data || []) as Array<{ feature_id?: string | null; feature_name?: string | null }>,
+        readMode: 'mixed',
+      }
+    }
+
+    const idRes = await supabase.from('business_features').select('feature_id').eq('business_id', businessId)
+    if (!idRes.error) {
+      return {
+        rows: (idRes.data || []) as Array<{ feature_id?: string | null; feature_name?: string | null }>,
+        readMode: 'id',
+      }
+    }
+
+    const nameRes = await supabase.from('business_features').select('feature_name').eq('business_id', businessId)
+    if (!nameRes.error) {
+      return {
+        rows: (nameRes.data || []) as Array<{ feature_id?: string | null; feature_name?: string | null }>,
+        readMode: 'name',
+      }
+    }
+
+    return { rows: [], readMode: 'id' }
+  }
+
+  const insertBusinessFeatures = async (rows: Array<Record<string, unknown>>) => {
+    if (rows.length === 0) return
+
+    const withValueRes = await supabase
+      .from('business_features')
+      .insert(rows.map((row) => ({ ...row, value: 'true' })))
+
+    if (!withValueRes.error) return
+
+    const plainRes = await supabase.from('business_features').insert(rows)
+    if (plainRes.error) {
+      throw new Error(plainRes.error.message)
+    }
+  }
+
+  const fetchBusinesses = async (soft = false) => {
+    if (soft) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+
+    let query = supabase.from('businesses').select('*', { count: 'exact' })
+
+    const appliedQuery = searchApplied.trim()
+    if (appliedQuery) {
+      query = query.or(
+        `name.ilike.%${appliedQuery}%,phone.ilike.%${appliedQuery}%,address_text.ilike.%${appliedQuery}%,road_name.ilike.%${appliedQuery}%`
+      )
+    }
+
+    if (statusFilter !== 'all') {
+      query = query.eq('status', statusFilter)
+    }
+
+    if (categoryFilter !== 'all') {
+      query = query.eq('type', categoryFilter)
+    }
+
+    const sortConfig = buildSort()
+    query = query.order(sortConfig.column, { ascending: sortConfig.asc })
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
     query = query.range(from, to)
 
     const { data, count, error } = await query
 
     if (error) {
-      console.error(error)
-      // Hata durumunda boş liste
-    } else {
-      setBusinesses(data as Business[])
-      setTotalCount(count || 0)
+      setBusinesses([])
+      setTotalCount(0)
+      setLoading(false)
+      setRefreshing(false)
+      return
     }
+
+    const rows = ((data || []) as GenericRow[]).map(buildBusinessRow)
+    setTotalCount(count || 0)
+
+    const ownerIds = Array.from(
+      new Set(
+        rows
+          .map((row) => row.owner_id || '')
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+      )
+    )
+    const businessIds = rows.map((row) => row.id)
+
+    const ownerMap = new Map<string, ProfileLite>()
+    if (ownerIds.length > 0) {
+      const ownerRes = await supabase
+        .from('profiles')
+        .select('id,full_name,email,avatar_url,role,status')
+        .in('id', ownerIds)
+
+      if (!ownerRes.error) {
+        for (const row of (ownerRes.data || []) as GenericRow[]) {
+          const profile = buildProfileLite(row)
+          ownerMap.set(profile.id, profile)
+        }
+      }
+    }
+
+    const categoryIdsByBusiness = new Map<string, string[]>()
+    if (businessIds.length > 0) {
+      const relationRes = await supabase
+        .from('business_categories')
+        .select('business_id,category_id')
+        .in('business_id', businessIds)
+
+      if (!relationRes.error) {
+        for (const row of (relationRes.data || []) as Array<{ business_id?: string | null; category_id?: string | null }>) {
+          const businessId = (row.business_id || '').trim()
+          const categoryId = (row.category_id || '').trim()
+          if (!businessId || !categoryId) continue
+          const current = categoryIdsByBusiness.get(businessId) || []
+          categoryIdsByBusiness.set(businessId, [...current, categoryId])
+        }
+      }
+    }
+
+    const list: BusinessListItem[] = rows.map((business) => {
+      const categoryIds = categoryIdsByBusiness.get(business.id) || []
+      const categoryNames = Array.from(
+        new Set(
+          categoryIds
+            .map((id) => categoryNameById.get(id) || '')
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0)
+        )
+      )
+
+      return {
+        business,
+        owner: business.owner_id ? ownerMap.get(business.owner_id) || null : null,
+        categories: categoryNames,
+      }
+    })
+
+    setBusinesses(list)
     setLoading(false)
+    setRefreshing(false)
   }
 
-  const handleSearch = () => {
-    setPage(1)
-    fetchBusinesses()
-  }
-
-  const handleOpenDetail = async (biz: Business) => {
-    setSelectedBiz(biz)
-    setEditForm(biz)
+  const openDetail = async (item: BusinessListItem) => {
+    setDetailLoading(true)
     setActiveTab('genel')
-    setModalLoading(true)
 
-    const [featsRes, ownerRes] = await Promise.all([
-      supabase.from('business_features').select('feature_name').eq('business_id', biz.id),
-      supabase.from('profiles').select('*').eq('id', biz.owner_id).single()
-    ])
+    const businessId = item.business.id
 
-    setBizFeatures(featsRes.data ? featsRes.data.map(f => f.feature_name) : [])
-    setBizOwner(ownerRes.data ? ownerRes.data as Profile : null)
-    setModalLoading(false)
-  }
+    const businessRes = await supabase.from('businesses').select('*').eq('id', businessId).maybeSingle()
+    const business = businessRes.data ? buildBusinessRow(businessRes.data as GenericRow) : item.business
 
-  const handleSaveAll = async () => {
-    if (!selectedBiz) return
-    if (!confirm('Değişiklikleri kaydediyor musunuz?')) return
+    const [ownerRes, categoryRelRes, featureRel, photosRes, storesRes, campaignRes, menuRes, reviewRes] =
+      await Promise.all([
+        business.owner_id
+          ? supabase
+              .from('profiles')
+              .select('id,full_name,email,avatar_url,role,status')
+              .eq('id', business.owner_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+        supabase.from('business_categories').select('category_id').eq('business_id', businessId),
+        readBusinessFeatures(businessId),
+        supabase
+          .from('business_photos')
+          .select('id,url,is_cover,created_at')
+          .eq('business_id', businessId)
+          .order('is_cover', { ascending: false })
+          .order('created_at', { ascending: false }),
+        supabase.from('business_stores').select('id,name,floor_info').eq('business_id', businessId),
+        supabase.from('business_campaigns').select('id,is_active').eq('business_id', businessId),
+        supabase.from('business_menu_items').select('id', { head: true, count: 'exact' }).eq('business_id', businessId),
+        supabase.from('business_reviews').select('rating').eq('business_id', businessId),
+      ])
 
-    const { error } = await supabase.from('businesses').update({
-        name: editForm.name,
-        description: editForm.description,
-        phone: editForm.phone,
-        type: editForm.type,
-        status: editForm.status,
-        lat: editForm.lat,
-        lng: editForm.lng,
-        road_name: editForm.road_name,
-        road_note: editForm.road_note,
-        image_url: editForm.image_url
-    }).eq('id', selectedBiz.id)
-
-    if (error) { alert('Hata: ' + error.message); return }
-
-    await supabase.from('business_features').delete().eq('business_id', selectedBiz.id)
-    if (bizFeatures.length > 0) {
-      await supabase.from('business_features').insert(bizFeatures.map(f => ({ business_id: selectedBiz.id, feature_name: f })))
+    let ownerRaw: GenericRow | null = null
+    let owner: ProfileLite | null = null
+    if (ownerRes.data) {
+      ownerRaw = ownerRes.data as GenericRow
+      owner = buildProfileLite(ownerRaw)
+    } else {
+      owner = item.owner
     }
 
-    alert('Güncellendi!')
-    setBusinesses(prev => prev.map(b => b.id === selectedBiz.id ? { ...b, ...editForm } as Business : b))
-    setSelectedBiz(null)
+    const categoryIds = (categoryRelRes.data || [])
+      .map((row) => ((row as { category_id?: string | null }).category_id || '').trim())
+      .filter((id) => id.length > 0)
+
+    const featureRows = featureRel.rows
+    const featureIds = Array.from(
+      new Set(
+        featureRows
+          .map((row) => (row.feature_id || '').trim())
+          .filter((id) => id.length > 0)
+      )
+    )
+    const rawFeatureNames = Array.from(
+      new Set(
+        featureRows
+          .map((row) => (row.feature_name || '').trim())
+          .filter((name) => name.length > 0)
+      )
+    )
+
+    const mappedFeatureIdsFromNames = rawFeatureNames
+      .map((name) => features.find((feature) => normalizeText(feature.name) === normalizeText(name))?.id || '')
+      .filter((id) => id.length > 0)
+
+    const mergedFeatureIds = Array.from(new Set([...featureIds, ...mappedFeatureIdsFromNames]))
+    const unresolvedFeatureNames = rawFeatureNames.filter(
+      (name) => !features.some((feature) => normalizeText(feature.name) === normalizeText(name))
+    )
+
+    let writeMode: 'id' | 'name' | 'mixed' = featureRel.readMode
+    if (featureIds.length === 0 && rawFeatureNames.length > 0) writeMode = 'name'
+    if (featureIds.length > 0 && rawFeatureNames.length > 0) writeMode = 'mixed'
+
+    const photos = (photosRes.data || [])
+      .map((row, index) => {
+        const typed = row as { id?: string | null; url?: string | null; is_cover?: boolean | null; created_at?: string | null }
+        const id = (typed.id || '').trim() || `photo-${index}`
+        const url = (typed.url || '').trim()
+        return {
+          id,
+          url,
+          is_cover: Boolean(typed.is_cover),
+          created_at: typed.created_at || null,
+        }
+      })
+      .filter((row) => row.url.length > 0)
+
+    if (photos.length === 0 && business.image_url) {
+      photos.push({
+        id: 'legacy-cover',
+        url: business.image_url,
+        is_cover: true,
+        created_at: business.created_at,
+      })
+    }
+
+    const stores = (storesRes.data || []).map((row, index) => {
+      const typed = row as { id?: string | null; name?: string | null; floor_info?: string | null }
+      return {
+        id: (typed.id || '').trim() || `store-${index}`,
+        name: typed.name || null,
+        floor_info: typed.floor_info || null,
+      }
+    })
+
+    const campaigns = (campaignRes.data || []) as Array<{ is_active?: boolean | null }>
+    const ratings = ((reviewRes.data || []) as Array<{ rating?: number | null }>)
+      .map((row) => parseNumber(row.rating ?? null))
+      .filter((value): value is number => value !== null)
+
+    const reviewAverage =
+      ratings.length > 0
+        ? Math.round((ratings.reduce((sum, value) => sum + value, 0) / ratings.length) * 10) / 10
+        : null
+
+    const detailState: DetailState = {
+      business,
+      owner,
+      ownerRaw,
+      categoryIds,
+      featureIds: mergedFeatureIds,
+      featureLegacyNames: unresolvedFeatureNames,
+      featureWriteMode: writeMode,
+      photos,
+      stores,
+      metrics: {
+        campaignCount: campaigns.length,
+        activeCampaignCount: campaigns.filter((item) => Boolean(item.is_active)).length,
+        reviewCount: ratings.length,
+        reviewAverage,
+        menuItemCount: menuRes.error ? 0 : menuRes.count || 0,
+      },
+    }
+
+    setDetail(detailState)
+    setEditCategoryIds(categoryIds)
+    setEditFeatureIds(mergedFeatureIds)
+    setFeatureLegacyNames(unresolvedFeatureNames)
+    setFeatureWriteMode(writeMode)
+    setForm({
+      name: business.name || '',
+      description: business.description || '',
+      phone: business.phone || '',
+      address_text: business.address_text || '',
+      type: business.type || '',
+      status: business.status || 'active',
+      lat: business.lat !== null ? String(business.lat) : '',
+      lng: business.lng !== null ? String(business.lng) : '',
+      road_name: business.road_name || '',
+      road_note: business.road_note || '',
+      road_type: business.road_type || '',
+      road_place_id: business.road_place_id || '',
+      image_url: business.image_url || '',
+      menu_description: business.menu_description || '',
+      is_open: business.is_open,
+    })
+    setActivePhotoUrl(photos[0]?.url || business.image_url || null)
+    setDetailLoading(false)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('DİKKAT! Bu işlem geri alınamaz. Silinsin mi?')) return
-    await supabase.from('businesses').delete().eq('id', id)
-    fetchBusinesses()
+  const writeCategories = async (businessId: string, categoryIds: string[]) => {
+    await supabase.from('business_categories').delete().eq('business_id', businessId)
+    if (categoryIds.length === 0) return
+    const inserts = categoryIds.map((categoryId) => ({ business_id: businessId, category_id: categoryId }))
+    const insertRes = await supabase.from('business_categories').insert(inserts)
+    if (insertRes.error) {
+      throw new Error(insertRes.error.message)
+    }
   }
 
-  const toggleFeature = (featName: string) => {
-    setBizFeatures(prev => prev.includes(featName) ? prev.filter(f => f !== featName) : [...prev, featName])
+  const writeFeatures = async (
+    businessId: string,
+    selectedFeatureIds: string[],
+    legacyNames: string[],
+    writeMode: 'id' | 'name' | 'mixed'
+  ) => {
+    await supabase.from('business_features').delete().eq('business_id', businessId)
+
+    const uniqueIds = Array.from(new Set(selectedFeatureIds.filter((id) => id.trim().length > 0)))
+    const namesFromIds = uniqueIds
+      .map((id) => featureNameById.get(id) || '')
+      .filter((name) => name.trim().length > 0)
+    const uniqueNames = Array.from(new Set([...namesFromIds, ...legacyNames].map((value) => value.trim()).filter((value) => value.length > 0)))
+
+    if (uniqueIds.length === 0 && uniqueNames.length === 0) {
+      return
+    }
+
+    if (writeMode === 'name') {
+      if (uniqueNames.length > 0) {
+        await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
+      }
+      return
+    }
+
+    if (uniqueIds.length > 0) {
+      try {
+        await insertBusinessFeatures(uniqueIds.map((featureId) => ({ business_id: businessId, feature_id: featureId })))
+        if (writeMode === 'mixed' && uniqueNames.length > 0) {
+          await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
+        }
+        return
+      } catch {
+        // Falls back to legacy name mode below.
+      }
+    }
+
+    if (uniqueNames.length > 0) {
+      await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
+    }
   }
 
-  const getCategoryName = (slug: string) => categories.find(c => c.slug === slug)?.name || slug
+  const saveDetail = async () => {
+    if (!detail || !form) return
+    const businessId = detail.business.id
+    setSaving(true)
+
+    const lat = form.lat.trim() ? Number(form.lat.trim()) : null
+    const lng = form.lng.trim() ? Number(form.lng.trim()) : null
+
+    const payload: GenericRow = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      phone: form.phone.trim(),
+      address_text: form.address_text.trim(),
+      type: form.type.trim() || null,
+      status: form.status.trim() || null,
+      lat: Number.isFinite(lat as number) ? lat : null,
+      lng: Number.isFinite(lng as number) ? lng : null,
+      road_name: form.road_name.trim() || null,
+      road_note: form.road_note.trim() || null,
+      road_type: form.road_type.trim() || null,
+      road_place_id: form.road_place_id.trim() || null,
+      image_url: form.image_url.trim() || null,
+      menu_description: form.menu_description.trim() || null,
+      is_open: form.is_open,
+    }
+
+    const updateRes = await supabase.from('businesses').update(payload).eq('id', businessId)
+    if (updateRes.error) {
+      setSaving(false)
+      window.alert(`Kaydedilemedi: ${updateRes.error.message}`)
+      return
+    }
+
+    try {
+      await writeCategories(businessId, editCategoryIds)
+      await writeFeatures(businessId, editFeatureIds, featureLegacyNames, featureWriteMode)
+    } catch (error) {
+      setSaving(false)
+      const message = error instanceof Error ? error.message : 'İlişkili alanlar kaydedilemedi.'
+      window.alert(message)
+      return
+    }
+
+    await fetchBusinesses(true)
+    await openDetail({
+      business: buildBusinessRow({ ...detail.business.raw, ...payload, id: businessId }),
+      owner: detail.owner,
+      categories: [],
+    })
+    setSaving(false)
+  }
+
+  const deleteBusiness = async (businessId: string, businessName: string) => {
+    if (deleting) return
+    const typed = window.prompt(`Silmek için işletme adını yazın:\n${businessName}`)
+    if (typed === null) return
+    if (typed.trim() !== businessName.trim()) {
+      window.alert('İsim eşleşmedi. Silme iptal edildi.')
+      return
+    }
+
+    setDeleting(true)
+    const deleteRes = await supabase.from('businesses').delete().eq('id', businessId)
+    if (deleteRes.error) {
+      window.alert(`Silinemedi: ${deleteRes.error.message}`)
+      setDeleting(false)
+      return
+    }
+
+    if (detail?.business.id === businessId) {
+      setDetail(null)
+      setForm(null)
+    }
+    setSelectedBusinessIds((current) => current.filter((id) => id !== businessId))
+    await fetchBusinesses(true)
+    await fetchStatusStats()
+    setDeleting(false)
+  }
+
+  const toggleBusinessSelection = (businessId: string) => {
+    setSelectedBusinessIds((current) =>
+      current.includes(businessId) ? current.filter((id) => id !== businessId) : [...current, businessId]
+    )
+  }
+
+  const toggleSelectCurrentPage = () => {
+    const pageIds = businesses.map((item) => item.business.id).filter((id) => id.length > 0)
+    if (pageIds.length === 0) return
+
+    setSelectedBusinessIds((current) => {
+      const currentSet = new Set(current)
+      const allSelected = pageIds.every((id) => currentSet.has(id))
+      if (allSelected) {
+        for (const id of pageIds) currentSet.delete(id)
+      } else {
+        for (const id of pageIds) currentSet.add(id)
+      }
+      return Array.from(currentSet)
+    })
+  }
+
+  const applyBulkStatus = async () => {
+    const ids = Array.from(new Set(selectedBusinessIds)).filter((id) => id.length > 0)
+    if (ids.length === 0 || bulkProcessing) return
+
+    const confirmed = window.confirm(
+      `${ids.length} işletmenin durumu "${bulkStatus}" olarak güncellensin mi?`
+    )
+    if (!confirmed) return
+
+    setBulkProcessing(true)
+    try {
+      for (const chunk of chunkArray(ids, 250)) {
+        const res = await supabase.from('businesses').update({ status: bulkStatus }).in('id', chunk)
+        if (res.error) throw new Error(res.error.message)
+      }
+
+      if (detail && ids.includes(detail.business.id)) {
+        setForm((current) => (current ? { ...current, status: bulkStatus } : current))
+      }
+
+      await Promise.all([fetchBusinesses(true), fetchStatusStats()])
+      setSelectedBusinessIds([])
+      window.alert(`Durum güncellemesi tamamlandı. (${ids.length} işletme)`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Toplu durum güncellemesi başarısız.'
+      window.alert(message)
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  const deleteSelectedBusinesses = async () => {
+    const ids = Array.from(new Set(selectedBusinessIds)).filter((id) => id.length > 0)
+    if (ids.length === 0 || bulkProcessing) return
+
+    const typed = window.prompt(
+      `${ids.length} işletmeyi kalıcı silmek için "TOPLU SIL" yazın.`
+    )
+    if (typed === null) return
+    if (typed.trim().toUpperCase() !== 'TOPLU SIL') {
+      window.alert('Doğrulama başarısız. Toplu silme iptal edildi.')
+      return
+    }
+
+    setBulkProcessing(true)
+    try {
+      for (const chunk of chunkArray(ids, 250)) {
+        const res = await supabase.from('businesses').delete().in('id', chunk)
+        if (res.error) throw new Error(res.error.message)
+      }
+
+      if (detail && ids.includes(detail.business.id)) {
+        setDetail(null)
+        setForm(null)
+      }
+
+      await Promise.all([fetchBusinesses(true), fetchStatusStats()])
+      setSelectedBusinessIds([])
+      window.alert(`Toplu silme tamamlandı. (${ids.length} işletme)`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Toplu silme başarısız.'
+      window.alert(message)
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  useEffect(() => {
+    void fetchLookups()
+    void fetchStatusStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    void fetchBusinesses(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, statusFilter, categoryFilter, sort, searchApplied, categories])
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const windowStart = Math.floor((safePage - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1
+  const windowEnd = Math.min(totalPages, windowStart + PAGE_WINDOW - 1)
+  const pageNumbers = Array.from({ length: windowEnd - windowStart + 1 }, (_, idx) => windowStart + idx)
+  const selectedBusinessIdSet = new Set(selectedBusinessIds)
+  const currentPageBusinessIds = businesses.map((item) => item.business.id).filter((id) => id.length > 0)
+  const currentPageSelectedCount = currentPageBusinessIds.filter((id) => selectedBusinessIdSet.has(id)).length
+  const isCurrentPageAllSelected = currentPageBusinessIds.length > 0 && currentPageSelectedCount === currentPageBusinessIds.length
+
+  const activeCategoryNameList = detail
+    ? editCategoryIds
+        .map((id) => categories.find((category) => category.id === id)?.name || '')
+        .filter((name) => name.length > 0)
+    : []
 
   return (
-    <div className="h-full flex flex-col font-sans text-slate-600">
-      
-      {/* BAŞLIK VE İSTATİSTİK */}
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-700">İşletme Yönetimi</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Veritabanında toplam <span className="text-blue-600 font-bold">{totalCount}</span> kayıt bulundu.</p>
+    <div className="h-full flex flex-col gap-4 text-slate-700">
+      <section className={`${panelCardClass} p-4 md:p-5`}>
+        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">İşletme Operasyon Merkezi</h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              void fetchStatusStats()
+              void fetchBusinesses(true)
+            }}
+            disabled={refreshing}
+            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center gap-2 disabled:opacity-60"
+          >
+            {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            Yenile
+          </button>
         </div>
-        <NeuButton onClick={fetchBusinesses} className="px-4 py-2 text-xs">
-          <SlidersHorizontal className="w-4 h-4" /> Listeyi Yenile
-        </NeuButton>
-      </div>
 
-      {/* --- OPERASYONEL FİLTRE BAR --- */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          
-          <div className="md:col-span-4">
-             <div className="flex gap-2 w-full">
-               <NeuInput 
-                 placeholder="İsim, Şehir veya Adres ara..." 
-                 icon={Search}
-                 value={searchTerm}
-                 onChange={(e: any) => setSearchTerm(e.target.value)}
-                 onKeyDown={(e: any) => e.key === 'Enter' && handleSearch()}
-               />
-               <NeuButton onClick={handleSearch} variant="solid-blue" className="px-4">Ara</NeuButton>
-             </div>
+        <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2.5">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Toplam</p>
+            <p className="mt-1 text-xl font-bold text-slate-900">{totalCount}</p>
           </div>
-
-          <div className="md:col-span-3">
-             <NeuSelect label="KATEGORİ" value={filterCategory} onChange={(e: any) => { setFilterCategory(e.target.value); setPage(1); }}>
-               <option value="all">Tümü</option>
-               {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
-             </NeuSelect>
+          <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-700">Aktif</p>
+            <p className="mt-1 text-xl font-bold text-emerald-900">{statusStats.active}</p>
           </div>
-
-          <div className="md:col-span-2">
-             <NeuSelect label="DURUM" value={filterStatus} onChange={(e: any) => { setFilterStatus(e.target.value); setPage(1); }}>
-               <option value="all">Tümü</option>
-               <option value="active">Aktif</option>
-               <option value="passive">Pasif</option>
-               <option value="rejected">Reddedildi</option>
-             </NeuSelect>
+          <div className="rounded-xl border border-orange-200/80 bg-orange-50 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-orange-700">Pasif</p>
+            <p className="mt-1 text-xl font-bold text-orange-900">{statusStats.passive}</p>
           </div>
-
-          <div className="md:col-span-3">
-             <NeuSelect label="SIRALAMA" value={sortOrder} onChange={(e: any) => { setSortOrder(e.target.value); setPage(1); }}>
-               <option value="newest">En Yeni Eklenen</option>
-               <option value="oldest">En Eski Eklenen</option>
-               <option value="name_asc">İsim (A-Z)</option>
-               <option value="name_desc">İsim (Z-A)</option>
-             </NeuSelect>
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-700">Onay Bekleyen</p>
+            <p className="mt-1 text-xl font-bold text-amber-900">{statusStats.pending}</p>
           </div>
-
+          <div className="rounded-xl border border-rose-200/80 bg-rose-50 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-rose-700">Reddedilen</p>
+            <p className="mt-1 text-xl font-bold text-rose-900">{statusStats.rejected}</p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* --- LİSTE VE PAGINATION --- */}
-      <NeuCard className="flex-1 overflow-hidden p-6 flex flex-col relative">
-        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          {loading ? ( <div className="flex justify-center pt-20"><Loader2 className="animate-spin text-blue-500 w-10 h-10"/></div> ) : 
-           businesses.length === 0 ? ( <div className="text-center pt-20 text-slate-400 font-bold">Kriterlere uygun kayıt bulunamadı.</div> ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white z-10 text-slate-400 text-[10px] font-semibold uppercase tracking-widest border-b border-slate-300/50">
-                <tr>
-                  <th className="pb-4 pl-4">İşletme</th>
-                  <th className="pb-4">Kategori & Konum</th>
-                  <th className="pb-4">Durum</th>
-                  <th className="pb-4">Eklenme Tarihi</th>
-                  <th className="pb-4 text-right pr-4">İşlem</th>
+      <section className={`${panelCardClass} p-3 md:p-4`}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))] gap-2.5">
+          <div>
+            <label className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Ara</label>
+            <div className="mt-1.5 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      setPage(1)
+                      setSearchApplied(searchInput.trim())
+                    }
+                  }}
+                  placeholder="İşletme adı, telefon, adres, yol..."
+                  className="w-full h-11 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-700 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPage(1)
+                  setSearchApplied(searchInput.trim())
+                }}
+                className="h-11 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+              >
+                Ara
+              </button>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Durum</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value)
+                setPage(1)
+              }}
+              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+            >
+              <option value="all">Tümü</option>
+              <option value="active">Aktif</option>
+              <option value="passive">Pasif</option>
+              <option value="pending">Onay Bekleyen</option>
+              <option value="rejected">Reddedilen</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Kategori</span>
+            <select
+              value={categoryFilter}
+              onChange={(event) => {
+                setCategoryFilter(event.target.value)
+                setPage(1)
+              }}
+              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+            >
+              <option value="all">Tümü</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Sıralama</span>
+            <select
+              value={sort}
+              onChange={(event) => {
+                setSort(event.target.value as SortValue)
+                setPage(1)
+              }}
+              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+            >
+              <option value="created_desc">Yeni → Eski</option>
+              <option value="created_asc">Eski → Yeni</option>
+              <option value="name_asc">İsim A → Z</option>
+              <option value="name_desc">İsim Z → A</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Sayfa Boyutu</span>
+            <select
+              value={pageSize}
+              onChange={(event) => {
+                setPageSize(Number(event.target.value))
+                setPage(1)
+              }}
+              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size} kayıt
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className={`${panelCardClass} p-3 md:p-4`}>
+        <div className="mb-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
+            <div className="text-xs font-semibold text-slate-600">
+              Seçili kayıt: <span className="text-slate-900">{selectedBusinessIds.length}</span> • Bu sayfa: {currentPageSelectedCount}/
+              {currentPageBusinessIds.length}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={toggleSelectCurrentPage}
+                disabled={loading || businesses.length === 0 || bulkProcessing}
+                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 disabled:opacity-50"
+              >
+                {isCurrentPageAllSelected ? 'Sayfayı Bırak' : 'Sayfayı Seç'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedBusinessIds([])}
+                disabled={selectedBusinessIds.length === 0 || bulkProcessing}
+                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 disabled:opacity-50"
+              >
+                Seçimi Temizle
+              </button>
+              <select
+                value={bulkStatus}
+                onChange={(event) => setBulkStatus(event.target.value as BulkStatus)}
+                disabled={bulkProcessing}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none disabled:opacity-50"
+              >
+                <option value="active">active</option>
+                <option value="passive">passive</option>
+                <option value="pending">pending</option>
+                <option value="rejected">rejected</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void applyBulkStatus()}
+                disabled={selectedBusinessIds.length === 0 || bulkProcessing || deleting}
+                className="h-9 px-3 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {bulkProcessing ? <Loader2 size={13} className="animate-spin" /> : null}
+                Durum Uygula
+              </button>
+              <button
+                type="button"
+                onClick={() => void deleteSelectedBusinesses()}
+                disabled={selectedBusinessIds.length === 0 || bulkProcessing || deleting}
+                className="h-9 px-3 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700 inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {bulkProcessing ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                Toplu Sil
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 overflow-hidden">
+          <div className="max-h-[560px] overflow-y-auto">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200/80">
+                <tr className="text-[11px] uppercase tracking-[0.14em] text-slate-500 font-semibold">
+                  <th className="w-12 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={isCurrentPageAllSelected}
+                      onChange={toggleSelectCurrentPage}
+                      disabled={loading || businesses.length === 0 || bulkProcessing}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                      aria-label="Bu sayfadaki işletmeleri seç"
+                    />
+                  </th>
+                  <th className="px-3 py-3">İşletme</th>
+                  <th className="px-3 py-3">Sahip</th>
+                  <th className="px-3 py-3">Kategori</th>
+                  <th className="px-3 py-3">Durum</th>
+                  <th className="px-3 py-3">İletişim</th>
+                  <th className="px-3 py-3">Kayıt</th>
+                  <th className="px-3 py-3 text-right">Aksiyon</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-300/40">
-                {businesses.map(biz => (
-                  <tr key={biz.id} className="group transition-colors hover:bg-slate-200/40">
-                    <td className="py-4 pl-4">
-                      <div className="font-semibold text-slate-700">{biz.name}</div>
-                      <div className="text-xs text-slate-500 font-mono">{biz.phone}</div>
-                    </td>
-                    <td className="py-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded w-fit uppercase">
-                          {getCategoryName(biz.type)}
-                        </span>
-                        <div className="text-xs text-slate-400 font-bold flex items-center gap-1">
-                           <MapPin className="w-3 h-3"/> {biz.road_name || 'Yol Yok'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4">
-                      {biz.status === 'active' && <span className="flex items-center gap-1 text-xs font-semibold text-green-600"><CheckCircle className="w-4 h-4"/> AKTİF</span>}
-                      {biz.status === 'passive' && <span className="flex items-center gap-1 text-xs font-semibold text-orange-500"><PauseCircle className="w-4 h-4"/> PASİF</span>}
-                      {biz.status === 'rejected' && <span className="flex items-center gap-1 text-xs font-semibold text-red-500"><XCircle className="w-4 h-4"/> RED</span>}
-                    </td>
-                    <td className="py-4 text-xs font-bold text-slate-500">
-                      {new Date(biz.created_at).toLocaleDateString('tr-TR')}
-                    </td>
-                    <td className="py-4 text-right pr-4">
-                      <div className="flex justify-end gap-2">
-                        <NeuButton onClick={() => handleOpenDetail(biz)} className="p-2 h-10 w-10">
-                          <Edit3 className="w-4 h-4"/>
-                        </NeuButton>
-                        <NeuButton onClick={() => handleDelete(biz.id)} variant="danger" className="p-2 h-10 w-10">
-                          <Trash2 className="w-4 h-4"/>
-                        </NeuButton>
-                      </div>
+              <tbody className="divide-y divide-slate-200/70">
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="py-16 text-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-blue-500 mx-auto" />
                     </td>
                   </tr>
-                ))}
+                ) : businesses.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-16 text-center text-sm text-slate-500 font-semibold">
+                      Filtrelere uygun işletme bulunamadı.
+                    </td>
+                  </tr>
+                ) : (
+                  businesses.map((item) => {
+                    const business = item.business
+                    const isSelected = selectedBusinessIdSet.has(business.id)
+                    return (
+                      <tr key={business.id} className={`${isSelected ? 'bg-blue-50/50' : ''} hover:bg-slate-50/80`}>
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleBusinessSelection(business.id)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                            aria-label={`${business.name || 'İşletme'} seç`}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <p className="text-sm font-bold text-slate-800">{business.name || 'İsimsiz işletme'}</p>
+                          <p className="text-xs text-slate-500 font-mono">{business.id}</p>
+                        </td>
+                        <td className="px-3 py-3">
+                          <p className="text-sm font-semibold text-slate-700">
+                            {item.owner?.full_name || item.owner?.email || 'Sahip yok'}
+                          </p>
+                          <p className="text-xs text-slate-500">{item.owner ? roleLabel(item.owner.role) : '-'}</p>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {(item.categories.length > 0 ? item.categories : [business.type || 'Kategori yok']).map(
+                              (name) => (
+                                <span
+                                  key={`${business.id}-${name}`}
+                                  className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700"
+                                >
+                                  {name}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex w-fit px-2 py-0.5 rounded-md text-[10px] font-semibold border ${statusTone(business.status)}`}>
+                              {business.status || 'bilinmiyor'}
+                            </span>
+                            <span
+                              className={`inline-flex w-fit px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                business.is_open
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                  : 'bg-slate-100 border-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {business.is_open ? 'servis açık' : 'servis kapalı'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <p className="text-xs text-slate-700 inline-flex items-center gap-1">
+                            <Phone className="w-3.5 h-3.5" />
+                            {business.phone || '-'}
+                          </p>
+                          <p className="text-xs text-slate-500 inline-flex items-center gap-1 mt-1">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {business.road_name || 'Yol bilgisi yok'}
+                          </p>
+                        </td>
+                        <td className="px-3 py-3 text-xs font-semibold text-slate-600">{formatDate(business.created_at)}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => void openDetail(item)}
+                              disabled={bulkProcessing || deleting}
+                              className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 hover:border-blue-300 hover:text-blue-700 disabled:opacity-50"
+                            >
+                              <Eye size={13} />
+                              İncele
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void deleteBusiness(business.id, business.name || 'İşletme')}
+                              disabled={deleting || bulkProcessing}
+                              className="h-9 px-3 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700 inline-flex items-center gap-1.5 hover:bg-rose-100 disabled:opacity-50"
+                            >
+                              <Trash2 size={13} />
+                              Sil
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
-          )}
-        </div>
-
-        {/* --- PAGINATION CONTROLS --- */}
-        <div className="mt-4 pt-4 border-t border-slate-300/50 flex justify-between items-center">
-          <div className="text-xs font-bold text-slate-400">
-            Toplam {Math.ceil(totalCount / PAGE_SIZE)} sayfa ({totalCount} kayıt)
           </div>
-          <div className="flex items-center gap-4">
-            <NeuButton 
-              onClick={() => setPage(p => Math.max(1, p - 1))} 
-              disabled={page === 1}
-              className="px-4 py-2 text-xs"
-            >
-              <ChevronLeft className="w-4 h-4" /> Önceki
-            </NeuButton>
-            
-            <span className="font-semibold text-slate-700 bg-slate-200 px-4 py-2 rounded-lg shadow-inner text-xs">
-              Sayfa {page}
-            </span>
 
-            <NeuButton 
-              onClick={() => setPage(p => p + 1)} 
-              disabled={page * PAGE_SIZE >= totalCount}
-              className="px-4 py-2 text-xs"
-            >
-              Sonraki <ChevronRight className="w-4 h-4" />
-            </NeuButton>
-          </div>
-        </div>
-      </NeuCard>
+          <div className="border-t border-slate-200/80 px-3 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-500">
+              Toplam {totalCount} kayıt • Sayfa {safePage}/{totalPages}
+            </p>
 
-      {/* --- DETAY MODALI --- */}
-      {selectedBiz && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-6xl h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 bg-white z-20 shadow-sm relative border-b border-slate-300">
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-700">{selectedBiz.name}</h2>
-                <div className="text-xs font-bold text-slate-400 tracking-wider mt-1">SİSTEM ID: {selectedBiz.id}</div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, windowStart - PAGE_WINDOW))}
+                disabled={windowStart <= 1}
+                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
+              >
+                <ChevronsLeft size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, safePage - 1))}
+                disabled={safePage === 1}
+                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              {pageNumbers.map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setPage(num)}
+                  className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold border ${
+                    num === safePage
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-slate-700 border-slate-200'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage === totalPages}
+                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
+              >
+                <ChevronRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(totalPages, windowEnd + 1))}
+                disabled={windowEnd >= totalPages}
+                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
+              >
+                <ChevronsRight size={14} />
+              </button>
+
+              <div className="ml-2 flex items-center gap-1.5">
+                <input
+                  value={jumpPage}
+                  onChange={(event) => setJumpPage(event.target.value.replace(/[^\d]/g, ''))}
+                  placeholder="Sayfa"
+                  className="h-8 w-20 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = Number(jumpPage || '0')
+                    if (!Number.isFinite(next) || next <= 0) return
+                    setPage(Math.min(totalPages, Math.max(1, next)))
+                  }}
+                  className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+                >
+                  Git
+                </button>
               </div>
-              <NeuButton onClick={() => setSelectedBiz(null)} className="w-10 h-10 rounded-full !p-0">
-                <X className="w-5 h-5 text-slate-500"/>
-              </NeuButton>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {detail && form ? (
+        <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm p-3 md:p-5">
+          <div className="mx-auto w-full max-w-[1320px] h-full max-h-[92vh] rounded-[24px] border border-white/70 bg-[#f8fbff] shadow-[0_30px_44px_-26px_rgba(15,23,42,0.7)] flex flex-col overflow-hidden">
+            <div className="h-[78px] px-4 md:px-6 border-b border-slate-200/80 bg-white flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">İşletme Detayı</p>
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 truncate">{form.name || 'İsimsiz işletme'}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void deleteBusiness(detail.business.id, form.name || 'İşletme')}
+                  disabled={deleting}
+                  className="h-10 px-3 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-700 inline-flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  Sil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void saveDetail()}
+                  disabled={saving}
+                  className="h-10 px-3 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Kaydet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDetail(null)
+                    setForm(null)
+                  }}
+                  className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-600 inline-flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {/* Modal Tabs */}
-            <div className="px-8 flex gap-2 bg-white pt-4 border-b border-slate-300/50">
-               {['genel', 'konum', 'ozellikler', 'sahip'].map(tab => (
-                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-t-xl text-xs font-semibold uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-200 text-blue-600 shadow-inner' : 'text-slate-400 hover:bg-slate-200/50'}`}>{tab}</button>
-               ))}
+            <div className="h-[52px] px-4 md:px-6 border-b border-slate-200/70 bg-white flex items-center gap-1.5 overflow-x-auto">
+              {([
+                ['genel', 'Genel'],
+                ['konum', 'Konum'],
+                ['kategori', 'Kategori & Özellik'],
+                ['medya', 'Medya'],
+                ['sahip', 'Sahip'],
+                ['ham', 'Ham Veri'],
+              ] as Array<[TabValue, string]>).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setActiveTab(value)}
+                  className={`h-9 px-3 rounded-lg text-xs font-semibold whitespace-nowrap ${
+                    activeTab === value
+                      ? 'bg-blue-50 border border-blue-200 text-blue-700'
+                      : 'bg-white border border-slate-200 text-slate-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-8 bg-slate-200/30">
-              {modalLoading ? <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-500 w-10 h-10"/></div> : (
-                <div className="max-w-5xl mx-auto space-y-6">
-                  {activeTab === 'genel' && (
-                    <div className="grid grid-cols-12 gap-6">
-                       <div className="col-span-8 space-y-6">
-                          <NeuInput label="İŞLETME ADI" value={editForm.name} onChange={(e: any) => setEditForm({...editForm, name: e.target.value})} icon={CheckCircle} />
-                          <div className="grid grid-cols-2 gap-6">
-                             <NeuSelect label="KATEGORİ" value={editForm.type} onChange={(e: any) => setEditForm({...editForm, type: e.target.value})}>
-                               {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
-                             </NeuSelect>
-                             <NeuSelect label="DURUM" value={editForm.status} onChange={(e: any) => setEditForm({...editForm, status: e.target.value})}>
-                               <option value="active">AKTİF</option> <option value="passive">PASİF</option> <option value="rejected">REDDEDİLDİ</option>
-                             </NeuSelect>
+            <div className="flex-1 overflow-y-auto p-4 md:p-5">
+              {detailLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activeTab === 'genel' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4">
+                      <div className={`${panelCardClass} p-4 space-y-3`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Temel Bilgiler</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                          <label className="block">
+                            <span className="text-[11px] text-slate-500 font-semibold">İşletme Adı</span>
+                            <input
+                              value={form.name}
+                              onChange={(event) => setForm((current) => (current ? { ...current, name: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[11px] text-slate-500 font-semibold">Telefon</span>
+                            <input
+                              value={form.phone}
+                              onChange={(event) => setForm((current) => (current ? { ...current, phone: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[11px] text-slate-500 font-semibold">Ana Tip</span>
+                            <input
+                              value={form.type}
+                              onChange={(event) => setForm((current) => (current ? { ...current, type: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[11px] text-slate-500 font-semibold">Durum</span>
+                            <select
+                              value={form.status}
+                              onChange={(event) => setForm((current) => (current ? { ...current, status: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            >
+                              <option value="active">active</option>
+                              <option value="passive">passive</option>
+                              <option value="pending">pending</option>
+                              <option value="rejected">rejected</option>
+                            </select>
+                          </label>
+                        </div>
+
+                        <label className="block">
+                          <span className="text-[11px] text-slate-500 font-semibold">Adres</span>
+                          <input
+                            value={form.address_text}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, address_text: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="text-[11px] text-slate-500 font-semibold">Açıklama</span>
+                          <textarea
+                            value={form.description}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, description: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full min-h-[120px] rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none resize-y"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="text-[11px] text-slate-500 font-semibold">Menü Açıklaması</span>
+                          <textarea
+                            value={form.menu_description}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, menu_description: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full min-h-[100px] rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none resize-y"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className={`${panelCardClass} p-4`}>
+                          <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Operasyon Özeti</p>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                              <p className="text-[10px] text-slate-500 font-semibold">Kampanya</p>
+                              <p className="mt-1 text-base font-bold text-slate-900">{detail.metrics.campaignCount}</p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                              <p className="text-[10px] text-slate-500 font-semibold">Aktif Kamp.</p>
+                              <p className="mt-1 text-base font-bold text-emerald-700">{detail.metrics.activeCampaignCount}</p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                              <p className="text-[10px] text-slate-500 font-semibold">Yorum</p>
+                              <p className="mt-1 text-base font-bold text-slate-900">{detail.metrics.reviewCount}</p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                              <p className="text-[10px] text-slate-500 font-semibold">Puan Ort.</p>
+                              <p className="mt-1 text-base font-bold text-amber-700">
+                                {detail.metrics.reviewAverage !== null ? detail.metrics.reviewAverage.toFixed(1) : '-'}
+                              </p>
+                            </div>
                           </div>
-                          <div className="group w-full"><label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block">AÇIKLAMA</label><textarea value={editForm.description || ''} onChange={e => setEditForm({...editForm, description: e.target.value})} className="w-full h-32 bg-white p-4 rounded-xl text-slate-700 text-sm outline-none shadow-sm" /></div>
-                       </div>
-                       <div className="col-span-4 space-y-6">
-                          <NeuInput label="TELEFON" value={editForm.phone} onChange={(e: any) => setEditForm({...editForm, phone: e.target.value})} icon={Phone} />
-                          <NeuInput label="RESİM URL" value={editForm.image_url || ''} onChange={(e: any) => setEditForm({...editForm, image_url: e.target.value})} icon={ImageIcon} />
-                          {editForm.image_url && <img src={editForm.image_url} className="w-full h-32 object-cover rounded-xl shadow-md" />}
-                       </div>
+                        </div>
+
+                        <div className={`${panelCardClass} p-4`}>
+                          <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Servis Durumu</p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm((current) => (current ? { ...current, is_open: !current.is_open } : current))
+                            }
+                            className={`mt-2 h-10 w-full rounded-lg border text-sm font-semibold ${
+                              form.is_open
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                : 'bg-slate-100 border-slate-200 text-slate-700'
+                            }`}
+                          >
+                            {form.is_open ? 'Servis Açık' : 'Servis Kapalı'}
+                          </button>
+                          <p className="mt-2 text-xs text-slate-500">Durum kaydettiğinizde işletmeye uygulanır.</p>
+                        </div>
+
+                        <div className={`${panelCardClass} p-4`}>
+                          <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Kayıt Bilgisi</p>
+                          <p className="mt-2 text-xs text-slate-600 font-mono break-all">{detail.business.id}</p>
+                          <p className="mt-1 text-xs text-slate-500">Eklenme: {formatDateTime(detail.business.created_at)}</p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  {activeTab === 'konum' && (
-                     <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                           <NeuInput label="ENLEM" type="number" value={editForm.lat} onChange={(e: any) => setEditForm({...editForm, lat: parseFloat(e.target.value)})} icon={Globe} />
-                           <NeuInput label="BOYLAM" type="number" value={editForm.lng} onChange={(e: any) => setEditForm({...editForm, lng: parseFloat(e.target.value)})} icon={Globe} />
-                           <NeuInput label="YOL ADI" value={editForm.road_name || ''} onChange={(e: any) => setEditForm({...editForm, road_name: e.target.value})} icon={MapPin} />
-                           <NeuInput label="YOL NOTU" value={editForm.road_note || ''} onChange={(e: any) => setEditForm({...editForm, road_note: e.target.value})} icon={MapPin} />
-                           <div className="group w-full"><label className="text-[10px] font-semibold text-slate-400 ml-3 mb-2 block">ADRES METNİ</label><textarea value={editForm.address_text || ''} onChange={e => setEditForm({...editForm, address_text: e.target.value})} className="w-full h-24 bg-white p-4 rounded-xl text-slate-700 text-sm outline-none shadow-sm" /></div>
+                  ) : null}
+
+                  {activeTab === 'konum' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-4">
+                      <div className={`${panelCardClass} p-4 space-y-3`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Konum Alanları</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                          <label>
+                            <span className="text-[11px] text-slate-500 font-semibold">Enlem</span>
+                            <input
+                              value={form.lat}
+                              onChange={(event) => setForm((current) => (current ? { ...current, lat: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label>
+                            <span className="text-[11px] text-slate-500 font-semibold">Boylam</span>
+                            <input
+                              value={form.lng}
+                              onChange={(event) => setForm((current) => (current ? { ...current, lng: event.target.value } : current))}
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label>
+                            <span className="text-[11px] text-slate-500 font-semibold">Yol Adı</span>
+                            <input
+                              value={form.road_name}
+                              onChange={(event) =>
+                                setForm((current) => (current ? { ...current, road_name: event.target.value } : current))
+                              }
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
+                          <label>
+                            <span className="text-[11px] text-slate-500 font-semibold">Yol Tipi</span>
+                            <input
+                              value={form.road_type}
+                              onChange={(event) =>
+                                setForm((current) => (current ? { ...current, road_type: event.target.value } : current))
+                              }
+                              className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            />
+                          </label>
                         </div>
-                        <div className="h-full bg-slate-300 rounded-2xl flex items-center justify-center relative overflow-hidden group shadow-inner">
-                             <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center" />
-                             <div className="z-10 text-center">
-                                <MapPin className="w-12 h-12 text-red-500 mx-auto mb-2 drop-shadow-lg" />
-                                <div className="font-semibold text-slate-600 mb-2">{editForm.lat}, {editForm.lng}</div>
-                                <a href={`https://www.google.com/maps/search/?api=1&query=${editForm.lat},${editForm.lng}`} target="_blank" className="px-4 py-2 bg-white rounded-full text-xs font-bold text-blue-600 shadow hover:scale-105 transition-transform block">Haritada Aç</a>
-                             </div>
+                        <label className="block">
+                          <span className="text-[11px] text-slate-500 font-semibold">Yol Notu</span>
+                          <input
+                            value={form.road_note}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, road_note: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[11px] text-slate-500 font-semibold">Google Place ID</span>
+                          <input
+                            value={form.road_place_id}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, road_place_id: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none font-mono"
+                          />
+                        </label>
+                      </div>
+                      <div className={`${panelCardClass} p-4`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Harita</p>
+                        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-100 h-[280px] flex items-center justify-center">
+                          {form.lat.trim() && form.lng.trim() ? (
+                            <a
+                              href={`https://maps.google.com/?q=${form.lat},${form.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-700"
+                            >
+                              <MapPin size={16} />
+                              Haritada Aç
+                            </a>
+                          ) : (
+                            <div className="text-sm text-slate-500">Koordinat girildiğinde harita bağlantısı aktif olur.</div>
+                          )}
                         </div>
-                     </div>
-                  )}
-                  {activeTab === 'ozellikler' && (
-                     <div className="grid grid-cols-4 gap-4">
-                        {allFeatures.map(f => (
-                           <div key={f.id} onClick={() => toggleFeature(f.name)} className={`p-4 rounded-xl cursor-pointer flex items-center gap-2 font-bold text-xs transition-all select-none ${bizFeatures.includes(f.name) ? 'bg-blue-500 text-white shadow-lg' : 'bg-white text-slate-500 shadow-sm hover:text-slate-700'}`}>
-                              {bizFeatures.includes(f.name) ? <CheckCircle className="w-4 h-4"/> : <Wifi className="w-4 h-4 opacity-50"/>} {f.name}
-                           </div>
-                        ))}
-                     </div>
-                  )}
-                  {activeTab === 'sahip' && bizOwner && (
-                     <div className="flex justify-center p-10">
-                        <NeuCard className="p-10 text-center max-w-md w-full">
-                           <div className="w-20 h-20 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center text-slate-400 shadow-inner"><User className="w-8 h-8"/></div>
-                           <div className="text-2xl font-semibold text-slate-700">{bizOwner.full_name || 'İsimsiz'}</div>
-                           <div className="text-blue-500 font-bold mb-4">{bizOwner.email}</div>
-                           <div className="text-xs font-mono bg-slate-200 p-2 rounded text-slate-500">{bizOwner.id}</div>
-                        </NeuCard>
-                     </div>
-                  )}
+                        <p className="mt-2 text-xs text-slate-500">
+                          Koordinat: {form.lat || '-'}, {form.lng || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeTab === 'kategori' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      <div className={`${panelCardClass} p-4`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Kategori Seçimi</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {categories.map((category) => {
+                            const selected = editCategoryIds.includes(category.id)
+                            return (
+                              <button
+                                key={category.id}
+                                type="button"
+                                onClick={() =>
+                                  setEditCategoryIds((current) =>
+                                    current.includes(category.id)
+                                      ? current.filter((id) => id !== category.id)
+                                      : [...current, category.id]
+                                  )
+                                }
+                                className={`px-3 h-9 rounded-lg text-xs font-semibold border ${
+                                  selected
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                    : 'bg-white border-slate-200 text-slate-700'
+                                }`}
+                              >
+                                {category.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <p className="mt-2 text-xs text-slate-500">
+                          Seçili: {activeCategoryNameList.length > 0 ? activeCategoryNameList.join(', ') : 'Kategori yok'}
+                        </p>
+                      </div>
+
+                      <div className={`${panelCardClass} p-4`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Özellik Seçimi</p>
+                        <div className="mt-2 max-h-[290px] overflow-y-auto flex flex-wrap gap-2 pr-1">
+                          {features.map((feature) => {
+                            const selected = editFeatureIds.includes(feature.id)
+                            return (
+                              <button
+                                key={feature.id}
+                                type="button"
+                                onClick={() =>
+                                  setEditFeatureIds((current) =>
+                                    current.includes(feature.id)
+                                      ? current.filter((id) => id !== feature.id)
+                                      : [...current, feature.id]
+                                  )
+                                }
+                                className={`px-3 h-9 rounded-lg text-xs font-semibold border ${
+                                  selected
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                    : 'bg-white border-slate-200 text-slate-700'
+                                }`}
+                              >
+                                {feature.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        {featureLegacyNames.length > 0 ? (
+                          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
+                            <span className="font-semibold inline-flex items-center gap-1">
+                              <AlertTriangle size={13} />
+                              Eski şema özellik adları:
+                            </span>{' '}
+                            {featureLegacyNames.join(', ')}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeTab === 'medya' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4">
+                      <div className={`${panelCardClass} p-4`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Görseller</p>
+                        {detail.photos.length === 0 ? (
+                          <div className="mt-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-14 text-center text-slate-500">
+                            <ImageIcon className="w-7 h-7 mx-auto" />
+                            <p className="mt-2 text-sm font-semibold">Fotoğraf kaydı bulunamadı.</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden">
+                              <img src={activePhotoUrl || detail.photos[0].url} alt="" className="w-full h-[320px] object-cover" />
+                            </div>
+                            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                              {detail.photos.map((photo) => {
+                                const selected = (activePhotoUrl || detail.photos[0].url) === photo.url
+                                return (
+                                  <button
+                                    key={photo.id}
+                                    type="button"
+                                    onClick={() => setActivePhotoUrl(photo.url)}
+                                    className={`relative rounded-lg overflow-hidden border-2 shrink-0 ${
+                                      selected ? 'border-blue-500' : 'border-transparent'
+                                    }`}
+                                  >
+                                    <img src={photo.url} alt="" className="w-[92px] h-[72px] object-cover" />
+                                    {photo.is_cover ? (
+                                      <span className="absolute left-1 top-1 text-[9px] px-1.5 py-0.5 rounded bg-slate-900/70 text-white font-semibold">
+                                        Kapak
+                                      </span>
+                                    ) : null}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className={`${panelCardClass} p-4`}>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Medya Alanları</p>
+                        <label className="block mt-2">
+                          <span className="text-[11px] text-slate-500 font-semibold">Kapak URL</span>
+                          <input
+                            value={form.image_url}
+                            onChange={(event) =>
+                              setForm((current) => (current ? { ...current, image_url: event.target.value } : current))
+                            }
+                            className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                          />
+                        </label>
+
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500 mt-4">Mağaza/Bölüm</p>
+                        <div className="mt-2 space-y-1.5 max-h-[240px] overflow-y-auto pr-1">
+                          {detail.stores.length > 0 ? (
+                            detail.stores.map((store) => (
+                              <div key={store.id} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                                <p className="text-xs font-semibold text-slate-800">{store.name || '-'}</p>
+                                <p className="text-[11px] text-slate-500">{store.floor_info || '-'}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-slate-500">Mağaza kaydı yok.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeTab === 'sahip' ? (
+                    <div className={`${panelCardClass} p-4`}>
+                      <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Sahip Profili</p>
+                      {detail.owner ? (
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-[72px_minmax(0,1fr)] gap-3">
+                          <div className="w-[72px] h-[72px] rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center">
+                            {detail.owner.avatar_url ? (
+                              <img src={detail.owner.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <UserCircle2 className="w-8 h-8 text-slate-500" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xl font-bold text-slate-900">{detail.owner.full_name || 'İsimsiz kullanıcı'}</p>
+                            <p className="text-sm text-slate-600 break-all">{detail.owner.email || '-'}</p>
+                            <div className="mt-2 flex gap-2 flex-wrap">
+                              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                {roleLabel(detail.owner.role)}
+                              </span>
+                              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                {detail.owner.status || 'durum yok'}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500 font-mono break-all">{detail.owner.id}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-500">Sahip profili bulunamadı.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {activeTab === 'ham' ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      <RawTable title="İşletme Ham Alanları" data={detail.business.raw} />
+                      <RawTable title="Sahip Ham Alanları" data={detail.ownerRaw} />
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 bg-white border-t border-slate-300/50 flex justify-end gap-4 z-20 shadow-sm">
-              <NeuButton onClick={() => setSelectedBiz(null)} className="px-8 py-3 text-slate-500">VAZGEÇ</NeuButton>
-              <NeuButton onClick={handleSaveAll} variant="solid-blue" className="px-8 py-3">KAYDET</NeuButton>
-            </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

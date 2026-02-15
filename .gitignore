@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local app link (do not deploy)
 molayeri_app
+
+# downloaded vendor artifacts
+*.download

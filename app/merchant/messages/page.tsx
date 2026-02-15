@@ -110,12 +110,14 @@ export default function MerchantMessagesPage() {
         .from('messages')
         .select('*')
         .is('recipient_id', null)
+        .in('message_type', ['broadcast_all', 'broadcast_business'])
         .neq('sender_id', user.id)
         .order('created_at', { ascending: false }),
       supabase
         .from('messages')
         .select('*')
         .eq('recipient_id', user.id)
+        .eq('message_type', 'direct')
         .order('created_at', { ascending: false }),
       supabase.from('message_reads').select('message_id').eq('user_id', user.id),
     ])
@@ -196,12 +198,13 @@ export default function MerchantMessagesPage() {
     setSelectedMessage(message)
     setReplyText('')
 
-    if (!isBroadcast && userId) {
+    if (!isBroadcast && userId && message.sender_id) {
       const { data } = await supabase
         .from('messages')
         .select('*')
         .eq('sender_id', userId)
-        .ilike('subject', `%${message.subject || ''}%`)
+        .eq('recipient_id', message.sender_id)
+        .eq('message_type', 'direct')
         .order('created_at', { ascending: true })
 
       setMyReplies((data || []) as MerchantMessage[])
@@ -215,6 +218,13 @@ export default function MerchantMessagesPage() {
       return
     }
 
+    const recipientId = selectedMessage.sender_id || ''
+    if (!recipientId) {
+      setSendingReply(false)
+      window.alert('Bu mesaja yanıt gönderilemiyor.')
+      return
+    }
+
     setSendingReply(true)
 
     const subject = selectedMessage.subject?.startsWith('Ynt:')
@@ -223,7 +233,7 @@ export default function MerchantMessagesPage() {
 
     const { error } = await supabase.from('messages').insert({
       sender_id: userId,
-      recipient_id: null,
+      recipient_id: recipientId,
       subject,
       content: replyText.trim(),
       message_type: 'direct',
@@ -235,7 +245,8 @@ export default function MerchantMessagesPage() {
         .from('messages')
         .select('*')
         .eq('sender_id', userId)
-        .ilike('subject', `%${selectedMessage.subject || ''}%`)
+        .eq('recipient_id', recipientId)
+        .eq('message_type', 'direct')
         .order('created_at', { ascending: true })
 
       setMyReplies((data || []) as MerchantMessage[])

@@ -14,7 +14,6 @@ import {
   Menu,
   MessageSquare,
   Store,
-  Tag,
   Users,
   X,
 } from 'lucide-react'
@@ -45,8 +44,7 @@ const NAV_GROUPS: NavSection[] = [
     title: 'İşletme Yönetimi',
     items: [
       { href: '/admin/businesses', label: 'İşletmeler', icon: Store },
-      { href: '/admin/categories', label: 'Kategoriler', icon: Layers },
-      { href: '/admin/features', label: 'Özellikler', icon: Tag },
+      { href: '/admin/categories', label: 'Kategori & Özellik', icon: Layers },
     ],
   },
   {
@@ -55,25 +53,11 @@ const NAV_GROUPS: NavSection[] = [
   },
 ]
 
-function buildTitle(pathname: string): string {
-  for (const group of NAV_GROUPS) {
-    for (const item of group.items) {
-      if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
-        return item.label
-      }
-    }
-  }
-
-  return 'Admin Paneli'
-}
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = useMemo(() => getBrowserSupabase(), [])
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  const pageTitle = buildTitle(pathname)
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
@@ -165,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         <section className="min-w-0 flex flex-col lg:flex-1 bg-[linear-gradient(180deg,#f8faff_0%,#f3f6fc_100%)]">
-          <header className="h-[84px] px-3 md:px-6 flex items-center justify-between gap-3 bg-[linear-gradient(180deg,#f8fbff_0%,#f2f6fd_100%)] border-b border-slate-200/70 shadow-[0_10px_18px_-16px_rgba(15,23,42,0.45)]">
+          <header className="h-[68px] px-3 md:px-6 flex items-center justify-between gap-3 bg-[linear-gradient(180deg,#f8fbff_0%,#f2f6fd_100%)] border-b border-slate-200/70 shadow-[0_10px_18px_-16px_rgba(15,23,42,0.45)]">
             <div className="flex items-center gap-2 min-w-0">
               <button
                 type="button"
@@ -175,11 +159,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 {mobileOpen ? <X size={18} /> : <Menu size={18} />}
               </button>
-
-              <div className="min-w-0">
-                <p className="text-[11px] tracking-[0.18em] uppercase font-semibold text-slate-500">Admin Paneli</p>
-                <h1 className="text-[34px] leading-none md:text-[36px] font-bold text-slate-800 truncate">{pageTitle}</h1>
-              </div>
             </div>
 
             <div className="flex items-center gap-2">

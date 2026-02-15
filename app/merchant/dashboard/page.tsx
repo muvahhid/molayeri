@@ -468,6 +468,7 @@ export default function MerchantDashboardPage() {
           .from('messages')
           .select('id')
           .is('recipient_id', null)
+          .in('message_type', ['broadcast_all', 'broadcast_business'])
           .neq('sender_id', userId)
           .gt('created_at', createdAt)
           .limit(100),
