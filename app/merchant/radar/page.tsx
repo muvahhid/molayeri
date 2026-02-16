@@ -1,16 +1,21 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   AlertTriangle,
+  ArrowUpRight,
   CheckCircle2,
+  Compass,
   Loader2,
   MapPin,
   Radio,
+  RefreshCcw,
   Send,
   ShieldAlert,
   Sparkles,
   Tag,
+  Users,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
 import { ModuleTitle } from '../_components/module-title'
@@ -143,6 +148,21 @@ function resolveRadarRuntimeDefaults(raw: unknown): {
   }
 }
 
+type MolaTargetSummaryRow = {
+  user_id: string
+  stop_key: string
+}
+
+function normalizeMolaTargetSummaryRows(rows: unknown[]): MolaTargetSummaryRow[] {
+  return rows
+    .map((raw) => asObject(raw))
+    .map((row) => ({
+      user_id: typeof row.user_id === 'string' ? row.user_id : '',
+      stop_key: typeof row.stop_key === 'string' ? row.stop_key : '',
+    }))
+    .filter((row) => row.user_id.length > 0 && row.stop_key.length > 0)
+}
+
 export default function MerchantRadarPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
 
@@ -162,6 +182,9 @@ export default function MerchantRadarPage() {
 
   const [resultText, setResultText] = useState('')
   const [resultTone, setResultTone] = useState<RadarResultTone>('success')
+  const [molaSummaryLoading, setMolaSummaryLoading] = useState(false)
+  const [molaTargetCount, setMolaTargetCount] = useState(0)
+  const [molaActiveOfferCount, setMolaActiveOfferCount] = useState(0)
 
   const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId) || null
   const selectedCoupon = coupons.find((coupon) => coupon.id === selectedCouponId) || null
@@ -295,6 +318,63 @@ export default function MerchantRadarPage() {
       setSelectedCouponId('')
     } finally {
       setComposerLoading(false)
+    }
+  }
+
+  const loadMolaSummary = async (businessId: string) => {
+    if (!businessId) {
+      setMolaTargetCount(0)
+      setMolaActiveOfferCount(0)
+      return
+    }
+
+    setMolaSummaryLoading(true)
+    try {
+      let targetRows: MolaTargetSummaryRow[] = []
+
+      try {
+        const { data, error } = await supabase.rpc('get_mola_targets_for_business_v2', {
+          p_business_id: businessId,
+        })
+        if (error) throw error
+        targetRows = normalizeMolaTargetSummaryRows((data || []) as unknown[])
+      } catch {
+        try {
+          const { data, error } = await supabase.rpc('get_mola_targets_for_business', {
+            p_business_id: businessId,
+          })
+          if (error) throw error
+          targetRows = normalizeMolaTargetSummaryRows((data || []) as unknown[])
+        } catch {
+          const { data } = await supabase
+            .from('user_mola_stops')
+            .select('user_id, stop_key')
+            .eq('business_id', businessId)
+            .eq('status', 'active')
+          targetRows = normalizeMolaTargetSummaryRows((data || []) as unknown[])
+        }
+      }
+
+      const { data: activeOffers } = await supabase
+        .from('mola_business_offers')
+        .select('user_id, stop_key')
+        .eq('business_id', businessId)
+        .in('status', ['sent', 'active'])
+
+      const activeKeys = new Set(
+        ((activeOffers || []) as unknown[])
+          .map((raw) => asObject(raw))
+          .map((row) => `${typeof row.user_id === 'string' ? row.user_id : ''}|${typeof row.stop_key === 'string' ? row.stop_key : ''}`)
+          .filter((key) => key !== '|')
+      )
+
+      setMolaTargetCount(targetRows.length)
+      setMolaActiveOfferCount(activeKeys.size)
+    } catch {
+      setMolaTargetCount(0)
+      setMolaActiveOfferCount(0)
+    } finally {
+      setMolaSummaryLoading(false)
     }
   }
 
@@ -490,8 +570,12 @@ export default function MerchantRadarPage() {
   }, [])
 
   useEffect(() => {
-    if (!selectedBusiness) return
-    void prepareComposerData(selectedBusiness)
+    if (!selectedBusiness) {
+      setMolaTargetCount(0)
+      setMolaActiveOfferCount(0)
+      return
+    }
+    void Promise.all([prepareComposerData(selectedBusiness), loadMolaSummary(selectedBusiness.id)])
     setResultText('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusiness])
@@ -546,7 +630,8 @@ export default function MerchantRadarPage() {
             Radar gönderimi için en az bir işletme gerekli.
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.22fr)_minmax(360px,0.78fr)] gap-3">
+          <>
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.22fr)_minmax(360px,0.78fr)] gap-3">
             <section className="rounded-[24px] p-4 md:p-5 bg-white border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
@@ -810,6 +895,62 @@ export default function MerchantRadarPage() {
               ) : null}
             </section>
           </div>
+
+            <div className="mt-3 rounded-[24px] p-4 md:p-5 bg-[linear-gradient(155deg,#ffffff_0%,#f6f9ff_100%)] border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)]">
+            <div className="flex flex-wrap items-start justify-between gap-2.5">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
+                  <Compass className="h-4 w-4 text-violet-600" />
+                  <span className="text-xs font-semibold">Modül 2 • Mola Hedefleri</span>
+                </p>
+                <p className="mt-2 text-xs text-slate-600">
+                  App akışıyla uyumlu Mola hedef yönetimi: kullanıcı listesi, kupon bağlı teklif gönderimi, aktif teklifi iptal.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedBusinessId) return
+                    void loadMolaSummary(selectedBusinessId)
+                  }}
+                  disabled={molaSummaryLoading || !selectedBusinessId}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-slate-300 disabled:opacity-55"
+                >
+                  {molaSummaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+                  Yenile
+                </button>
+
+                <Link
+                  href="/merchant/mola-targets"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-700"
+                >
+                  Mola Hedefleri Sayfası
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Mola Hedef</p>
+                <p className="mt-1 text-lg font-extrabold text-slate-800">{molaTargetCount}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Aktif Mola Teklifi</p>
+                <p className="mt-1 text-lg font-extrabold text-slate-800">{molaActiveOfferCount}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Durum</p>
+                <p className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-slate-800">
+                  <Users className="h-3.5 w-3.5 text-slate-500" />
+                  {molaSummaryLoading ? 'Yükleniyor' : 'Hazır'}
+                </p>
+              </div>
+            </div>
+            </div>
+          </>
         )}
       </section>
     </div>

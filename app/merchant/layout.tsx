@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType } from 'react'
 import {
   ClipboardList,
+  Compass,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -79,6 +80,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/merchant/coupons', label: 'Kupon Yönetimi', icon: Ticket },
   { href: '/merchant/convoys', label: 'Konvoy Yönetimi', icon: Route },
   { href: '/merchant/radar', label: 'Müşteri Radarı', icon: Radio },
+  { href: '/merchant/mola-targets', label: 'Mola Hedefleri', icon: Compass },
   { href: '/merchant/messages', label: 'Mesajlar', icon: MessageSquare },
   { href: '/merchant/reviews', label: 'Yorumlar', icon: Star },
   { href: '/merchant/settings', label: 'Ayarlar', icon: Settings },

@@ -297,6 +297,19 @@ export default function DashboardPage() {
     const thirtyDaysStart = shiftDays(dayStart(now), -29).toISOString()
 
     try {
+      const { data: authData } = await supabase.auth.getUser()
+      const currentUserId = authData.user?.id || null
+
+      const unreadMessages = currentUserId
+        ? await safeCount(
+            supabase
+              .from('messages')
+              .select('id', { count: 'exact', head: true })
+              .eq('recipient_id', currentUserId)
+              .eq('is_read', false)
+          )
+        : 0
+
       const [
         totalUsers,
         merchants,
@@ -306,7 +319,6 @@ export default function DashboardPage() {
         pendingBusinesses,
         rejectedBusinesses,
         messagesToday,
-        unreadMessages,
         reportedReviews,
         lowRating30d,
         pendingConvoyOffers,
@@ -319,7 +331,6 @@ export default function DashboardPage() {
         safeCount(supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'pending')),
         safeCount(supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'rejected')),
         safeCount(supabase.from('messages').select('*', { count: 'exact', head: true }).gte('created_at', todayStart)),
-        safeCount(supabase.from('messages').select('*', { count: 'exact', head: true }).eq('is_read', false)),
         safeCount(supabase.from('business_reviews').select('id', { count: 'exact', head: true }).eq('is_reported', true)),
         safeCount(
           supabase

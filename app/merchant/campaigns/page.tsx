@@ -45,6 +45,35 @@ function limitTagText(value: string): string {
   return value.slice(0, TAG_TEXT_MAX)
 }
 
+function toRgba(hex: string, alpha: number): string {
+  const cleaned = hex.replace('#', '').trim()
+  const expanded =
+    cleaned.length === 3
+      ? cleaned
+          .split('')
+          .map((char) => `${char}${char}`)
+          .join('')
+      : cleaned
+
+  const r = Number.parseInt(expanded.slice(0, 2), 16) || 0
+  const g = Number.parseInt(expanded.slice(2, 4), 16) || 0
+  const b = Number.parseInt(expanded.slice(4, 6), 16) || 0
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+function getPostitStyle(color: string, active: boolean) {
+  return {
+    shell: {
+      borderColor: toRgba(color, active ? 0.56 : 0.38),
+      background: `linear-gradient(180deg, ${toRgba(color, active ? 0.14 : 0.09)} 0%, rgba(248,250,252,0.95) 100%)`,
+      boxShadow: active
+        ? `0 10px 18px -16px ${toRgba(color, 0.75)}, inset 0 1px 0 rgba(255,255,255,0.95)`
+        : `0 8px 16px -16px rgba(15,23,42,0.5), inset 0 1px 0 rgba(255,255,255,0.94)`,
+    },
+  }
+}
+
 export default function MerchantCampaignsPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
 
@@ -64,6 +93,7 @@ export default function MerchantCampaignsPage() {
   const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId) || null
   const activeCampaignCount = campaigns.filter((campaign) => campaign.is_active).length
   const selectedTagColor = TAG_COLORS[tagColorIndex] || TAG_COLORS[0]
+  const previewPostitStyle = getPostitStyle(selectedTagColor, true)
 
   const loadBusinesses = async () => {
     setBootLoading(true)
@@ -277,11 +307,11 @@ export default function MerchantCampaignsPage() {
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500 mb-2">Seçili Renk Önizleme</p>
                     <div
-                      className="inline-flex max-w-full items-center gap-2 rounded-full border-2 bg-white px-2.5 py-1"
-                      style={{ borderColor: selectedTagColor }}
+                      className="relative inline-flex max-w-full items-center gap-2 rounded-[8px] border px-2.5 py-1.5"
+                      style={previewPostitStyle.shell}
                     >
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: selectedTagColor }} />
-                      <span className="truncate text-sm font-bold text-slate-800">
+                      <span className="h-3.5 w-1 rounded-full" style={{ backgroundColor: selectedTagColor }} />
+                      <span className="truncate text-sm font-bold" style={{ color: selectedTagColor }}>
                         {limitTagText(tagText.trim()) || 'Etiket metni önizlemesi'}
                       </span>
                     </div>
@@ -362,13 +392,14 @@ export default function MerchantCampaignsPage() {
                         : 0
                     const tagColor = TAG_COLORS[colorSafeIndex] || TAG_COLORS[0]
                     const isBusy = togglingTagId === campaign.id || deletingTagId === campaign.id
+                    const postitStyle = getPostitStyle(tagColor, Boolean(campaign.is_active))
 
                     return (
                       <article key={campaign.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 border-2 bg-white" style={{ borderColor: tagColor }}>
-                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tagColor }} />
+                            <div className="relative inline-flex max-w-full items-center gap-2 rounded-[8px] border px-2.5 py-1.5" style={postitStyle.shell}>
+                              <span className="h-3.5 w-1 rounded-full" style={{ backgroundColor: tagColor }} />
                               <span className="text-sm font-bold truncate max-w-[240px]" style={{ color: tagColor }}>
                                 {campaign.text || 'Etiket metni yok'}
                               </span>

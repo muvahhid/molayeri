@@ -104,6 +104,7 @@ export default function MerchantMessagesPage() {
     }
 
     setUserId(user.id)
+    const accountCreatedAt = user.created_at || new Date(0).toISOString()
 
     const [broadcastRes, directRes, readsRes] = await Promise.all([
       supabase
@@ -112,6 +113,7 @@ export default function MerchantMessagesPage() {
         .is('recipient_id', null)
         .in('message_type', ['broadcast_all', 'broadcast_business'])
         .neq('sender_id', user.id)
+        .gt('created_at', accountCreatedAt)
         .order('created_at', { ascending: false }),
       supabase
         .from('messages')
