@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+import type { LucideIcon } from 'lucide-react'
 import { 
   Apple, CheckCircle, Loader2, MapPin, Store, User, Phone, Lock, Mail, 
   Upload, Trash2, Search, Star, Plus, Map, 
-  AlertTriangle, Navigation, Check, ChevronRight
+  AlertTriangle, Navigation, Check
 } from 'lucide-react'
 
 // --- FIRE ORANGE NEUMORPHIC THEME ---
 const BG_MAIN = "bg-[#eef0f4]"
 const TXT_DARK = "text-slate-700"
-const TXT_MUTED = "text-slate-400"
 const ACCENT_COLOR = "text-orange-500"
 
 // Gölgeler
@@ -22,13 +23,53 @@ const SHADOW_BTN = "shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]"
 
 // --- UI COMPONENTS ---
 
-const NeuCard = ({ children, className = "" }: any) => (
+type Category = { id: string; name: string; [key: string]: unknown }
+type Feature = { id: string; name: string; category_id?: string | null; is_global?: boolean | null; [key: string]: unknown }
+type PlacePrediction = { place_id: string; description: string; types?: string[] }
+type RuleKey = 'r1' | 'r2' | 'r3'
+type RuleState = Record<RuleKey, boolean>
+
+type NeuCardProps = {
+  children: ReactNode
+  className?: string
+}
+
+type NeuInputProps = InputHTMLAttributes<HTMLInputElement> & {
+  icon?: LucideIcon
+  label?: string
+  rightElement?: ReactNode
+}
+
+type NeuTextAreaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  label?: string
+}
+
+type NeuSwitchProps = {
+  checked: boolean
+  onChange: (next: boolean) => void
+}
+
+type NeuButtonProps = {
+  onClick?: () => void
+  children: ReactNode
+  variant?: 'primary' | 'solid'
+  className?: string
+  disabled?: boolean
+  type?: 'button' | 'submit' | 'reset'
+}
+
+type SuccessModalProps = {
+  isOpen: boolean
+  onClose: () => void
+}
+
+const NeuCard = ({ children, className = "" }: NeuCardProps) => (
   <div className={`${BG_MAIN} rounded-[40px] ${SHADOW_OUT} border border-white/60 p-8 ${className}`}>
     {children}
   </div>
 )
 
-const NeuInput = ({ icon: Icon, label, rightElement, ...props }: any) => (
+const NeuInput = ({ icon: Icon, label, rightElement, ...props }: NeuInputProps) => (
   <div className="mb-6 group">
     {label && <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-4">{label}</label>}
     <div className="relative flex items-center">
@@ -43,7 +84,7 @@ const NeuInput = ({ icon: Icon, label, rightElement, ...props }: any) => (
   </div>
 )
 
-const NeuTextArea = ({ label, ...props }: any) => (
+const NeuTextArea = ({ label, ...props }: NeuTextAreaProps) => (
   <div className="mb-6 group">
     {label && <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-4">{label}</label>}
     <textarea 
@@ -54,7 +95,7 @@ const NeuTextArea = ({ label, ...props }: any) => (
   </div>
 )
 
-const NeuSwitch = ({ checked, onChange }: any) => (
+const NeuSwitch = ({ checked, onChange }: NeuSwitchProps) => (
   <div 
     onClick={(e) => { e.stopPropagation(); onChange(!checked); }} 
     className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300 ease-in-out ${checked ? 'bg-orange-500 shadow-inner' : `${BG_MAIN} ${SHADOW_IN}`}`}
@@ -63,7 +104,7 @@ const NeuSwitch = ({ checked, onChange }: any) => (
   </div>
 )
 
-const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled=false }: any) => {
+const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled=false, type = 'button' }: NeuButtonProps) => {
   const base = "relative overflow-hidden transition-all duration-200 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] uppercase tracking-wide text-sm select-none"
   const primary = `${BG_MAIN} text-slate-600 ${SHADOW_BTN} border border-white/60 hover:text-orange-600 hover:-translate-y-0.5 active:${SHADOW_IN}`
   const solid = `bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-[6px_6px_20px_rgba(249,115,22,0.4),-6px_-6px_20px_rgba(255,255,255,0.8)] border border-orange-400/20 hover:brightness-110 hover:-translate-y-0.5`
@@ -71,11 +112,11 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
   let style = primary
   if (variant === 'solid') style = solid
 
-  return <button onClick={onClick} disabled={disabled} className={`${base} ${style} ${className}`}>{children}</button>
+  return <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${style} ${className}`}>{children}</button>
 }
 
 // --- SUCCESS MODAL ---
-const SuccessModal = ({ isOpen, onClose }: any) => {
+const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -114,38 +155,38 @@ export default function BusinessWizard() {
   })
   
   const [placeQuery, setPlaceQuery] = useState('')
-  const [predictions, setPredictions] = useState<any[]>([])
+  const [predictions, setPredictions] = useState<PlacePrediction[]>([])
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
   const [detectedRoadType, setDetectedRoadType] = useState<string | null>(null)
 
-  const [categories, setCategories] = useState<any[]>([])
-  const [features, setFeatures] = useState<any[]>([]) 
+  const [categories, setCategories] = useState<Category[]>([])
+  const [features, setFeatures] = useState<Feature[]>([]) 
   const [selectedCats, setSelectedCats] = useState<Set<string>>(new Set())
   const [selectedFeats, setSelectedFeats] = useState<Set<string>>(new Set())
   const [brands, setBrands] = useState<Record<string, string[]>>({}) 
 
   const [photos, setPhotos] = useState<File[]>([])
   const [coverIndex, setCoverIndex] = useState(0)
-  const [rules, setRules] = useState({ r1: false, r2: false, r3: false })
+  const [rules, setRules] = useState<RuleState>({ r1: false, r2: false, r3: false })
 
-  useEffect(() => {
-    checkUser()
-    fetchData()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data } = await supabase.auth.getUser()
     if (data.user) setStep(2)
-  }
+  }, [supabase])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [cRes, fRes] = await Promise.all([
       supabase.from('categories').select('*').order('name'),
       supabase.from('features').select('*').order('name')
     ])
     if (cRes.data) setCategories(cRes.data)
     if (fRes.data) setFeatures(fRes.data)
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    void checkUser()
+    void fetchData()
+  }, [checkUser, fetchData])
 
   const normalizeTrPhone = (raw: string) => {
     const digits = raw.replace(/\D/g, '')
@@ -176,8 +217,8 @@ export default function BusinessWizard() {
     }
     try {
       await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
-    } catch (error: any) {
-      const msg = String(error?.message || '').toLowerCase()
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message.toLowerCase() : ''
       if (msg.includes('column') && msg.includes('phone')) {
         delete payload.phone
         await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
@@ -408,7 +449,7 @@ export default function BusinessWizard() {
       const featInserts = Array.from(selectedFeats).map(f => ({ business_id: bizId, feature_id: f, value: 'true' }))
       if(featInserts.length) await supabase.from('business_features').insert(featInserts)
 
-      const storeInserts: any[] = []
+      const storeInserts: Array<{ business_id: string; name: string; floor_info: string }> = []
       Object.entries(brands).forEach(([catId, bList]) => {
         const cName = categories.find(c=>c.id===catId)?.name || 'Mağaza'
         bList.forEach(bName => { if(bName.trim()) storeInserts.push({ business_id: bizId, name: bName.trim(), floor_info: cName }) })
@@ -435,7 +476,12 @@ export default function BusinessWizard() {
       
       setShowSuccess(true)
 
-    } catch (e:any) { alert(e.message) } finally { setLoading(false) }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Başvuru sırasında beklenmeyen bir hata oluştu.'
+      alert(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const steps = [{n:1,t:'HESAP'},{n:2,t:'KONUM'},{n:3,t:'DETAY'},{n:4,t:'GÖRSEL'},{n:5,t:'ONAY'}]
@@ -478,12 +524,12 @@ export default function BusinessWizard() {
             <div className="space-y-6">
               <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><User className={ACCENT_COLOR}/> HESAP BİLGİLERİ</h2>
               <div className="grid grid-cols-2 gap-6">
-                 <NeuInput icon={User} label="İsim" placeholder="Adınız" value={userForm.name} onChange={(e:any)=>setUserForm({...userForm, name:e.target.value})} />
-                 <NeuInput icon={User} label="Soyisim" placeholder="Soyadınız" value={userForm.surname} onChange={(e:any)=>setUserForm({...userForm, surname:e.target.value})} />
+                 <NeuInput icon={User} label="İsim" placeholder="Adınız" value={userForm.name} onChange={(e)=>setUserForm({...userForm, name:e.target.value})} />
+                 <NeuInput icon={User} label="Soyisim" placeholder="Soyadınız" value={userForm.surname} onChange={(e)=>setUserForm({...userForm, surname:e.target.value})} />
               </div>
-              <NeuInput icon={Mail} label="E-Posta" placeholder="E-posta Adresiniz" value={userForm.email} onChange={(e:any)=>setUserForm({...userForm, email:e.target.value})} />
-              <NeuInput icon={Phone} label="Telefon" placeholder="05XX XXX XX XX" value={userForm.phone} onChange={(e:any)=>setUserForm({...userForm, phone:e.target.value})} />
-              <NeuInput icon={Lock} label="Şifre" type="password" placeholder="Güçlü bir şifre belirleyin" value={userForm.password} onChange={(e:any)=>setUserForm({...userForm, password:e.target.value})} />
+              <NeuInput icon={Mail} label="E-Posta" placeholder="E-posta Adresiniz" value={userForm.email} onChange={(e)=>setUserForm({...userForm, email:e.target.value})} />
+              <NeuInput icon={Phone} label="Telefon" placeholder="05XX XXX XX XX" value={userForm.phone} onChange={(e)=>setUserForm({...userForm, phone:e.target.value})} />
+              <NeuInput icon={Lock} label="Şifre" type="password" placeholder="Güçlü bir şifre belirleyin" value={userForm.password} onChange={(e)=>setUserForm({...userForm, password:e.target.value})} />
               <p className="text-xs font-bold text-slate-500 mt-1">{passwordRuleText}</p>
               {accountError ? (
                 <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-red-700 bg-red-100 border border-red-200">
@@ -507,16 +553,16 @@ export default function BusinessWizard() {
             <div className="space-y-6">
               <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><MapPin className={ACCENT_COLOR}/> KONUM VE DETAYLAR</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <NeuInput icon={Store} label="İşletme Adı" placeholder="Tabela Adı" value={bizForm.name} onChange={(e:any)=>setBizForm({...bizForm, name:e.target.value})} />
-                 <NeuInput icon={Phone} label="İşletme Telefonu" placeholder="İletişim Numarası" value={bizForm.phone} onChange={(e:any)=>setBizForm({...bizForm, phone:e.target.value})} />
+                 <NeuInput icon={Store} label="İşletme Adı" placeholder="Tabela Adı" value={bizForm.name} onChange={(e)=>setBizForm({...bizForm, name:e.target.value})} />
+                 <NeuInput icon={Phone} label="İşletme Telefonu" placeholder="İletişim Numarası" value={bizForm.phone} onChange={(e)=>setBizForm({...bizForm, phone:e.target.value})} />
               </div>
 
               {/* SEARCH */}
               <div className="relative z-20">
-                 <NeuInput icon={Search} label="Konum Ara" placeholder="Google Maps'te Ara..." value={placeQuery} onChange={(e:any)=>searchPlaces(e.target.value)} />
+                 <NeuInput icon={Search} label="Konum Ara" placeholder="Google Maps&apos;te Ara..." value={placeQuery} onChange={(e)=>searchPlaces(e.target.value)} />
                  {predictions.length > 0 && (
                    <div className="absolute top-[85px] left-0 w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
-                     {predictions.map(p => (
+                     {predictions.map((p) => (
                        <div key={p.place_id} onClick={()=>selectPlace(p.place_id, p.description)} className="p-4 hover:bg-orange-50 cursor-pointer text-sm font-bold text-slate-600 border-b border-slate-50 flex items-center gap-3">
                          <MapPin className="w-4 h-4 text-orange-400"/> {p.description}
                        </div>
@@ -525,7 +571,7 @@ export default function BusinessWizard() {
                  )}
               </div>
 
-              <NeuInput icon={MapPin} label="Açık Adres" placeholder="Mahalle, Cadde, No..." value={bizForm.address} onChange={(e:any)=>setBizForm({...bizForm, address:e.target.value})} />
+              <NeuInput icon={MapPin} label="Açık Adres" placeholder="Mahalle, Cadde, No..." value={bizForm.address} onChange={(e)=>setBizForm({...bizForm, address:e.target.value})} />
 
               {/* COORDS + MAP */}
               <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100/50">
@@ -536,7 +582,7 @@ export default function BusinessWizard() {
                         label="Hassas Konum (Lat, Lng)" 
                         placeholder="Örn: 40.1234, 30.5678" 
                         value={bizForm.coordsInput}
-                        onChange={(e:any)=>handleCoordsChange(e.target.value)}
+                        onChange={(e)=>handleCoordsChange(e.target.value)}
                         rightElement={
                           <NeuButton onClick={openMap} className="w-10 h-10 !rounded-xl !p-0 !min-w-0 shadow-none border-0 bg-white text-orange-500">
                              <Map className="w-5 h-5"/>
@@ -548,7 +594,7 @@ export default function BusinessWizard() {
                  <div className="flex gap-3 text-xs text-slate-500 leading-relaxed bg-white/60 p-4 rounded-xl border border-white">
                     <div className="shrink-0 pt-0.5"><Star className="w-4 h-4 text-orange-400 fill-orange-400"/></div>
                     <div>
-                       <strong>Mükemmel Konum İçin:</strong> Yandaki harita ikonuna tıklayın, Google Maps'te işletmenizin tam giriş kapısının üzerine <u>sağ tıklayın</u>. En üstte çıkan koordinata (Örn: 41.23, 29.55) tıklayınca kopyalanır. Gelip buraya yapıştırın.
+                       <strong>Mükemmel Konum İçin:</strong> Yandaki harita ikonuna tıklayın, Google Maps&apos;te işletmenizin tam giriş kapısının üzerine <u>sağ tıklayın</u>. En üstte çıkan koordinata (Örn: 41.23, 29.55) tıklayınca kopyalanır. Gelip buraya yapıştırın.
                     </div>
                  </div>
               </div>
@@ -574,7 +620,7 @@ export default function BusinessWizard() {
                  </div>
               </div>
 
-              <NeuTextArea label="Tanıtım Yazısı" placeholder="İşletmenizi anlatan kısa bir yazı..." value={bizForm.desc} onChange={(e:any)=>setBizForm({...bizForm, desc:e.target.value})} />
+              <NeuTextArea label="Tanıtım Yazısı" placeholder="İşletmenizi anlatan kısa bir yazı..." value={bizForm.desc} onChange={(e)=>setBizForm({...bizForm, desc:e.target.value})} />
               <div className="pt-4 flex gap-4"><NeuButton onClick={()=>setStep(1)} className="flex-1 py-5">GERİ</NeuButton><NeuButton onClick={()=>setStep(3)} variant="solid" className="flex-1 py-5">DEVAM ET</NeuButton></div>
             </div>
           )}
@@ -588,15 +634,26 @@ export default function BusinessWizard() {
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Star className="w-4 h-4 text-orange-400"/> Genel Tesis İmkanları</h4>
                   <div className="flex flex-wrap gap-3">
                      {features.filter(f => f.is_global).map(f => (
-                       <button key={f.id} onClick={()=>{const s=new Set(selectedFeats); s.has(f.id)?s.delete(f.id):s.add(f.id); setSelectedFeats(s)}} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 ${selectedFeats.has(f.id) ? 'bg-orange-50 border-orange-200 text-orange-600 shadow-sm' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}>{f.name}</button>
+                       <button
+                         key={f.id}
+                         onClick={() => {
+                           const s = new Set(selectedFeats)
+                           if (s.has(f.id)) s.delete(f.id)
+                           else s.add(f.id)
+                           setSelectedFeats(s)
+                         }}
+                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 ${selectedFeats.has(f.id) ? 'bg-orange-50 border-orange-200 text-orange-600 shadow-sm' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}
+                       >
+                         {f.name}
+                       </button>
                      ))}
                   </div>
                </div>
 
                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {categories.map(cat => {
+                  {categories.map((cat) => {
                     const isSel = selectedCats.has(cat.id)
-                    const catFeats = features.filter(f => f.category_id === cat.id)
+                    const catFeats = features.filter((f) => f.category_id === cat.id)
                     const brandList = brands[cat.id]
 
                     return (
@@ -622,7 +679,18 @@ export default function BusinessWizard() {
                               {catFeats.length > 0 && (
                                  <div className="flex flex-wrap gap-2">
                                     {catFeats.map(f => (
-                                      <button key={f.id} onClick={()=>{const s=new Set(selectedFeats); s.has(f.id)?s.delete(f.id):s.add(f.id); setSelectedFeats(s)}} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedFeats.has(f.id) ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>{f.name}</button>
+                                      <button
+                                        key={f.id}
+                                        onClick={() => {
+                                          const s = new Set(selectedFeats)
+                                          if (s.has(f.id)) s.delete(f.id)
+                                          else s.add(f.id)
+                                          setSelectedFeats(s)
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedFeats.has(f.id) ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                                      >
+                                        {f.name}
+                                      </button>
                                     ))}
                                  </div>
                               )}
@@ -643,7 +711,7 @@ export default function BusinessWizard() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                    {photos.map((f, i) => (
                       <div key={i} className="relative group aspect-video rounded-2xl overflow-hidden shadow-lg border-2 border-white">
-                         <img src={URL.createObjectURL(f)} className="w-full h-full object-cover"/>
+                         <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" alt="Yüklenen işletme görseli" />
                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <button onClick={()=>setPhotos(photos.filter((_,x)=>x!==i))} className="p-2 bg-red-500 text-white rounded-full"><Trash2 className="w-4 h-4"/></button>
                             <button onClick={()=>setCoverIndex(i)} className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase ${coverIndex===i ? 'bg-green-500 text-white' : 'bg-white text-slate-800'}`}>{coverIndex===i ? 'Kapak' : 'Kapak Yap'}</button>
@@ -673,10 +741,10 @@ export default function BusinessWizard() {
                    <div className="flex justify-between pt-1"><span className="text-sm font-bold text-slate-400">LOKASYON</span><span className="text-sm font-black text-slate-700 max-w-[200px] text-right truncate">{bizForm.address}</span></div>
                 </div>
                 <div className="space-y-3">
-                   {[{k:'r1',t:'Girdiğim bilgilerin doğruluğunu beyan ederim.'},{k:'r2',t:'İşletme kurallarını ve sözleşmeyi okudum.'},{k:'r3',t:'KVKK metnini onaylıyorum.'}].map(r => (
-                     <label key={r.k} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${(rules as any)[r.k] ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
-                        <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${(rules as any)[r.k] ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{(rules as any)[r.k] && <Check className="w-4 h-4 text-white"/>}</div>
-                        <input type="checkbox" className="hidden" checked={(rules as any)[r.k]} onChange={(e)=>setRules({...rules, [r.k]: e.target.checked})}/>
+                   {([{k:'r1',t:'Girdiğim bilgilerin doğruluğunu beyan ederim.'},{k:'r2',t:'İşletme kurallarını ve sözleşmeyi okudum.'},{k:'r3',t:'KVKK metnini onaylıyorum.'}] as Array<{k: RuleKey; t: string}>).map((r) => (
+                     <label key={r.k} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${rules[r.k] ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
+                        <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${rules[r.k] ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{rules[r.k] && <Check className="w-4 h-4 text-white"/>}</div>
+                        <input type="checkbox" className="hidden" checked={rules[r.k]} onChange={(e)=>setRules({...rules, [r.k]: e.target.checked})}/>
                         <span className="text-sm font-bold text-slate-600">{r.t}</span>
                      </label>
                    ))}
