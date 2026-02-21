@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowRight,
   BellRing,
+  CircleDollarSign,
   CheckCircle2,
   ClipboardCheck,
   Clock3,
@@ -990,6 +991,7 @@ export default function DashboardPage() {
         {[
           { href: '/admin/approvals', title: 'Onay Merkezi', text: 'Bekleyen işletmeleri öncelik sırasıyla yönet.', icon: ClipboardCheck },
           { href: '/admin/messages', title: 'Mesaj Merkezi', text: 'Sistem mesajlarını filtreleyip hızlı yanıt ver.', icon: MessageCircleMore },
+          { href: '/admin/kasa', title: 'Kasa Analitiği', text: 'İşletme ve kategori bazında işlem hacmini izle.', icon: CircleDollarSign },
           { href: '/admin/reviews', title: 'Yorum Moderasyonu', text: 'Raporları kapat, gerekirse yorumu kaldır.', icon: ShieldAlert },
           { href: '/admin/users', title: 'Kullanıcı Güvenliği', text: 'Rol, durum ve suistimal kayıtlarını güncelle.', icon: UserCheck2 },
         ].map((item) => {

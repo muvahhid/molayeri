@@ -1,30 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import { Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { Apple, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import type { User } from '@supabase/supabase-js'
 import { fetchUserRoleById, getDashboardPathForRole } from '@/lib/auth-role'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState(false)
+  const [resolvingSession, setResolvingSession] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
   )
+
+  const redirectByRole = useCallback(
+    async (user: User) => {
+      const role = await fetchUserRoleById(
+        supabase,
+        user.id,
+        (user.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined
+      )
+      router.refresh()
+      router.push(getDashboardPathForRole(role))
+    },
+    [router, supabase]
+  )
+
+  useEffect(() => {
+    let active = true
+
+    const resolveInitialSession = async () => {
+      const { data } = await supabase.auth.getUser()
+      if (!active) return
+      if (data.user) {
+        await redirectByRole(data.user)
+      }
+      if (active) {
+        setResolvingSession(false)
+      }
+    }
+
+    void resolveInitialSession()
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        void redirectByRole(session.user)
+      }
+    })
+
+    return () => {
+      active = false
+      listener.subscription.unsubscribe()
+    }
+  }, [redirectByRole, supabase])
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault()
     setLoading(true)
     setError(null)
 
+    const normalizedEmail = email.trim().toLowerCase()
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
     })
 
@@ -35,18 +85,40 @@ export default function LoginPage() {
     }
 
     const { data: userData } = await supabase.auth.getUser()
-    const user = userData.user
+    if (userData.user) {
+      await redirectByRole(userData.user)
+    }
+  }
 
-    const role = user
-      ? await fetchUserRoleById(
-          supabase,
-          user.id,
-          (user.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined
-        )
-      : 'user'
+  const handleAppleLogin = async () => {
+    setError(null)
+    setOauthLoading(true)
+    const redirectTo = typeof window !== 'undefined'
+      ? `${window.location.origin}/login`
+      : undefined
 
-    router.refresh()
-    router.push(getDashboardPathForRole(role))
+    const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo,
+        queryParams: {
+          scope: 'name email',
+        },
+      },
+    })
+
+    if (oauthError) {
+      setError(`Apple girişi başlatılamadı: ${oauthError.message}`)
+      setOauthLoading(false)
+      return
+    }
+
+    if (data?.url && typeof window !== 'undefined') {
+      window.location.assign(data.url)
+      return
+    }
+
+    setOauthLoading(false)
   }
 
   return (
@@ -91,14 +163,33 @@ export default function LoginPage() {
 
           {error ? <div className="auth-error">{error}</div> : null}
 
-          <button type="submit" disabled={loading} className="auth-submit">
-            {loading ? (
+          <button type="submit" disabled={loading || oauthLoading || resolvingSession} className="auth-submit">
+            {loading || resolvingSession ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
                 Giriş yapılıyor
               </>
             ) : (
               'Panel’e Giriş Yap'
+            )}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading || oauthLoading || resolvingSession}
+            className="auth-submit auth-submit-apple"
+            onClick={handleAppleLogin}
+          >
+            {oauthLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Apple yönlendiriliyor
+              </>
+            ) : (
+              <>
+                <Apple size={16} />
+                Apple ile Giriş Yap
+              </>
             )}
           </button>
         </form>

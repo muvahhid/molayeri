@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import { 
-  CheckCircle, MapPin, Store, User, Phone, Lock, Mail, 
+  Apple, CheckCircle, Loader2, MapPin, Store, User, Phone, Lock, Mail, 
   Upload, Trash2, Search, Star, Plus, Map, 
   AlertTriangle, Navigation, Check, ChevronRight
 } from 'lucide-react'
@@ -103,6 +103,7 @@ export default function BusinessWizard() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [accountError, setAccountError] = useState<string | null>(null)
   
   // DATA STATES
   const [userForm, setUserForm] = useState({ name: '', surname: '', email: '', phone: '', password: '' })
@@ -146,6 +147,44 @@ export default function BusinessWizard() {
     if (fRes.data) setFeatures(fRes.data)
   }
 
+  const normalizeTrPhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, '')
+    if (digits.startsWith('0') && digits.length === 11) return digits
+    if (digits.startsWith('90') && digits.length === 12) return `0${digits.slice(2)}`
+    if (digits.startsWith('5') && digits.length === 10) return `0${digits}`
+    return digits
+  }
+
+  const isValidTrPhone = (raw: string) => /^05\d{9}$/.test(normalizeTrPhone(raw))
+
+  const isStrongPassword = (raw: string) => {
+    const value = raw.trim()
+    if (value.length < 8) return false
+    if (!/[A-Z]/.test(value)) return false
+    if (!/[0-9]/.test(value)) return false
+    return true
+  }
+
+  const passwordRuleText = 'Şifre en az 8 karakter olmalı, 1 büyük harf ve 1 rakam içermeli.'
+
+  const syncOwnProfile = async (userId: string, email: string, fullName: string, phone: string) => {
+    const payload: Record<string, unknown> = {
+      id: userId,
+      email,
+      full_name: fullName,
+      phone,
+    }
+    try {
+      await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
+    } catch (error: any) {
+      const msg = String(error?.message || '').toLowerCase()
+      if (msg.includes('column') && msg.includes('phone')) {
+        delete payload.phone
+        await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
+      }
+    }
+  }
+
   // --- LOGIC HELPER: TYPE DETERMINATION ---
   const normalize = (s: string) => s.toLowerCase().replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/[^a-z0-9]/g, '')
   
@@ -183,16 +222,71 @@ export default function BusinessWizard() {
   // --- ACTIONS ---
 
   const handleSignUp = async () => {
-    if (!userForm.email || !userForm.password || !userForm.name) return alert('Lütfen tüm alanları doldurun.')
+    setAccountError(null)
+
+    const name = userForm.name.trim()
+    const surname = userForm.surname.trim()
+    const email = userForm.email.trim().toLowerCase()
+    const password = userForm.password.trim()
+    const normalizedPhone = normalizeTrPhone(userForm.phone)
+    const fullName = `${name} ${surname}`.trim()
+
+    if (!email || !password || !name) {
+      setAccountError('Lütfen zorunlu alanları doldurun.')
+      return
+    }
+    if (!isValidTrPhone(normalizedPhone)) {
+      setAccountError('Geçerli bir telefon girin. Örn: 05XX XXX XX XX')
+      return
+    }
+    if (!isStrongPassword(password)) {
+      setAccountError(passwordRuleText)
+      return
+    }
+
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({
-      email: userForm.email,
-      password: userForm.password,
-      options: { data: { full_name: `${userForm.name} ${userForm.surname}`, phone: userForm.phone, role: 'isletmeci_aday' } }
+      email,
+      password,
+      options: { data: { full_name: fullName, phone: normalizedPhone, role: 'isletmeci_aday' } }
     })
     setLoading(false)
-    if (error) alert(error.message)
-    else if (data.user) setStep(2)
+    if (error) {
+      setAccountError(`Kayıt başarısız: ${error.message}`)
+      return
+    }
+    if (data.user) {
+      if (data.session) {
+        await syncOwnProfile(data.user.id, email, fullName, normalizedPhone)
+      }
+      setStep(2)
+    }
+  }
+
+  const handleAppleContinue = async () => {
+    setAccountError(null)
+    setLoading(true)
+    const redirectTo =
+      typeof window !== 'undefined' ? `${window.location.origin}/register/business` : undefined
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo,
+        queryParams: { scope: 'name email' },
+      },
+    })
+    if (error) {
+      setAccountError(`Apple girişi başlatılamadı: ${error.message}`)
+      setLoading(false)
+      return
+    }
+
+    if (data?.url && typeof window !== 'undefined') {
+      window.location.assign(data.url)
+      return
+    }
+
+    setLoading(false)
   }
 
   // PLACES API
@@ -390,7 +484,21 @@ export default function BusinessWizard() {
               <NeuInput icon={Mail} label="E-Posta" placeholder="E-posta Adresiniz" value={userForm.email} onChange={(e:any)=>setUserForm({...userForm, email:e.target.value})} />
               <NeuInput icon={Phone} label="Telefon" placeholder="05XX XXX XX XX" value={userForm.phone} onChange={(e:any)=>setUserForm({...userForm, phone:e.target.value})} />
               <NeuInput icon={Lock} label="Şifre" type="password" placeholder="Güçlü bir şifre belirleyin" value={userForm.password} onChange={(e:any)=>setUserForm({...userForm, password:e.target.value})} />
-              <div className="pt-4"><NeuButton onClick={handleSignUp} variant="solid" className="w-full py-5 text-lg">HESABI OLUŞTUR</NeuButton></div>
+              <p className="text-xs font-bold text-slate-500 mt-1">{passwordRuleText}</p>
+              {accountError ? (
+                <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-red-700 bg-red-100 border border-red-200">
+                  {accountError}
+                </div>
+              ) : null}
+              <div className="pt-2 space-y-3">
+                <NeuButton onClick={handleSignUp} variant="solid" className="w-full py-5 text-lg" disabled={loading}>
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR</> : 'HESABI OLUŞTUR'}
+                </NeuButton>
+                <NeuButton onClick={handleAppleContinue} className="w-full py-4" disabled={loading}>
+                  <Apple className="w-4 h-4" />
+                  Apple ile Devam Et
+                </NeuButton>
+              </div>
             </div>
           )}
 

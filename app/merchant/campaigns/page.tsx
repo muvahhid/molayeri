@@ -6,11 +6,13 @@ import { getBrowserSupabase } from '@/lib/browser-client'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 import type { MerchantBusiness } from '../_lib/helpers'
 import { ModuleTitle } from '../_components/module-title'
+import { CampaignSubNav } from './_components/campaign-subnav'
 
 type Campaign = {
   id: string
   text: string | null
   color_index: number | null
+  image_url: string | null
   is_active: boolean | null
   created_at: string | null
 }
@@ -114,11 +116,17 @@ export default function MerchantCampaignsPage() {
     setRecordsLoading(true)
     const { data } = await supabase
       .from('business_campaigns')
-      .select('id, text, color_index, is_active, created_at')
+      .select('id, text, color_index, image_url, is_active, created_at')
       .eq('business_id', businessId)
       .order('created_at', { ascending: false })
 
-    const sorted = [...((data || []) as Campaign[])].sort((left, right) => {
+    const isTagCampaign = (campaign: Campaign) => {
+      const hasColor = campaign.color_index !== null && campaign.color_index !== undefined
+      const hasImage = Boolean((campaign.image_url || '').trim())
+      return hasColor && !hasImage
+    }
+
+    const sorted = [...((data || []) as Campaign[]).filter(isTagCampaign)].sort((left, right) => {
       const activeDiff = Number(Boolean(right.is_active)) - Number(Boolean(left.is_active))
       if (activeDiff !== 0) {
         return activeDiff
@@ -153,6 +161,7 @@ export default function MerchantCampaignsPage() {
       business_id: selectedBusinessId,
       text: normalizedTagText,
       color_index: tagColorIndex,
+      image_url: null,
       is_active: false,
     })
     setSavingTag(false)
@@ -222,6 +231,9 @@ export default function MerchantCampaignsPage() {
     <div className="space-y-6">
       <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)]">
         <ModuleTitle title="Kampanya Yönetimi" />
+        <div className="mt-4">
+          <CampaignSubNav active="tags" />
+        </div>
         <p className="text-sm text-slate-500 mt-1">
           İşletme kartında görünen etiket mesajlarını yönetin. Kupon yönetimi artık ayrı menüde.
         </p>

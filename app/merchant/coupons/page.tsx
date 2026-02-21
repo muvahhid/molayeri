@@ -18,6 +18,7 @@ type CouponCampaign = {
   usage_count: number | null
   valid_until: string | null
   is_active: boolean | null
+  show_in_detail: boolean | null
   created_at: string | null
 }
 
@@ -154,6 +155,8 @@ export default function MerchantCouponsPage() {
   const [togglingCouponId, setTogglingCouponId] = useState<string | null>(null)
   const [copyingCouponId, setCopyingCouponId] = useState<string | null>(null)
   const [deletingCouponId, setDeletingCouponId] = useState<string | null>(null)
+  const [detailTogglingCouponId, setDetailTogglingCouponId] = useState<string | null>(null)
+  const [detailFlagSupported, setDetailFlagSupported] = useState(true)
 
   const [businesses, setBusinesses] = useState<MerchantBusiness[]>([])
   const [selectedBusinessId, setSelectedBusinessId] = useState('')
@@ -189,15 +192,37 @@ export default function MerchantCouponsPage() {
 
   const loadCoupons = async (businessId: string) => {
     setRecordsLoading(true)
-    const { data } = await supabase
+    let detailSupported = true
+    let rows: CouponCampaign[] = []
+
+    const detailed = await supabase
       .from('coupon_campaigns')
       .select(
-        'id, title, code, discount_type, discount_value, monetary_value, max_usage_limit, usage_count, valid_until, is_active, created_at'
+        'id, title, code, discount_type, discount_value, monetary_value, max_usage_limit, usage_count, valid_until, is_active, show_in_detail, created_at'
       )
       .eq('business_id', businessId)
       .order('created_at', { ascending: false })
 
-    setCoupons((data || []) as CouponCampaign[])
+    if (detailed.error) {
+      detailSupported = false
+      const fallback = await supabase
+        .from('coupon_campaigns')
+        .select(
+          'id, title, code, discount_type, discount_value, monetary_value, max_usage_limit, usage_count, valid_until, is_active, created_at'
+        )
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false })
+
+      rows = ((fallback.data || []) as CouponCampaign[]).map((coupon) => ({
+        ...coupon,
+        show_in_detail: false,
+      }))
+    } else {
+      rows = (detailed.data || []) as CouponCampaign[]
+    }
+
+    setDetailFlagSupported(detailSupported)
+    setCoupons(rows)
     setRecordsLoading(false)
   }
 
@@ -340,6 +365,7 @@ export default function MerchantCouponsPage() {
         valid_until: validUntilIso,
         max_usage_limit: maxUsageLimit,
         is_active: true,
+        show_in_detail: false,
       })
 
       if (!error) {
@@ -379,14 +405,40 @@ export default function MerchantCouponsPage() {
     if (!selectedBusinessId) return
 
     setTogglingCouponId(coupon.id)
+    const nextActive = !coupon.is_active
     const { error } = await supabase
       .from('coupon_campaigns')
-      .update({ is_active: !coupon.is_active })
+      .update(nextActive ? { is_active: true } : { is_active: false, show_in_detail: false })
       .eq('id', coupon.id)
     setTogglingCouponId(null)
 
     if (error) {
       window.alert('Kupon durumu güncellenemedi.')
+      return
+    }
+    await refreshBusinessCouponData(selectedBusinessId)
+  }
+
+  const toggleCouponDetailVisibility = async (coupon: CouponCampaign) => {
+    if (!selectedBusinessId) return
+    if (!detailFlagSupported) {
+      window.alert('Detayda yayınlama alanı eksik. SQL patch çalıştırılmalı.')
+      return
+    }
+    if (!coupon.show_in_detail && !coupon.is_active) {
+      window.alert('Detayda yayınlamak için kupon önce aktif olmalı.')
+      return
+    }
+
+    setDetailTogglingCouponId(coupon.id)
+    const { error } = await supabase
+      .from('coupon_campaigns')
+      .update({ show_in_detail: !coupon.show_in_detail })
+      .eq('id', coupon.id)
+    setDetailTogglingCouponId(null)
+
+    if (error) {
+      window.alert('Detay yayın durumu güncellenemedi.')
       return
     }
     await refreshBusinessCouponData(selectedBusinessId)
@@ -607,6 +659,11 @@ export default function MerchantCouponsPage() {
                   <h3 className="text-sm font-bold text-slate-800">Kupon Listesi</h3>
                   <span className="text-xs font-semibold text-slate-500">Aktif {activeCouponCount} / Toplam {coupons.length}</span>
                 </div>
+                {!detailFlagSupported ? (
+                  <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+                    Detayda Yayınla özelliği için DB patch gerekli (`show_in_detail` alanı).
+                  </div>
+                ) : null}
 
                 {recordsLoading ? (
                   <div className="h-24 flex items-center justify-center">
@@ -629,18 +686,28 @@ export default function MerchantCouponsPage() {
                             <p className="mt-1 text-xs font-semibold text-slate-500">{couponBenefitText(coupon)}</p>
                             <p className="text-xs text-slate-500">Limit: {coupon.max_usage_limit || 0} | Kullanım: {coupon.usage_count || 0}</p>
                             <p className="text-xs text-slate-500">Geçerlilik: {formatDate(coupon.valid_until)}</p>
+                            <p className="text-xs text-slate-500">
+                              Detay: {coupon.show_in_detail ? 'Yayında' : 'Kapalı'}
+                            </p>
                           </div>
 
-                          <span
-                            className={`px-2 py-1 rounded-full text-[11px] font-semibold ${
-                              coupon.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                            }`}
-                          >
-                            {coupon.is_active ? 'AKTİF' : 'PASİF'}
-                          </span>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span
+                              className={`px-2 py-1 rounded-full text-[11px] font-semibold ${
+                                coupon.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {coupon.is_active ? 'AKTİF' : 'PASİF'}
+                            </span>
+                            {coupon.show_in_detail ? (
+                              <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">
+                                DETAYDA
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
 
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           <button
                             type="button"
                             onClick={() => copyCouponCode(coupon)}
@@ -658,6 +725,24 @@ export default function MerchantCouponsPage() {
                             }`}
                           >
                             {togglingCouponId === coupon.id ? '...' : coupon.is_active ? 'Pasife Al' : 'Aktif Et'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCouponDetailVisibility(coupon)}
+                            disabled={
+                              detailTogglingCouponId === coupon.id ||
+                              (!coupon.is_active && !coupon.show_in_detail) ||
+                              !detailFlagSupported
+                            }
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold ${
+                              coupon.show_in_detail ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'
+                            } disabled:opacity-55`}
+                          >
+                            {detailTogglingCouponId === coupon.id
+                              ? '...'
+                              : coupon.show_in_detail
+                                ? 'Detaydan Kaldır'
+                                : 'Detayda Yayınla'}
                           </button>
                           <button
                             type="button"

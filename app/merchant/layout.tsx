@@ -7,6 +7,7 @@ import type { ComponentType } from 'react'
 import {
   ClipboardList,
   Compass,
+  CircleDollarSign,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -78,6 +79,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/merchant/menu', label: 'Menü ve İçerik', icon: Layers },
   { href: '/merchant/campaigns', label: 'Kampanyalar', icon: ClipboardList },
   { href: '/merchant/coupons', label: 'Kupon Yönetimi', icon: Ticket },
+  { href: '/merchant/kasa', label: 'Kasa', icon: CircleDollarSign },
   { href: '/merchant/convoys', label: 'Konvoy Yönetimi', icon: Route },
   { href: '/merchant/radar', label: 'Müşteri Radarı', icon: Radio },
   { href: '/merchant/mola-targets', label: 'Mola Hedefleri', icon: Compass },

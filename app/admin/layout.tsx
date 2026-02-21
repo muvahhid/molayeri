@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Fragment, useMemo, useState } from 'react'
 import type { ComponentType } from 'react'
 import {
+  CircleDollarSign,
   ClipboardCheck,
   Flag,
   Layers,
@@ -12,7 +13,9 @@ import {
   LogOut,
   MapPin,
   Menu,
+  Megaphone,
   MessageSquare,
+  Route,
   Store,
   Users,
   X,
@@ -38,12 +41,15 @@ const NAV_GROUPS: NavSection[] = [
       { href: '/admin/approvals', label: 'Onay Merkezi', icon: ClipboardCheck },
       { href: '/admin/messages', label: 'Mesajlar', icon: MessageSquare },
       { href: '/admin/reviews', label: 'Yorum Şikayetleri', icon: Flag },
+      { href: '/admin/molastop', label: 'MolaStop Kontrol', icon: Route },
     ],
   },
   {
     title: 'İşletme Yönetimi',
     items: [
       { href: '/admin/businesses', label: 'İşletmeler', icon: Store },
+      { href: '/admin/kasa', label: 'Kasa', icon: CircleDollarSign },
+      { href: '/admin/reklam-yonetimi', label: 'Reklam Yönetimi', icon: Megaphone },
       { href: '/admin/categories', label: 'Kategori & Özellik', icon: Layers },
     ],
   },

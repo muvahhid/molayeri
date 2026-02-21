@@ -649,6 +649,15 @@ a {
   opacity: 0.72;
 }
 
+.auth-submit-apple {
+  margin-top: 10px;
+  color: #e7edf8;
+  background: linear-gradient(145deg, #1e2b44 0%, #121a2d 100%);
+  box-shadow:
+    11px 11px 20px rgba(152, 167, 189, 0.52),
+    -8px -8px 16px rgba(255, 255, 255, 0.42);
+}
+
 .landing-card {
   width: min(740px, 100%);
   border-radius: 32px;

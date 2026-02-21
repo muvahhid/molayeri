@@ -884,6 +884,7 @@ export default function MerchantMenuPage() {
       business_id: selectedBusiness.id,
       image_url: imageUrl,
       text: campaignHeadline.trim() || null,
+      color_index: null,
       is_active: false,
     })
 
@@ -928,6 +929,7 @@ export default function MerchantMenuPage() {
         business_id: selectedBusiness.id,
         image_url: imageUrl,
         text: campaignHeadline.trim() || selectedBusiness.name,
+        color_index: null,
         is_active: false,
       })
 
@@ -949,21 +951,11 @@ export default function MerchantMenuPage() {
     }
 
     setCampaignNotice(null)
-
-    if (campaign.is_active) {
-      await supabase.from('business_campaigns').update({ is_active: false }).eq('id', campaign.id)
-      setCampaignNotice({ type: 'success', message: 'Kampanya yayından kaldırıldı.' })
-      await loadActiveModuleData()
-      return
-    }
-
-    await supabase
-      .from('business_campaigns')
-      .update({ is_active: false })
-      .eq('business_id', selectedBusiness.id)
-
-    await supabase.from('business_campaigns').update({ is_active: true }).eq('id', campaign.id)
-    setCampaignNotice({ type: 'success', message: 'Kampanya A4 menüsünde yayına alındı.' })
+    await supabase.from('business_campaigns').update({ is_active: !campaign.is_active }).eq('id', campaign.id)
+    setCampaignNotice({
+      type: 'success',
+      message: campaign.is_active ? 'Kampanya yayından kaldırıldı.' : 'Kampanya A4 menüsünde yayına alındı.',
+    })
     await loadActiveModuleData()
   }
 
@@ -975,11 +967,6 @@ export default function MerchantMenuPage() {
     setCampaignNotice(null)
     setPublishingCampaigns(true)
     try {
-      await supabase
-        .from('business_campaigns')
-        .update({ is_active: false })
-        .eq('business_id', selectedBusiness.id)
-
       await supabase
         .from('business_campaigns')
         .update({ is_active: true })
