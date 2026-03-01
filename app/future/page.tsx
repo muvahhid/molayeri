@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useSyncExternalStore } from 'react'
 import { useScroll, useSpring } from 'framer-motion'
 
 import { THEME, SECTIONS_DATA, MERCHANT_SECTIONS_DATA } from '../../constants/spatialData'
@@ -16,15 +16,44 @@ import { ConvoyFeature } from '../../components/features/ConvoyFeature'
 import LongRoadFeature from '../../components/features/LongRoadFeature'
 import PanicFeature from '../../components/features/PanicFeature'
 import MerchantTemplateFeature from '../../components/features/MerchantTemplateFeature'
+import FutureMobileView from '../../components/sections/FutureMobileView'
+
+const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
+
+const subscribeDesktopQuery = (callback: () => void) => {
+  if (typeof window === 'undefined') return () => {}
+  const media = window.matchMedia(DESKTOP_MEDIA_QUERY)
+  media.addEventListener('change', callback)
+  return () => media.removeEventListener('change', callback)
+}
+
+const getDesktopSnapshot = () => {
+  if (typeof window === 'undefined') return true
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches
+}
+
+const getDesktopServerSnapshot = () => true
 
 export default function FutureLanding() {
+  const isDesktop = useSyncExternalStore(subscribeDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
   const [activeSection, setActiveSection] = useState('hero')
   const [audienceMode, setAudienceMode] = useState<'user' | 'merchant'>('user')
+  const [mobileSectionId, setMobileSectionId] = useState(SECTIONS_DATA[0]?.id ?? '')
+  const [mobileFeatureIndex, setMobileFeatureIndex] = useState(0)
   const { scrollYProgress } = useScroll()
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 50, damping: 20, restDelta: 0.001 })
   const activeSections = audienceMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
 
+  const switchAudienceMode = (nextMode: 'user' | 'merchant') => {
+    const nextSections = nextMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
+    setAudienceMode(nextMode)
+    setActiveSection('hero')
+    setMobileSectionId(nextSections[0]?.id ?? '')
+    setMobileFeatureIndex(0)
+  }
+
   useEffect(() => {
+    if (!isDesktop) return
     const handleScroll = () => {
       const scrollPos = window.scrollY + window.innerHeight * 0.5
       const currentSection = activeSections.find((sec) => {
@@ -38,7 +67,7 @@ export default function FutureLanding() {
     return () => {
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [activeSections])
+  }, [activeSections, isDesktop])
 
   return (
     <main className={`min-h-screen ${THEME.bg} font-sans selection:bg-[#FF7043]/30 selection:text-white pb-32`}>
@@ -46,45 +75,59 @@ export default function FutureLanding() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(29,78,216,0.16)_0%,rgba(29,78,216,0)_42%),radial-gradient(circle_at_86%_82%,rgba(255,112,67,0.14)_0%,rgba(255,112,67,0)_40%)]" />
       </div>
 
-      <PremiumHighwayLine progress={smoothProgress} />
-      <CommandCenterNav
-        activeSection={activeSection}
-        progress={smoothProgress}
-        sections={activeSections}
-        audienceMode={audienceMode}
-        onToggleAudience={() => {
-          setAudienceMode((prev) => (prev === 'user' ? 'merchant' : 'user'))
-          setActiveSection('hero')
-        }}
-      />
-      
-      <HeroSection />
+      {isDesktop ? (
+        <>
+          <PremiumHighwayLine progress={smoothProgress} />
+          <CommandCenterNav
+            activeSection={activeSection}
+            progress={smoothProgress}
+            sections={activeSections}
+            audienceMode={audienceMode}
+            onToggleAudience={() => switchAudienceMode(audienceMode === 'user' ? 'merchant' : 'user')}
+          />
 
-      {activeSections.map((data) => {
-        let ActiveComponent = null;
-        
-        if (audienceMode === 'merchant') {
-          ActiveComponent = <MerchantTemplateFeature section={data} />
-        } else {
-          switch (data.id) {
-            case 'radar': ActiveComponent = <RadarFeature />; break;
-            case 'wallet': ActiveComponent = <WalletFeature />; break;
-            case 'convoy': ActiveComponent = <ConvoyFeature />; break;
-            case 'long-road': ActiveComponent = <LongRoadFeature />; break;
-            case 'panic': ActiveComponent = <PanicFeature />; break;
-          }
-        }
+          <HeroSection />
 
-        if (!ActiveComponent) return null
+          {activeSections.map((data) => {
+            let ActiveComponent = null
 
-        return (
-          <StickyScrollContainer key={data.id} data={data}>
-            {ActiveComponent}
-          </StickyScrollContainer>
-        )
-      })}
+            if (audienceMode === 'merchant') {
+              ActiveComponent = <MerchantTemplateFeature section={data} />
+            } else {
+              switch (data.id) {
+                case 'radar': ActiveComponent = <RadarFeature />; break
+                case 'wallet': ActiveComponent = <WalletFeature />; break
+                case 'convoy': ActiveComponent = <ConvoyFeature />; break
+                case 'long-road': ActiveComponent = <LongRoadFeature />; break
+                case 'panic': ActiveComponent = <PanicFeature />; break
+              }
+            }
 
-      <SpatialFooter />
+            if (!ActiveComponent) return null
+
+            return (
+              <StickyScrollContainer key={data.id} data={data}>
+                {ActiveComponent}
+              </StickyScrollContainer>
+            )
+          })}
+
+          <SpatialFooter />
+        </>
+      ) : (
+        <FutureMobileView
+          sections={activeSections}
+          audienceMode={audienceMode}
+          onToggleAudience={() => switchAudienceMode(audienceMode === 'user' ? 'merchant' : 'user')}
+          selectedSectionId={mobileSectionId}
+          onSelectSection={(sectionId) => {
+            setMobileSectionId(sectionId)
+            setMobileFeatureIndex(0)
+          }}
+          selectedFeatureIndex={mobileFeatureIndex}
+          onSelectFeatureIndex={setMobileFeatureIndex}
+        />
+      )}
     </main>
   )
 }
