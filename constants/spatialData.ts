@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Route, Wallet, Mic2, ShieldAlert, Radio, Users,
   Navigation, Target, Map, Tag, CreditCard, Smartphone, MapPin,
@@ -9,14 +9,14 @@ import {
 export type SpatialFeatureItem = {
   title: string
   desc: string
-  icon: ComponentType<{ size?: number | string; className?: string }>
+  icon: LucideIcon
 }
 
 export type SpatialSection = {
   id: string
   title: string
   navLabel?: string
-  icon: ComponentType<{ size?: number | string; className?: string }>
+  icon: LucideIcon
   color: string
   glow: string
   features: SpatialFeatureItem[]
