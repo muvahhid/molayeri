@@ -1,7 +1,26 @@
+import type { ComponentType } from 'react'
 import {
   Route, Wallet, Mic2, ShieldAlert, Radio, Users,
-  Navigation, Target, Map, Tag, CreditCard, Smartphone, MapPin
+  Navigation, Target, Map, Tag, CreditCard, Smartphone, MapPin,
+  Store, Megaphone, Handshake, MessageSquare, BarChart3,
+  LayoutDashboard, ClipboardList, Bell
 } from 'lucide-react'
+
+export type SpatialFeatureItem = {
+  title: string
+  desc: string
+  icon: ComponentType<{ size?: number | string; className?: string }>
+}
+
+export type SpatialSection = {
+  id: string
+  title: string
+  navLabel?: string
+  icon: ComponentType<{ size?: number | string; className?: string }>
+  color: string
+  glow: string
+  features: SpatialFeatureItem[]
+}
 
 export const THEME = {
   bg: 'bg-[#050811]',
@@ -20,7 +39,7 @@ export const SPATIAL = {
   phoneScreen: 'bg-[#070A12]'
 }
 
-export const SECTIONS_DATA = [
+export const SECTIONS_DATA: SpatialSection[] = [
   {
     id: 'radar', title: 'Akıllı Keşif Radarı', icon: Route, color: 'text-[#FF8A3D]', glow: 'bg-[#FF7043]/20',
     features: [
@@ -59,6 +78,74 @@ export const SECTIONS_DATA = [
       { title: 'Tek Dokunuş Acil Akış', desc: 'Ana sayfadaki panik butonu ile acil mod açılır; kullanıcı doğrudan yardım akışına girer.', icon: ShieldAlert },
       { title: 'Canlı Konum ve Yön', desc: 'Konum alınır, rotadaki acil ihtiyaç noktaları hızlıca taranır ve kullanıcı yönlendirilir.', icon: MapPin },
       { title: 'Anında Yardım Görünümü', desc: 'Yakıt, şarj ve servis için yakın noktalar tek panelde görünür; anında GİT aksiyonu alır.', icon: Navigation }
+    ]
+  }
+]
+
+export const MERCHANT_SECTIONS_DATA: SpatialSection[] = [
+  {
+    id: 'merchant-dashboard',
+    title: 'İşletme Kokpiti',
+    navLabel: 'Kokpit',
+    icon: Store,
+    color: 'text-[#FF8A3D]',
+    glow: 'bg-[#FF8A3D]/20',
+    features: [
+      { title: 'Genel Durum', desc: 'Bugünkü trafik, etkileşim ve temel vitrin metrikleri için boş kokpit şablonu.', icon: LayoutDashboard },
+      { title: 'Hızlı Aksiyon', desc: 'İşletmeci ana işlemleri için buton/CTA yerleşimi hazır boş ekran şablonu.', icon: ClipboardList },
+      { title: 'Canlı Uyarılar', desc: 'Yeni teklif ve hareket bildirimleri için bildirim paneli şablonu.', icon: Bell }
+    ]
+  },
+  {
+    id: 'merchant-campaigns',
+    title: 'Kampanya Stüdyosu',
+    navLabel: 'Kampanya',
+    icon: Megaphone,
+    color: 'text-[#38BDF8]',
+    glow: 'bg-[#38BDF8]/20',
+    features: [
+      { title: 'Taslak Alanı', desc: 'Başlık, içerik ve medya blokları için boş kampanya editör şablonu.', icon: ClipboardList },
+      { title: 'Yayın Akışı', desc: 'Aktif/Pasif kampanya kontrol listesi için boş yönetim şablonu.', icon: Bell },
+      { title: 'Hedefleme', desc: 'Kategori ve segment seçimleri için filtre paneli şablonu.', icon: Target }
+    ]
+  },
+  {
+    id: 'merchant-offers',
+    title: 'Teklif Yönetimi',
+    navLabel: 'Teklif',
+    icon: Handshake,
+    color: 'text-[#4ADE80]',
+    glow: 'bg-[#4ADE80]/20',
+    features: [
+      { title: 'Gelen Talepler', desc: 'Konvoy/mola taleplerinin listelenmesi için boş istek şablonu.', icon: Users },
+      { title: 'Karar Merkezi', desc: 'Kabul/ret ve not alanları için karar ekranı şablonu.', icon: ClipboardList },
+      { title: 'Teklif Geçmişi', desc: 'Zaman bazlı teklif kayıtları için geçmiş sayfası şablonu.', icon: Route }
+    ]
+  },
+  {
+    id: 'merchant-messages',
+    title: 'Mesaj Merkezi',
+    navLabel: 'Mesajlar',
+    icon: MessageSquare,
+    color: 'text-[#C084FC]',
+    glow: 'bg-[#C084FC]/20',
+    features: [
+      { title: 'Sohbet Kutusu', desc: 'Müşteri/katılımcı konuşmaları için boş mesaj görünümü.', icon: MessageSquare },
+      { title: 'Filtreler', desc: 'Okunmamış, öncelikli ve kategoriye göre filtre alanı şablonu.', icon: Target },
+      { title: 'Arşiv', desc: 'Geçmiş konuşmaların saklanması için arşiv şablonu.', icon: ClipboardList }
+    ]
+  },
+  {
+    id: 'merchant-analytics',
+    title: 'Performans Paneli',
+    navLabel: 'Analitik',
+    icon: BarChart3,
+    color: 'text-[#FF5D5D]',
+    glow: 'bg-[#FF5D5D]/20',
+    features: [
+      { title: 'Gelir Özeti', desc: 'Günlük/haftalık performans kartları için boş analitik şablonu.', icon: Wallet },
+      { title: 'Dönüşüm Grafiği', desc: 'Etkileşimden satışa dönüşüm takibi için grafik alanı şablonu.', icon: BarChart3 },
+      { title: 'Karşılaştırma', desc: 'Dönemsel kıyaslama tabloları için rapor şablonu.', icon: ClipboardList }
     ]
   }
 ]

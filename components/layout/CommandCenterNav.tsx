@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useTransform, type MotionValue } from 'framer-motion'
 import { House, LoaderCircle } from 'lucide-react'
-import { SPATIAL, THEME, SECTIONS_DATA } from '../../constants/spatialData'
+import { SPATIAL, THEME, type SpatialSection } from '../../constants/spatialData'
 
 const NAV_NEON_STYLES: Record<string, React.CSSProperties> = {
   convoy: {
@@ -22,14 +22,30 @@ const NAV_NEON_STYLES: Record<string, React.CSSProperties> = {
   },
 }
 
-export const CommandCenterNav = ({ activeSection, progress }: { activeSection: string, progress: MotionValue<number> }) => {
-  const getNavLabel = (sectionId: string, title: string) => {
+export const CommandCenterNav = ({
+  activeSection,
+  progress,
+  sections,
+  audienceMode,
+  onToggleAudience,
+}: {
+  activeSection: string
+  progress: MotionValue<number>
+  sections: SpatialSection[]
+  audienceMode: 'user' | 'merchant'
+  onToggleAudience: () => void
+}) => {
+  const getNavLabel = (section: SpatialSection) => {
+    if (section.navLabel) return section.navLabel
+    const sectionId = section.id
+    const title = section.title
     if (sectionId === 'convoy') return 'Dijital Konvoy'
     if (sectionId === 'long-road') return 'Uzun Yol'
     return title.split(' ')[0]
   }
 
   const progressWidth = useTransform(progress, [0, 1], ['0%', '100%'])
+  const audienceToggleLabel = audienceMode === 'user' ? 'İşletmeciyim' : 'Kullanıcıyım'
   const [isNavigating, setIsNavigating] = useState(false)
   const [targetLabel, setTargetLabel] = useState<string | null>(null)
   const navTokenRef = useRef(0)
@@ -86,8 +102,8 @@ export const CommandCenterNav = ({ activeSection, progress }: { activeSection: s
       sectionId === 'hero'
         ? 'Ana Sayfa'
         : (() => {
-            const sec = SECTIONS_DATA.find((s) => s.id === sectionId)
-            return sec ? getNavLabel(sec.id, sec.title) : 'Akış'
+            const sec = sections.find((s) => s.id === sectionId)
+            return sec ? getNavLabel(sec) : 'Akış'
           })()
     )
     setIsNavigating(true)
@@ -124,7 +140,7 @@ export const CommandCenterNav = ({ activeSection, progress }: { activeSection: s
                 Ana Sayfa
               </span>
             </button>
-            {SECTIONS_DATA.map(sec => {
+            {sections.map(sec => {
               const isActive = activeSection === sec.id
               const activeStyle = isActive ? NAV_NEON_STYLES[sec.id] : undefined
               return (
@@ -132,11 +148,22 @@ export const CommandCenterNav = ({ activeSection, progress }: { activeSection: s
                   {isActive && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 shadow-[inset_0_0_12px_rgba(255,255,255,0.1)] border border-white/20 rounded-full z-0" transition={{ type: 'spring', stiffness: 300, damping: 25 }} />}
                   <span className="relative z-10 flex items-center gap-1.5 sm:gap-2" style={activeStyle}>
                     <sec.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" style={activeStyle} />
-                    {getNavLabel(sec.id, sec.title)}
+                    {getNavLabel(sec)}
                   </span>
                 </button>
               )
             })}
+            <button
+              type="button"
+              onClick={onToggleAudience}
+              className={`relative shrink-0 px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
+                audienceMode === 'merchant'
+                  ? 'text-[#38BDF8] border border-[#38BDF8]/40 bg-[#38BDF8]/10'
+                  : 'text-[#FF7043] border border-[#FF7043]/40 bg-[#FF7043]/10'
+              }`}
+            >
+              <span className="relative z-10">{audienceToggleLabel}</span>
+            </button>
           </div>
         </div>
       </nav>

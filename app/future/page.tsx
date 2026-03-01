@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useScroll, useSpring } from 'framer-motion'
 
-import { THEME, SECTIONS_DATA } from '../../constants/spatialData'
+import { THEME, SECTIONS_DATA, MERCHANT_SECTIONS_DATA } from '../../constants/spatialData'
 import { PremiumHighwayLine } from '../../components/layout/PremiumHighwayLine'
 import { CommandCenterNav } from '../../components/layout/CommandCenterNav'
 import { SpatialFooter } from '../../components/layout/SpatialFooter'
@@ -15,16 +15,19 @@ import { WalletFeature } from '../../components/features/WalletFeature'
 import { ConvoyFeature } from '../../components/features/ConvoyFeature'
 import LongRoadFeature from '../../components/features/LongRoadFeature'
 import PanicFeature from '../../components/features/PanicFeature'
+import MerchantTemplateFeature from '../../components/features/MerchantTemplateFeature'
 
 export default function FutureLanding() {
   const [activeSection, setActiveSection] = useState('hero')
+  const [audienceMode, setAudienceMode] = useState<'user' | 'merchant'>('user')
   const { scrollYProgress } = useScroll()
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 50, damping: 20, restDelta: 0.001 })
+  const activeSections = audienceMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY + window.innerHeight * 0.5
-      const currentSection = SECTIONS_DATA.find((sec) => {
+      const currentSection = activeSections.find((sec) => {
         const el = document.getElementById(sec.id)
         return !!el && scrollPos >= el.offsetTop && scrollPos < el.offsetTop + el.offsetHeight
       })
@@ -35,7 +38,7 @@ export default function FutureLanding() {
     return () => {
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+  }, [activeSections])
 
   return (
     <main className={`min-h-screen ${THEME.bg} font-sans selection:bg-[#FF7043]/30 selection:text-white pb-32`}>
@@ -44,21 +47,35 @@ export default function FutureLanding() {
       </div>
 
       <PremiumHighwayLine progress={smoothProgress} />
-      <CommandCenterNav activeSection={activeSection} progress={smoothProgress} />
+      <CommandCenterNav
+        activeSection={activeSection}
+        progress={smoothProgress}
+        sections={activeSections}
+        audienceMode={audienceMode}
+        onToggleAudience={() => {
+          setAudienceMode((prev) => (prev === 'user' ? 'merchant' : 'user'))
+          setActiveSection('hero')
+        }}
+      />
       
       <HeroSection />
 
-      {/* SORUNUN ÇÖZÜLDÜĞÜ YER: Tek bir net Child render ediyoruz */}
-      {SECTIONS_DATA.map((data) => {
+      {activeSections.map((data) => {
         let ActiveComponent = null;
         
-        switch (data.id) {
-          case 'radar': ActiveComponent = <RadarFeature />; break;
-          case 'wallet': ActiveComponent = <WalletFeature />; break;
-          case 'convoy': ActiveComponent = <ConvoyFeature />; break;
-          case 'long-road': ActiveComponent = <LongRoadFeature />; break;
-          case 'panic': ActiveComponent = <PanicFeature />; break;
+        if (audienceMode === 'merchant') {
+          ActiveComponent = <MerchantTemplateFeature section={data} />
+        } else {
+          switch (data.id) {
+            case 'radar': ActiveComponent = <RadarFeature />; break;
+            case 'wallet': ActiveComponent = <WalletFeature />; break;
+            case 'convoy': ActiveComponent = <ConvoyFeature />; break;
+            case 'long-road': ActiveComponent = <LongRoadFeature />; break;
+            case 'panic': ActiveComponent = <PanicFeature />; break;
+          }
         }
+
+        if (!ActiveComponent) return null
 
         return (
           <StickyScrollContainer key={data.id} data={data}>

@@ -55,6 +55,7 @@ export const StickyScrollContainer = ({ data, children }: { data: SectionData, c
   const containerRef = useRef<HTMLElement | null>(null)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
   const [activeIndex, setActiveIndex] = useState(0)
+  const [isMobileLayout, setIsMobileLayout] = useState(false)
   const neonStyle = NEON_STYLES[data.id] ?? undefined
   const lastRawProgressRef = useRef(0)
   const smoothProgressRef = useRef(0)
@@ -82,6 +83,15 @@ export const StickyScrollContainer = ({ data, children }: { data: SectionData, c
   }
 
   useEffect(() => {
+    const media = window.matchMedia('(max-width: 1023px)')
+    const update = () => setIsMobileLayout(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    if (isMobileLayout) return
     // Hedef akış:
     // Asagi: 1 uzun -> 2 uzun -> 3 cok uzun
     // Yukari: 3 uzun -> 2 uzun -> 1 cok uzun
@@ -127,11 +137,15 @@ export const StickyScrollContainer = ({ data, children }: { data: SectionData, c
       })
     })
     return () => unsub()
-  }, [scrollYProgress])
+  }, [scrollYProgress, isMobileLayout])
 
   return (
-    <section ref={containerRef} className="relative h-[340vh] md:h-[380vh] lg:h-[400vh]" id={data.id}>
-      <div className="sticky top-0 h-screen flex items-center justify-center px-4 sm:px-6 pt-24 pb-8 lg:py-0 lg:px-20 lg:pl-32 overflow-visible lg:overflow-hidden">
+    <section ref={containerRef} className={`relative h-auto ${isMobileLayout ? 'py-9 sm:py-12' : 'lg:h-[400vh]'}`} id={data.id}>
+      <div
+        className={`flex items-center justify-center px-4 sm:px-6 lg:px-20 lg:pl-32 overflow-visible lg:overflow-hidden ${
+          isMobileLayout ? 'relative pt-0 pb-0' : 'sticky top-0 h-screen pt-24 pb-8 lg:py-0'
+        }`}
+      >
         <div className={`absolute top-1/4 left-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] pointer-events-none opacity-30 ${data.glow.replace('/20', '')}`} />
         <div className="w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-5 sm:gap-8 lg:gap-16 relative z-10 items-center">
           <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
@@ -139,26 +153,50 @@ export const StickyScrollContainer = ({ data, children }: { data: SectionData, c
               <data.icon size={20} className={data.color} style={neonStyle} />
               <span className={`font-black tracking-widest uppercase text-sm ${data.color}`} style={neonStyle}>{data.title}</span>
             </div>
-            <div className="flex flex-col gap-3 sm:gap-4 max-h-[32vh] sm:max-h-[36vh] lg:max-h-none overflow-y-auto pr-1">
-              {data.features.map((feat: FeatureItem, i: number) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => jumpToIndex(i)}
-                  aria-label={`${feat.title} sekmesine git`}
-                  className={`transition-all duration-700 p-4 sm:p-5 rounded-2xl ${activeIndex === i ? SPATIAL.glassContainer : data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? `${SPATIAL.glassCard} opacity-100 scale-[0.98]` : `${SPATIAL.glassCard} opacity-80 scale-95`}`}
-                  style={activeIndex === i ? undefined : { filter: 'blur(1.1px)' }}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <feat.icon size={20} className={activeIndex === i ? data.color : 'text-white/40'} style={neonStyle} />
-                    <h3 className="text-base sm:text-[1.1rem] font-bold" style={neonStyle ?? { color: '#FFFFFF' }}>{feat.title}</h3>
-                  </div>
-                  <p className="text-xs sm:text-[13px]" style={data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? { color: '#FFECEC' } : { color: 'rgba(255,255,255,0.85)' }}>{feat.desc}</p>
-                </button>
-              ))}
-            </div>
+            {isMobileLayout ? (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 pr-1">
+                {data.features.map((feat: FeatureItem, i: number) => {
+                  const selected = activeIndex === i
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveIndex(i)}
+                      aria-label={`${feat.title} sekmesini aç`}
+                      className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-full border text-xs font-bold transition-colors ${
+                        selected
+                          ? 'text-white border-white/35 bg-white/[0.11]'
+                          : 'text-white/70 border-white/15 bg-white/[0.04]'
+                      }`}
+                    >
+                      <feat.icon size={14} className={selected ? 'text-white' : 'text-white/60'} />
+                      {feat.title}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 sm:gap-4 max-h-[32vh] sm:max-h-[36vh] lg:max-h-none overflow-y-auto pr-1">
+                {data.features.map((feat: FeatureItem, i: number) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => jumpToIndex(i)}
+                    aria-label={`${feat.title} sekmesine git`}
+                    className={`transition-all duration-700 p-4 sm:p-5 rounded-2xl ${activeIndex === i ? SPATIAL.glassContainer : data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? `${SPATIAL.glassCard} opacity-100 scale-[0.98]` : `${SPATIAL.glassCard} opacity-80 scale-95`}`}
+                    style={activeIndex === i ? undefined : { filter: 'blur(1.1px)' }}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <feat.icon size={20} className={activeIndex === i ? data.color : 'text-white/40'} style={neonStyle} />
+                      <h3 className="text-base sm:text-[1.1rem] font-bold" style={neonStyle ?? { color: '#FFFFFF' }}>{feat.title}</h3>
+                    </div>
+                    <p className="text-xs sm:text-[13px]" style={data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? { color: '#FFECEC' } : { color: 'rgba(255,255,255,0.85)' }}>{feat.desc}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className={`h-[54vh] sm:h-[62vh] lg:h-[75vh] w-full rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem] p-3 sm:p-4 ${SPATIAL.glassContainer} relative`}>
+          <div className={`${isMobileLayout ? 'min-h-[540px] sm:min-h-[620px] h-auto' : 'h-[54vh] sm:h-[62vh] lg:h-[75vh]'} w-full rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem] p-3 sm:p-4 ${SPATIAL.glassContainer} relative`}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem]" />
             {React.isValidElement<ChildWithActiveIndexProps>(children)
               ? React.cloneElement(children, { activeIndex })
