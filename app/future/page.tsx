@@ -38,17 +38,16 @@ export default function FutureLanding() {
   const isDesktop = useSyncExternalStore(subscribeDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
   const [activeSection, setActiveSection] = useState('hero')
   const [audienceMode, setAudienceMode] = useState<'user' | 'merchant'>('user')
-  const [mobileSectionId, setMobileSectionId] = useState(SECTIONS_DATA[0]?.id ?? '')
+  const [mobileSectionId, setMobileSectionId] = useState('home')
   const [mobileFeatureIndex, setMobileFeatureIndex] = useState(0)
   const { scrollYProgress } = useScroll()
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 50, damping: 20, restDelta: 0.001 })
   const activeSections = audienceMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
 
   const switchAudienceMode = (nextMode: 'user' | 'merchant') => {
-    const nextSections = nextMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
     setAudienceMode(nextMode)
     setActiveSection('hero')
-    setMobileSectionId(nextSections[0]?.id ?? '')
+    setMobileSectionId('home')
     setMobileFeatureIndex(0)
   }
 
