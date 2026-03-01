@@ -11,6 +11,7 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAdminPath = pathname.startsWith('/admin')
   const isMerchantPath = pathname.startsWith('/merchant')
+  const isFuturePath = pathname === '/future' || pathname.startsWith('/future/')
   const isLoginPath = pathname.startsWith('/login')
 
   // 1. Yanıt (Response) nesnesini oluştur
@@ -68,10 +69,12 @@ export async function proxy(request: NextRequest) {
   )
 
   // 3. Kullanıcı oturumunu kontrol et
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // 4. KURAL: Korumalı alanlar için giriş zorunlu
-  if ((isAdminPath || isMerchantPath) && !user) {
+  if ((isAdminPath || isMerchantPath || isFuturePath) && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     return NextResponse.redirect(loginUrl)
@@ -82,7 +85,9 @@ export async function proxy(request: NextRequest) {
   }
 
   const fallbackRole =
-    ((user.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined) || 'user'
+    ((user.user_metadata as Record<string, unknown> | undefined)?.role as
+      | string
+      | undefined) || 'user'
   const role = await fetchUserRoleById(supabase, user.id, fallbackRole)
   const targetDashboard = getDashboardPathForRole(role)
 
@@ -115,6 +120,8 @@ export const config = {
   matcher: [
     '/admin/:path*', // Admin altındaki her şey
     '/merchant/:path*', // İşletmeci paneli
-    '/login',        // Giriş sayfası
+    '/future', // Geçici kapalı lansman sayfası
+    '/future/:path*', // Geçici alt rotalar
+    '/login', // Giriş sayfası
   ],
 }

@@ -10,6 +10,16 @@ import {
   Upload, Trash2, Search, Star, Plus, Map, 
   AlertTriangle, Navigation, Check
 } from 'lucide-react'
+import {
+  USER_MEMBERSHIP_TERMS_VERSION,
+  KVKK_TERMS_VERSION,
+  BUSINESS_MEMBERSHIP_TERMS_VERSION,
+  BUSINESS_KVKK_TERMS_VERSION,
+  USER_MEMBERSHIP_TERMS_TEXT,
+  KVKK_TERMS_TEXT,
+  BUSINESS_MEMBERSHIP_TERMS_TEXT,
+  BUSINESS_KVKK_TERMS_TEXT,
+} from '@/lib/legal-documents'
 
 // --- FIRE ORANGE NEUMORPHIC THEME ---
 const BG_MAIN = "bg-[#eef0f4]"
@@ -28,6 +38,7 @@ type Feature = { id: string; name: string; category_id?: string | null; is_globa
 type PlacePrediction = { place_id: string; description: string; types?: string[] }
 type RuleKey = 'r1' | 'r2' | 'r3'
 type RuleState = Record<RuleKey, boolean>
+type LegalModalState = { title: string; version: string; body: string } | null
 
 type NeuCardProps = {
   children: ReactNode
@@ -60,6 +71,11 @@ type NeuButtonProps = {
 
 type SuccessModalProps = {
   isOpen: boolean
+  onClose: () => void
+}
+
+type LegalModalProps = {
+  state: LegalModalState
   onClose: () => void
 }
 
@@ -134,6 +150,28 @@ const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
   )
 }
 
+const LegalModal = ({ state, onClose }: LegalModalProps) => {
+  if (!state) return null
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[85vh] bg-[#eef0f4] rounded-[32px] border border-white shadow-2xl p-6 md:p-8 flex flex-col">
+        <div className="mb-4">
+          <p className="text-[11px] font-black uppercase tracking-widest text-orange-500">{state.version}</p>
+          <h3 className="text-xl font-black text-slate-800 mt-1">{state.title}</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto rounded-2xl bg-white/70 border border-white p-4 md:p-5 text-sm text-slate-700 leading-6 whitespace-pre-wrap">
+          {state.body}
+        </div>
+        <div className="pt-5 flex justify-end">
+          <NeuButton onClick={onClose} variant="solid" className="px-6 py-3">
+            Kapat
+          </NeuButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function BusinessWizard() {
   const router = useRouter()
   const supabase = createBrowserClient(
@@ -145,6 +183,10 @@ export default function BusinessWizard() {
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [accountTermsAccepted, setAccountTermsAccepted] = useState(false)
+  const [accountKvkkAccepted, setAccountKvkkAccepted] = useState(false)
+  const [legalModal, setLegalModal] = useState<LegalModalState>(null)
   
   // DATA STATES
   const [userForm, setUserForm] = useState({ name: '', surname: '', email: '', phone: '', password: '' })
@@ -171,7 +213,26 @@ export default function BusinessWizard() {
 
   const checkUser = useCallback(async () => {
     const { data } = await supabase.auth.getUser()
-    if (data.user) setStep(2)
+    if (!data.user) {
+      setCurrentUserId(null)
+      return
+    }
+
+    setCurrentUserId(data.user.id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('membership_terms_accepted_at,kvkk_accepted_at')
+      .eq('id', data.user.id)
+      .maybeSingle()
+
+    const hasMembership = Boolean(profile?.membership_terms_accepted_at)
+    const hasKvkk = Boolean(profile?.kvkk_accepted_at)
+    setAccountTermsAccepted(hasMembership)
+    setAccountKvkkAccepted(hasKvkk)
+
+    if (hasMembership && hasKvkk) {
+      setStep(2)
+    }
   }, [supabase])
 
   const fetchData = useCallback(async () => {
@@ -208,12 +269,24 @@ export default function BusinessWizard() {
 
   const passwordRuleText = 'Şifre en az 8 karakter olmalı, 1 büyük harf ve 1 rakam içermeli.'
 
-  const syncOwnProfile = async (userId: string, email: string, fullName: string, phone: string) => {
+  const syncOwnProfile = async (
+    userId: string,
+    email: string,
+    fullName: string,
+    phone: string,
+    acceptedAtIso?: string
+  ) => {
     const payload: Record<string, unknown> = {
       id: userId,
       email,
       full_name: fullName,
       phone,
+    }
+    if (acceptedAtIso) {
+      payload.membership_terms_accepted_at = acceptedAtIso
+      payload.membership_terms_version = USER_MEMBERSHIP_TERMS_VERSION
+      payload.kvkk_accepted_at = acceptedAtIso
+      payload.kvkk_version = KVKK_TERMS_VERSION
     }
     try {
       await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
@@ -224,6 +297,20 @@ export default function BusinessWizard() {
         await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
       }
     }
+  }
+
+  const saveLegalToProfile = async (userId: string) => {
+    const acceptedAtIso = new Date().toISOString()
+    await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        membership_terms_accepted_at: acceptedAtIso,
+        membership_terms_version: USER_MEMBERSHIP_TERMS_VERSION,
+        kvkk_accepted_at: acceptedAtIso,
+        kvkk_version: KVKK_TERMS_VERSION,
+      },
+      { onConflict: 'id' }
+    )
   }
 
   // --- LOGIC HELPER: TYPE DETERMINATION ---
@@ -284,12 +371,27 @@ export default function BusinessWizard() {
       setAccountError(passwordRuleText)
       return
     }
+    if (!accountTermsAccepted || !accountKvkkAccepted) {
+      setAccountError('Üyelik sözleşmesi ve KVKK metnini onaylamadan devam edemezsiniz.')
+      return
+    }
 
+    const acceptedAtIso = new Date().toISOString()
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, phone: normalizedPhone, role: 'isletmeci_aday' } }
+      options: {
+        data: {
+          full_name: fullName,
+          phone: normalizedPhone,
+          role: 'isletmeci_aday',
+          membership_terms_version: USER_MEMBERSHIP_TERMS_VERSION,
+          membership_terms_accepted_at: acceptedAtIso,
+          kvkk_version: KVKK_TERMS_VERSION,
+          kvkk_accepted_at: acceptedAtIso,
+        },
+      },
     })
     setLoading(false)
     if (error) {
@@ -297,15 +399,47 @@ export default function BusinessWizard() {
       return
     }
     if (data.user) {
+      setCurrentUserId(data.user.id)
       if (data.session) {
-        await syncOwnProfile(data.user.id, email, fullName, normalizedPhone)
+        await syncOwnProfile(data.user.id, email, fullName, normalizedPhone, acceptedAtIso)
+        setStep(2)
+      } else {
+        setAccountError(
+          'Doğrulama e-postası gönderildi. Mail doğrulamasından sonra giriş yapıp başvuruya devam edebilirsiniz.'
+        )
       }
+    }
+  }
+
+  const handleAccountComplianceContinue = async () => {
+    setAccountError(null)
+    if (!currentUserId) {
+      setAccountError('Aktif oturum bulunamadı. Lütfen tekrar giriş yapın.')
+      return
+    }
+    if (!accountTermsAccepted || !accountKvkkAccepted) {
+      setAccountError('Üyelik sözleşmesi ve KVKK metnini onaylamadan devam edemezsiniz.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await saveLegalToProfile(currentUserId)
       setStep(2)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sözleşme onayı kaydedilemedi.'
+      setAccountError(message)
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleAppleContinue = async () => {
     setAccountError(null)
+    if (!accountTermsAccepted || !accountKvkkAccepted) {
+      setAccountError('Apple ile devam etmeden önce üyelik sözleşmesi ve KVKK onayı gereklidir.')
+      return
+    }
     setLoading(true)
     const redirectTo =
       typeof window !== 'undefined' ? `${window.location.origin}/register/business` : undefined
@@ -419,9 +553,18 @@ export default function BusinessWizard() {
       const { data: userData } = await supabase.auth.getUser()
       const userId = userData.user?.id
       if(!userId) throw new Error("Kullanıcı bulunamadı")
+      const legalAcceptedAtIso = new Date().toISOString()
 
       // TİP BELİRLEME
       const determinedType = determineMainType()
+
+      const { data: profileForName } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .maybeSingle()
+      const acceptedByName =
+        (profileForName?.full_name || `${userForm.name} ${userForm.surname}`.trim() || userData.user?.email || 'Bilinmiyor').toString()
 
       // 1. İşletme
       const { data: biz, error } = await supabase.from('businesses').insert({
@@ -437,7 +580,12 @@ export default function BusinessWizard() {
         road_place_id: selectedPlaceId,
         road_type: detectedRoadType,
         status: 'pending', 
-        type: determinedType
+        type: determinedType,
+        business_terms_accepted_at: legalAcceptedAtIso,
+        business_terms_version: BUSINESS_MEMBERSHIP_TERMS_VERSION,
+        business_kvkk_accepted_at: legalAcceptedAtIso,
+        business_kvkk_version: BUSINESS_KVKK_TERMS_VERSION,
+        business_terms_accepted_by_name: acceptedByName,
       }).select().single()
       if (error) throw error
       const bizId = biz.id
@@ -468,7 +616,15 @@ export default function BusinessWizard() {
 
       // 4. Profil Güncelleme (GÜVENLİ)
       // Önce mevcut profili çek, Admin veya İşletmeci ise dokunma
-      const { data: currentProfile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('role,membership_terms_accepted_at,kvkk_accepted_at')
+        .eq('id', userId)
+        .single()
+
+      if (!currentProfile?.membership_terms_accepted_at || !currentProfile?.kvkk_accepted_at) {
+        await saveLegalToProfile(userId)
+      }
       
       if (currentProfile?.role !== 'admin' && currentProfile?.role !== 'isletmeci') {
          await supabase.from('profiles').update({ role: 'pending_business' }).eq('id', userId)
@@ -485,10 +641,36 @@ export default function BusinessWizard() {
   }
 
   const steps = [{n:1,t:'HESAP'},{n:2,t:'KONUM'},{n:3,t:'DETAY'},{n:4,t:'GÖRSEL'},{n:5,t:'ONAY'}]
+  const finalRules: Array<{
+    k: RuleKey
+    t: string
+    legal?: { title: string; version: string; body: string }
+  }> = [
+    { k: 'r1', t: 'Girdiğim bilgilerin doğruluğunu beyan ederim.' },
+    {
+      k: 'r2',
+      t: 'İşletme üyelik sözleşmesini okudum ve kabul ediyorum.',
+      legal: {
+        title: 'İşletme Üyelik ve Hizmet Sözleşmesi',
+        version: BUSINESS_MEMBERSHIP_TERMS_VERSION,
+        body: BUSINESS_MEMBERSHIP_TERMS_TEXT,
+      },
+    },
+    {
+      k: 'r3',
+      t: 'İşletme KVKK metnini okudum ve onaylıyorum.',
+      legal: {
+        title: 'İşletme KVKK Aydınlatma Metni',
+        version: BUSINESS_KVKK_TERMS_VERSION,
+        body: BUSINESS_KVKK_TERMS_TEXT,
+      },
+    },
+  ]
 
   return (
     <div className={`min-h-screen flex flex-col items-center py-12 px-4 ${BG_MAIN} text-slate-600 font-sans`}>
       <SuccessModal isOpen={showSuccess} onClose={() => router.push('/')} />
+      <LegalModal state={legalModal} onClose={() => setLegalModal(null)} />
 
       <div className="w-full max-w-3xl">
         
@@ -522,28 +704,67 @@ export default function BusinessWizard() {
           {/* STEP 1: ACCOUNT */}
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><User className={ACCENT_COLOR}/> HESAP BİLGİLERİ</h2>
-              <div className="grid grid-cols-2 gap-6">
-                 <NeuInput icon={User} label="İsim" placeholder="Adınız" value={userForm.name} onChange={(e)=>setUserForm({...userForm, name:e.target.value})} />
-                 <NeuInput icon={User} label="Soyisim" placeholder="Soyadınız" value={userForm.surname} onChange={(e)=>setUserForm({...userForm, surname:e.target.value})} />
+              <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}>
+                <User className={ACCENT_COLOR}/> {currentUserId ? 'HESAP UYUM ONAYI' : 'HESAP BİLGİLERİ'}
+              </h2>
+
+              {!currentUserId ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    <NeuInput icon={User} label="İsim" placeholder="Adınız" value={userForm.name} onChange={(e)=>setUserForm({...userForm, name:e.target.value})} />
+                    <NeuInput icon={User} label="Soyisim" placeholder="Soyadınız" value={userForm.surname} onChange={(e)=>setUserForm({...userForm, surname:e.target.value})} />
+                  </div>
+                  <NeuInput icon={Mail} label="E-Posta" placeholder="E-posta Adresiniz" value={userForm.email} onChange={(e)=>setUserForm({...userForm, email:e.target.value})} />
+                  <NeuInput icon={Phone} label="Telefon" placeholder="05XX XXX XX XX" value={userForm.phone} onChange={(e)=>setUserForm({...userForm, phone:e.target.value})} />
+                  <NeuInput icon={Lock} label="Şifre" type="password" placeholder="Güçlü bir şifre belirleyin" value={userForm.password} onChange={(e)=>setUserForm({...userForm, password:e.target.value})} />
+                  <p className="text-xs font-bold text-slate-500 mt-1">{passwordRuleText}</p>
+                </>
+              ) : (
+                <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-slate-600 bg-white/70 border border-white">
+                  Giriş yapılmış hesap tespit edildi. Devam etmek için aşağıdaki üyelik ve KVKK metinlerini onaylayın.
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${accountTermsAccepted ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
+                  <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${accountTermsAccepted ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{accountTermsAccepted && <Check className="w-4 h-4 text-white"/>}</div>
+                  <input type="checkbox" className="hidden" checked={accountTermsAccepted} onChange={(e)=>setAccountTermsAccepted(e.target.checked)} />
+                  <span className="text-sm font-bold text-slate-600 flex-1">Kullanıcı üyelik sözleşmesini okudum ve kabul ediyorum.</span>
+                  <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'Kullanıcı Üyelik Sözleşmesi', version: USER_MEMBERSHIP_TERMS_VERSION, body: USER_MEMBERSHIP_TERMS_TEXT }) }} className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600">
+                    Metni Oku
+                  </button>
+                </label>
+                <label className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${accountKvkkAccepted ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
+                  <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${accountKvkkAccepted ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{accountKvkkAccepted && <Check className="w-4 h-4 text-white"/>}</div>
+                  <input type="checkbox" className="hidden" checked={accountKvkkAccepted} onChange={(e)=>setAccountKvkkAccepted(e.target.checked)} />
+                  <span className="text-sm font-bold text-slate-600 flex-1">KVKK aydınlatma metnini okudum ve onaylıyorum.</span>
+                  <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'KVKK Aydınlatma Metni', version: KVKK_TERMS_VERSION, body: KVKK_TERMS_TEXT }) }} className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600">
+                    Metni Oku
+                  </button>
+                </label>
               </div>
-              <NeuInput icon={Mail} label="E-Posta" placeholder="E-posta Adresiniz" value={userForm.email} onChange={(e)=>setUserForm({...userForm, email:e.target.value})} />
-              <NeuInput icon={Phone} label="Telefon" placeholder="05XX XXX XX XX" value={userForm.phone} onChange={(e)=>setUserForm({...userForm, phone:e.target.value})} />
-              <NeuInput icon={Lock} label="Şifre" type="password" placeholder="Güçlü bir şifre belirleyin" value={userForm.password} onChange={(e)=>setUserForm({...userForm, password:e.target.value})} />
-              <p className="text-xs font-bold text-slate-500 mt-1">{passwordRuleText}</p>
+
               {accountError ? (
                 <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-red-700 bg-red-100 border border-red-200">
                   {accountError}
                 </div>
               ) : null}
               <div className="pt-2 space-y-3">
-                <NeuButton onClick={handleSignUp} variant="solid" className="w-full py-5 text-lg" disabled={loading}>
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR</> : 'HESABI OLUŞTUR'}
-                </NeuButton>
-                <NeuButton onClick={handleAppleContinue} className="w-full py-4" disabled={loading}>
-                  <Apple className="w-4 h-4" />
-                  Apple ile Devam Et
-                </NeuButton>
+                {currentUserId ? (
+                  <NeuButton onClick={handleAccountComplianceContinue} variant="solid" className="w-full py-5 text-lg" disabled={loading}>
+                    {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR</> : 'ONAYLARI KAYDET VE DEVAM ET'}
+                  </NeuButton>
+                ) : (
+                  <>
+                    <NeuButton onClick={handleSignUp} variant="solid" className="w-full py-5 text-lg" disabled={loading}>
+                      {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR</> : 'HESABI OLUŞTUR'}
+                    </NeuButton>
+                    <NeuButton onClick={handleAppleContinue} className="w-full py-4" disabled={loading}>
+                      <Apple className="w-4 h-4" />
+                      Apple ile Devam Et
+                    </NeuButton>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -741,11 +962,20 @@ export default function BusinessWizard() {
                    <div className="flex justify-between pt-1"><span className="text-sm font-bold text-slate-400">LOKASYON</span><span className="text-sm font-black text-slate-700 max-w-[200px] text-right truncate">{bizForm.address}</span></div>
                 </div>
                 <div className="space-y-3">
-                   {([{k:'r1',t:'Girdiğim bilgilerin doğruluğunu beyan ederim.'},{k:'r2',t:'İşletme kurallarını ve sözleşmeyi okudum.'},{k:'r3',t:'KVKK metnini onaylıyorum.'}] as Array<{k: RuleKey; t: string}>).map((r) => (
+                   {finalRules.map((r) => (
                      <label key={r.k} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${rules[r.k] ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
                         <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${rules[r.k] ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{rules[r.k] && <Check className="w-4 h-4 text-white"/>}</div>
                         <input type="checkbox" className="hidden" checked={rules[r.k]} onChange={(e)=>setRules({...rules, [r.k]: e.target.checked})}/>
-                        <span className="text-sm font-bold text-slate-600">{r.t}</span>
+                        <span className="text-sm font-bold text-slate-600 flex-1">{r.t}</span>
+                        {r.legal ? (
+                          <button
+                            type="button"
+                            onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: r.legal!.title, version: r.legal!.version, body: r.legal!.body }) }}
+                            className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600"
+                          >
+                            Metni Oku
+                          </button>
+                        ) : null}
                      </label>
                    ))}
                 </div>
