@@ -11,9 +11,9 @@ const IYZICO_URL =
 const DOWNLOAD_LOGO_URL =
   'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/indirmelogo.png'
 const HERO_BIG_PHONE_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/1.heic?v=front'
+  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/abc.jpg'
 const HERO_SMALL_PHONE_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/IMG_9425.HEIC?v=back'
+  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/abcd.jpg'
 
 export const HeroSection = () => (
   <section
