@@ -18,7 +18,7 @@ const HERO_SMALL_PHONE_URL =
 export const HeroSection = () => (
   <section
     id="hero"
-    className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-8 lg:pl-32 relative z-10"
+    className="min-h-screen flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-24 sm:pt-28 pb-8 lg:pl-32 relative z-10"
   >
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -26,11 +26,11 @@ export const HeroSection = () => (
       transition={{ duration: 0.9 }}
       className="w-full max-w-[1200px]"
     >
-      <div className={`rounded-[3rem] p-8 md:p-12 ${SPATIAL.glassContainer} relative overflow-hidden`}>
+      <div className={`rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] p-5 sm:p-7 md:p-12 ${SPATIAL.glassContainer} relative overflow-hidden`}>
         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
 
         <div className="grid grid-cols-1 lg:grid-cols-[0.86fr_1.14fr] gap-8 lg:gap-10 items-stretch">
-          <div className="lg:pr-2 flex flex-col min-h-[560px] md:min-h-[640px] pt-[15px]">
+          <div className="lg:pr-2 flex flex-col min-h-0 lg:min-h-[560px] xl:min-h-[640px] pt-[15px]">
             <div className="mt-4 md:mt-6 flex flex-col items-center">
               <img
                 src={LOGO_URL}
@@ -95,14 +95,14 @@ export const HeroSection = () => (
             </div>
           </div>
 
-          <div className="relative mx-auto lg:ml-auto lg:mr-0 w-[520px] md:w-[620px] h-[560px] md:h-[640px]">
+          <div className="relative mx-auto lg:ml-auto lg:mr-0 w-full max-w-[360px] sm:max-w-[460px] md:max-w-[620px] h-[360px] sm:h-[500px] md:h-[640px]">
             <motion.div
               initial={{ opacity: 0, x: 20, y: 20 }}
               animate={{ opacity: 0.88, x: 0, y: 0 }}
               transition={{ duration: 0.7, delay: 0.12 }}
-              className="absolute z-10 right-[20px] md:right-[30px] top-10"
+              className="absolute z-10 right-0 sm:right-[20px] md:right-[30px] top-6 sm:top-10"
             >
-              <div className="w-[245px] md:w-[270px] h-[500px] md:h-[540px] rounded-[40px] border-[6px] border-[#080A0F] bg-[#040507] shadow-[0_24px_56px_rgba(0,0,0,0.68)] overflow-hidden">
+              <div className="w-[150px] sm:w-[210px] md:w-[270px] h-[300px] sm:h-[420px] md:h-[540px] rounded-[28px] sm:rounded-[34px] md:rounded-[40px] border-[4px] sm:border-[5px] md:border-[6px] border-[#080A0F] bg-[#040507] shadow-[0_24px_56px_rgba(0,0,0,0.68)] overflow-hidden">
                 <img
                   src={HERO_SMALL_PHONE_URL}
                   alt="Molayeri küçük telefon mockup"
@@ -117,9 +117,9 @@ export const HeroSection = () => (
               initial={{ opacity: 0, y: 22, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.85, delay: 0.04 }}
-              className="absolute right-[220px] md:right-[250px] top-0 z-20"
+              className="absolute right-[120px] sm:right-[190px] md:right-[250px] top-0 z-20"
             >
-              <div className="w-[260px] md:w-[290px] h-[530px] md:h-[590px] rounded-[44px] border-[7px] border-[#07090D] bg-[#030406] shadow-[0_36px_86px_rgba(0,0,0,0.78)] overflow-hidden">
+              <div className="w-[165px] sm:w-[240px] md:w-[290px] h-[330px] sm:h-[490px] md:h-[590px] rounded-[30px] sm:rounded-[38px] md:rounded-[44px] border-[5px] sm:border-[6px] md:border-[7px] border-[#07090D] bg-[#030406] shadow-[0_36px_86px_rgba(0,0,0,0.78)] overflow-hidden">
                 <img
                   src={HERO_BIG_PHONE_URL}
                   alt="Molayeri büyük telefon mockup"
@@ -131,7 +131,7 @@ export const HeroSection = () => (
             </motion.div>
 
             <p
-              className="absolute -bottom-2 left-1/2 -translate-x-[47%] w-full text-center text-[12px] font-medium tracking-wide"
+              className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-full text-center text-[10px] sm:text-[12px] font-medium tracking-wide px-3"
               style={{ color: '#FF6A2A' }}
             >
               *İşletmeler Örnektir, Gerçek Uygulama Görüntüleri Kullanılmıştır

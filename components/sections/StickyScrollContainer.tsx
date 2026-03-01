@@ -130,36 +130,36 @@ export const StickyScrollContainer = ({ data, children }: { data: SectionData, c
   }, [scrollYProgress])
 
   return (
-    <section ref={containerRef} className="relative h-[400vh]" id={data.id}>
-      <div className="sticky top-0 h-screen flex items-center justify-center px-4 sm:px-6 py-20 lg:py-0 lg:px-20 lg:pl-32 overflow-hidden">
+    <section ref={containerRef} className="relative h-[340vh] md:h-[380vh] lg:h-[400vh]" id={data.id}>
+      <div className="sticky top-0 h-screen flex items-center justify-center px-4 sm:px-6 pt-24 pb-8 lg:py-0 lg:px-20 lg:pl-32 overflow-visible lg:overflow-hidden">
         <div className={`absolute top-1/4 left-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] pointer-events-none opacity-30 ${data.glow.replace('/20', '')}`} />
-        <div className="w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-16 relative z-10 items-center">
-          <div className="flex flex-col gap-8">
+        <div className="w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-5 sm:gap-8 lg:gap-16 relative z-10 items-center">
+          <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
             <div className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full ${SPATIAL.glassCard} w-max`}>
               <data.icon size={20} className={data.color} style={neonStyle} />
               <span className={`font-black tracking-widest uppercase text-sm ${data.color}`} style={neonStyle}>{data.title}</span>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:gap-4 max-h-[32vh] sm:max-h-[36vh] lg:max-h-none overflow-y-auto pr-1">
               {data.features.map((feat: FeatureItem, i: number) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => jumpToIndex(i)}
                   aria-label={`${feat.title} sekmesine git`}
-                  className={`transition-all duration-700 p-5 rounded-2xl ${activeIndex === i ? SPATIAL.glassContainer : data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? `${SPATIAL.glassCard} opacity-100 scale-[0.98]` : `${SPATIAL.glassCard} opacity-80 scale-95`}`}
+                  className={`transition-all duration-700 p-4 sm:p-5 rounded-2xl ${activeIndex === i ? SPATIAL.glassContainer : data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? `${SPATIAL.glassCard} opacity-100 scale-[0.98]` : `${SPATIAL.glassCard} opacity-80 scale-95`}`}
                   style={activeIndex === i ? undefined : { filter: 'blur(1.1px)' }}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <feat.icon size={20} className={activeIndex === i ? data.color : 'text-white/40'} style={neonStyle} />
-                    <h3 className="text-[1.1rem] font-bold" style={neonStyle ?? { color: '#FFFFFF' }}>{feat.title}</h3>
+                    <h3 className="text-base sm:text-[1.1rem] font-bold" style={neonStyle ?? { color: '#FFFFFF' }}>{feat.title}</h3>
                   </div>
-                  <p className="text-[13px]" style={data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? { color: '#FFECEC' } : { color: 'rgba(255,255,255,0.85)' }}>{feat.desc}</p>
+                  <p className="text-xs sm:text-[13px]" style={data.id === 'wallet' || data.id === 'radar' || data.id === 'convoy' || data.id === 'long-road' || data.id === 'panic' ? { color: '#FFECEC' } : { color: 'rgba(255,255,255,0.85)' }}>{feat.desc}</p>
                 </button>
               ))}
             </div>
           </div>
-          <div className={`h-[65vh] lg:h-[75vh] w-full rounded-[2.5rem] p-4 ${SPATIAL.glassContainer} relative`}>
-            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none rounded-[2.5rem]" />
+          <div className={`h-[54vh] sm:h-[62vh] lg:h-[75vh] w-full rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem] p-3 sm:p-4 ${SPATIAL.glassContainer} relative`}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem]" />
             {React.isValidElement<ChildWithActiveIndexProps>(children)
               ? React.cloneElement(children, { activeIndex })
               : children}

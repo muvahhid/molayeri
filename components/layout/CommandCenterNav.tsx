@@ -113,22 +113,25 @@ export const CommandCenterNav = ({ activeSection, progress }: { activeSection: s
 
   return (
     <>
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-[85%] max-w-5xl">
-        <div className={`p-2 rounded-[2rem] ${SPATIAL.glassContainer} border-t-white/20 flex items-center justify-center relative overflow-hidden`}>
+      <nav className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 w-[96%] sm:w-[95%] md:w-[85%] max-w-5xl">
+        <div className={`p-1.5 sm:p-2 rounded-[1.4rem] sm:rounded-[2rem] ${SPATIAL.glassContainer} border-t-white/20 flex items-center justify-center relative overflow-hidden`}>
           <motion.div className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#FF7043] via-[#8A77FF] to-[#29B6F6]" style={{ width: progressWidth }} />
           <div className="flex items-center gap-2 p-1 overflow-x-auto">
-            <button onClick={() => scrollToSection('hero')} className={`relative px-5 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${activeSection === 'hero' ? 'text-white' : THEME.textMuted}`}>
+            <button onClick={() => scrollToSection('hero')} className={`relative shrink-0 px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${activeSection === 'hero' ? 'text-white' : THEME.textMuted}`}>
               {activeSection === 'hero' && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 shadow-[inset_0_0_12px_rgba(255,255,255,0.1)] border border-white/20 rounded-full z-0" transition={{ type: 'spring', stiffness: 300, damping: 25 }} />}
-              <span className="relative z-10 flex items-center gap-2"><House size={16} /> Ana Sayfa</span>
+              <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <House className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Ana Sayfa
+              </span>
             </button>
             {SECTIONS_DATA.map(sec => {
               const isActive = activeSection === sec.id
               const activeStyle = isActive ? NAV_NEON_STYLES[sec.id] : undefined
               return (
-                <button key={sec.id} onClick={() => scrollToSection(sec.id)} className={`relative px-5 py-2 rounded-full text-sm font-bold transition-colors ${isActive ? sec.color : THEME.textMuted}`}>
+                <button key={sec.id} onClick={() => scrollToSection(sec.id)} className={`relative shrink-0 px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-colors ${isActive ? sec.color : THEME.textMuted}`}>
                   {isActive && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 shadow-[inset_0_0_12px_rgba(255,255,255,0.1)] border border-white/20 rounded-full z-0" transition={{ type: 'spring', stiffness: 300, damping: 25 }} />}
-                  <span className="relative z-10 flex items-center gap-2" style={activeStyle}>
-                    <sec.icon size={16} style={activeStyle} />
+                  <span className="relative z-10 flex items-center gap-1.5 sm:gap-2" style={activeStyle}>
+                    <sec.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" style={activeStyle} />
                     {getNavLabel(sec.id, sec.title)}
                   </span>
                 </button>
@@ -149,7 +152,7 @@ export const CommandCenterNav = ({ activeSection, progress }: { activeSection: s
           >
             <div className="absolute inset-0 bg-[#050811]/20 backdrop-blur-[1.5px]" />
             <motion.div
-              className="absolute top-[92px] left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl shadow-[0_10px_28px_rgba(0,0,0,0.35)] flex items-center gap-2.5"
+              className="absolute top-[78px] sm:top-[92px] left-1/2 -translate-x-1/2 px-4 sm:px-5 py-2.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl shadow-[0_10px_28px_rgba(0,0,0,0.35)] flex items-center gap-2.5"
               initial={{ y: -10, scale: 0.96 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: -8, scale: 0.98 }}
