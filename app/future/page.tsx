@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useSyncExternalStore } from 'react'
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useScroll, useSpring } from 'framer-motion'
 
 import { THEME, SECTIONS_DATA, MERCHANT_SECTIONS_DATA } from '../../constants/spatialData'
@@ -43,6 +43,37 @@ export default function FutureLanding() {
   const { scrollYProgress } = useScroll()
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 50, damping: 20, restDelta: 0.001 })
   const activeSections = audienceMode === 'merchant' ? MERCHANT_SECTIONS_DATA : SECTIONS_DATA
+  const mobileSelectedSection = activeSections.find((section) => section.id === mobileSectionId) ?? activeSections[0]
+
+  const mobilePreview = useMemo(() => {
+    if (mobileSectionId === 'home') {
+      return (
+        <div className="lg:hidden">
+          <HeroSection embedded />
+        </div>
+      )
+    }
+
+    if (!mobileSelectedSection) return null
+    if (audienceMode === 'merchant') {
+      return <MerchantTemplateFeature section={mobileSelectedSection} activeIndex={mobileFeatureIndex} />
+    }
+
+    switch (mobileSelectedSection.id) {
+      case 'radar':
+        return <RadarFeature activeIndex={mobileFeatureIndex} />
+      case 'wallet':
+        return <WalletFeature activeIndex={mobileFeatureIndex} />
+      case 'convoy':
+        return <ConvoyFeature activeIndex={mobileFeatureIndex} />
+      case 'long-road':
+        return <LongRoadFeature activeIndex={mobileFeatureIndex} />
+      case 'panic':
+        return <PanicFeature activeIndex={mobileFeatureIndex} />
+      default:
+        return null
+    }
+  }, [audienceMode, mobileFeatureIndex, mobileSectionId, mobileSelectedSection])
 
   const switchAudienceMode = (nextMode: 'user' | 'merchant') => {
     setAudienceMode(nextMode)
@@ -110,8 +141,6 @@ export default function FutureLanding() {
               </StickyScrollContainer>
             )
           })}
-
-          <SpatialFooter />
         </>
       ) : (
         <FutureMobileView
@@ -125,8 +154,10 @@ export default function FutureLanding() {
           }}
           selectedFeatureIndex={mobileFeatureIndex}
           onSelectFeatureIndex={setMobileFeatureIndex}
+          preview={mobilePreview}
         />
       )}
+      <SpatialFooter />
     </main>
   )
 }

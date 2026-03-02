@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Lock, MapPin, Store } from 'lucide-react'
+import { Lock, MapPin } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -15,14 +15,9 @@ export default function LandingPage() {
         </p>
 
         <div className="landing-actions">
-          <Link href="/register/business" className="landing-btn primary">
-            <Store size={16} />
-            İşletmeni Kaydet
-          </Link>
-
           <Link href="/login" className="landing-btn">
             <Lock size={16} />
-            Yönetim Girişi
+            Sisteme Giriş
           </Link>
         </div>
       </section>
