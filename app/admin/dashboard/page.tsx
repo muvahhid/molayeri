@@ -105,7 +105,7 @@ type StatCardItem = {
   title: string
   value: number
   subtitle: string
-  icon: ComponentType<{ size?: number }>
+  icon: ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
   href: string
   tone: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'slate'
 }
@@ -124,13 +124,14 @@ const DEFAULT_KPIS: DashboardKpis = {
   pendingConvoyOffers: 0,
 }
 
-const TONE_CLASS: Record<StatCardItem['tone'], string> = {
-  blue: 'from-blue-500 to-blue-600 shadow-[0_12px_18px_-14px_rgba(37,99,235,0.8)]',
-  emerald: 'from-emerald-500 to-emerald-600 shadow-[0_12px_18px_-14px_rgba(5,150,105,0.78)]',
-  amber: 'from-amber-500 to-orange-500 shadow-[0_12px_18px_-14px_rgba(249,115,22,0.72)]',
-  violet: 'from-violet-500 to-indigo-600 shadow-[0_12px_18px_-14px_rgba(109,40,217,0.72)]',
-  rose: 'from-rose-500 to-rose-600 shadow-[0_12px_18px_-14px_rgba(225,29,72,0.72)]',
-  slate: 'from-slate-500 to-slate-600 shadow-[0_12px_18px_-14px_rgba(51,65,85,0.72)]',
+// Karanlık tema için renk eşleştirmeleri
+const TONE_COLORS: Record<StatCardItem['tone'], string> = {
+  blue: 'text-[#38bdf8]',
+  emerald: 'text-emerald-400',
+  amber: 'text-amber-400',
+  violet: 'text-indigo-400',
+  rose: 'text-rose-400',
+  slate: 'text-[#94a3b8]',
 }
 
 function pad2(value: number): string {
@@ -213,15 +214,15 @@ function buildTrendWindow(days: number): TrendPoint[] {
 }
 
 function severityClass(level: FeedLevel): string {
-  if (level === 'high') return 'text-rose-700 bg-rose-100 border-rose-200'
-  if (level === 'medium') return 'text-amber-700 bg-amber-100 border-amber-200'
-  return 'text-emerald-700 bg-emerald-100 border-emerald-200'
+  if (level === 'high') return 'text-rose-400 bg-rose-950/20 border-rose-900/50'
+  if (level === 'medium') return 'text-amber-400 bg-amber-950/20 border-amber-900/50'
+  return 'text-emerald-400 bg-emerald-950/20 border-emerald-900/50'
 }
 
 function cardToneClass(level: FeedLevel): string {
-  if (level === 'high') return 'border-rose-200 bg-rose-50'
-  if (level === 'medium') return 'border-amber-200 bg-amber-50'
-  return 'border-emerald-200 bg-emerald-50'
+  if (level === 'high') return 'border-rose-900/30 bg-rose-950/10 hover:border-rose-900/50'
+  if (level === 'medium') return 'border-amber-900/30 bg-amber-950/10 hover:border-amber-900/50'
+  return 'border-[#2d313a] bg-[#0a0c10] hover:border-[#475569]'
 }
 
 async function safeCount(query: PromiseLike<CountResponse>): Promise<number> {
@@ -234,34 +235,49 @@ async function safeCount(query: PromiseLike<CountResponse>): Promise<number> {
   }
 }
 
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
+
 function StatCard({ item }: { item: StatCardItem }) {
   const Icon = item.icon
+  const textColor = TONE_COLORS[item.tone]
+  
   return (
-    <Link href={item.href} className="group block">
-      <article className="rounded-[22px] border border-white/75 bg-white p-4 shadow-[0_16px_24px_-22px_rgba(15,23,42,0.72)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_22px_30px_-22px_rgba(15,23,42,0.65)]">
+    <Link href={item.href} className="group block h-full">
+      <HardwarePanel className="p-5 h-full transition-colors hover:border-[#475569] flex flex-col justify-between">
         <div className="flex items-start justify-between gap-3">
-          <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white ${TONE_CLASS[item.tone]}`}>
-            <Icon size={17} />
+          <span className={`inline-flex h-9 w-9 items-center justify-center rounded border border-[#2d313a] bg-[#0a0c10] ${textColor}`}>
+            <Icon size={16} strokeWidth={1.5} />
           </span>
-          <ArrowRight size={15} className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600" />
+          <ArrowRight size={14} className="text-[#475569] transition-transform group-hover:translate-x-1 group-hover:text-[#94a3b8]" />
         </div>
-        <p className="mt-3 text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">{item.title}</p>
-        <p className="mt-1 text-[28px] leading-none font-bold text-slate-800">{compact(item.value)}</p>
-        <p className="mt-2 text-[11px] font-medium text-slate-500">{item.subtitle}</p>
-      </article>
+        <div className="mt-4">
+          <p className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">{item.title}</p>
+          <p className="mt-1 text-2xl font-mono text-[#e2e8f0]">{compact(item.value)}</p>
+          <p className="mt-2 text-[9px] font-mono text-[#475569] uppercase tracking-widest">{item.subtitle}</p>
+        </div>
+      </HardwarePanel>
     </Link>
   )
 }
 
 function TrendLegend() {
   return (
-    <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-500">
+    <div className="flex items-center gap-3 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+        <span className="h-2 w-2 rounded-full bg-[#38bdf8] shadow-[0_0_6px_rgba(56,189,248,0.6)]" />
         Kullanıcı
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+        <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
         İşletme
       </span>
     </div>
@@ -685,56 +701,53 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[420px] rounded-[28px] border border-white/70 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] shadow-[0_26px_30px_-24px_rgba(15,23,42,0.72)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-[420px] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#38bdf8]" />
       </div>
     )
   }
 
   return (
     <div className="space-y-5">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#eef4ff_58%,#eaf2ff_100%)] p-4 md:p-5 shadow-[0_26px_34px_-26px_rgba(15,23,42,0.72)]">
-        <div className="pointer-events-none absolute -top-16 -right-12 h-40 w-40 rounded-full bg-blue-300/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-40 rounded-full bg-amber-300/25 blur-3xl" />
-
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+      <HardwarePanel className="p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-600 shadow-[0_12px_18px_-16px_rgba(15,23,42,0.7)]">
-              <Sparkles size={13} className="text-amber-500" />
+            <div className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+              <Sparkles size={13} className="text-[#38bdf8]" />
               Kontrol Merkezi
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-600">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-[9px] font-mono tracking-widest uppercase">
+              <span className="inline-flex items-center gap-1.5 rounded border border-emerald-900/50 bg-emerald-950/20 px-2.5 py-1 text-emerald-400">
                 <CheckCircle2 size={13} />
                 Sistem Stabil
               </span>
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1">
-                <Clock3 size={13} className="text-blue-500" />
+              <span className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-2.5 py-1 text-[#94a3b8]">
+                <Clock3 size={13} className="text-[#38bdf8]" />
                 {lastSyncedAt ? `Son senkron: ${relativeTime(lastSyncedAt)}` : 'Senkron bekleniyor'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-[0_12px_20px_-16px_rgba(15,23,42,0.62)]">
-                <p className="text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-500">Onay</p>
-                <p className="text-lg leading-none mt-1 font-bold text-slate-800">{kpis.pendingBusinesses}</p>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex gap-3">
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-2">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Onay</p>
+                <p className="text-sm font-mono mt-1 text-[#e2e8f0]">{kpis.pendingBusinesses}</p>
               </div>
-              <div className="rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-[0_12px_20px_-16px_rgba(15,23,42,0.62)]">
-                <p className="text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-500">Rapor</p>
-                <p className="text-lg leading-none mt-1 font-bold text-slate-800">{kpis.reportedReviews}</p>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-2">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Rapor</p>
+                <p className="text-sm font-mono mt-1 text-[#e2e8f0]">{kpis.reportedReviews}</p>
               </div>
-              <div className="rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-[0_12px_20px_-16px_rgba(15,23,42,0.62)]">
-                <p className="text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-500">Mesaj</p>
-                <p className="text-lg leading-none mt-1 font-bold text-slate-800">{kpis.unreadMessages}</p>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-2">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Mesaj</p>
+                <p className="text-sm font-mono mt-1 text-[#e2e8f0]">{kpis.unreadMessages}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => void loadDashboard(true)}
               disabled={refreshing}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/85 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-[0_14px_22px_-18px_rgba(15,23,42,0.6)] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded px-4 py-3 bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[10px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
             >
               {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Yenile
@@ -743,49 +756,51 @@ export default function DashboardPage() {
         </div>
 
         {errorText ? (
-          <div className="relative mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{errorText}</div>
+          <div className="mt-4 rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 text-[11px] font-mono uppercase tracking-widest text-rose-400">
+            [HATA] {errorText}
+          </div>
         ) : null}
-      </section>
+      </HardwarePanel>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {statCards.map((item) => (
           <StatCard key={item.title} item={item} />
         ))}
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(380px,0.9fr)] gap-4">
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)]">
-          <div className="flex items-center justify-between gap-3">
+        <HardwarePanel className="p-5">
+          <div className="flex items-center justify-between gap-3 border-b border-[#1e232b] pb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">14 Günlük Eğilim</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-800">Kullanıcı ve İşletme Büyümesi</h3>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">14 Günlük Eğilim</p>
+              <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Kullanıcı ve İşletme Büyümesi</h3>
             </div>
             <TrendLegend />
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-3">
+          <div className="mt-5 rounded border border-[#2d313a] bg-[#0a0c10] p-4">
             <div className="h-44 grid grid-cols-14 gap-1.5 items-end">
               {trend.map((point) => {
                 const userHeight = Math.max(4, Math.round((point.users / maxTrend) * 88))
                 const businessHeight = Math.max(4, Math.round((point.businesses / maxTrend) * 88))
                 return (
-                  <div key={point.key} className="flex flex-col items-center justify-end gap-1">
+                  <div key={point.key} className="flex flex-col items-center justify-end gap-1.5">
                     <div className="flex items-end gap-1 h-24">
-                      <span className="w-2 rounded-sm bg-blue-500/90" style={{ height: `${userHeight}px` }} />
-                      <span className="w-2 rounded-sm bg-emerald-500/90" style={{ height: `${businessHeight}px` }} />
+                      <span className="w-2 rounded-sm bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)]" style={{ height: `${userHeight}px` }} />
+                      <span className="w-2 rounded-sm bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" style={{ height: `${businessHeight}px` }} />
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-500">{point.label}</span>
+                    <span className="text-[8px] font-mono text-[#64748b]">{point.label}</span>
                   </div>
                 )
               })}
             </div>
           </div>
-        </article>
+        </HardwarePanel>
 
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)] space-y-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Operasyon Sağlığı</p>
-            <h3 className="mt-1 text-xl font-bold text-slate-800">Basınç ve Risk Göstergeleri</h3>
+        <HardwarePanel className="p-5 space-y-4">
+          <div className="border-b border-[#1e232b] pb-4">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">Operasyon Sağlığı</p>
+            <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Basınç ve Risk Göstergeleri</h3>
           </div>
 
           {[
@@ -797,151 +812,151 @@ export default function DashboardPage() {
             const safeRatio = Math.min(1, Math.max(0, row.ratio))
             const barClass =
               safeRatio >= 0.7
-                ? 'from-rose-500 to-rose-600'
+                ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
                 : safeRatio >= 0.4
-                  ? 'from-amber-500 to-orange-500'
-                  : 'from-emerald-500 to-emerald-600'
+                  ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                  : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
             return (
-              <div key={row.label} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+              <div key={row.label} className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[12px] font-semibold text-slate-700">{row.label}</p>
-                  <span className="text-[11px] font-bold text-slate-600">{percent(safeRatio)}</span>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">{row.label}</p>
+                  <span className="text-[10px] font-mono text-[#94a3b8]">{percent(safeRatio)}</span>
                 </div>
-                <div className="mt-1.5 h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${barClass}`} style={{ width: `${Math.max(4, safeRatio * 100)}%` }} />
+                <div className="mt-2.5 h-1.5 rounded-full bg-[#16181d] border border-[#2d313a] overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${barClass}`} style={{ width: `${Math.max(4, safeRatio * 100)}%` }} />
                 </div>
-                <p className="mt-1.5 text-[11px] text-slate-500">{row.help}</p>
+                <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">{row.help}</p>
               </div>
             )
           })}
-        </article>
+        </HardwarePanel>
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)]">
-          <div className="flex items-center justify-between gap-2">
+        <HardwarePanel className="p-5">
+          <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-4 mb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Onay Kuyruğu</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-800">Bekleyen İşletmeler</h3>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">Onay Kuyruğu</p>
+              <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Bekleyen İşletmeler</h3>
             </div>
             <Link
               href="/admin/approvals"
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700"
+              className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors"
             >
               Tümünü Aç
-              <ArrowRight size={13} />
+              <ArrowRight size={12} />
             </Link>
           </div>
 
-          <div className="mt-3 space-y-2">
+          <div className="space-y-3">
             {pendingQueue.length === 0 ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
-                Onay bekleyen işletme yok.
+              <div className="rounded border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-emerald-400">
+                ONAY BEKLEYEN İŞLETME YOK.
               </div>
             ) : (
               pendingQueue.map((row) => (
                 <Link
                   key={row.id}
                   href="/admin/approvals"
-                  className="block rounded-xl border border-slate-200 bg-white px-3 py-2.5 hover:border-amber-300 hover:bg-amber-50/45 transition-colors"
+                  className="block rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 hover:border-amber-500/50 hover:bg-amber-950/20 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-800 truncate">{row.name || 'İşletme'}</p>
-                    <span className="text-[11px] font-semibold text-amber-700">{relativeTime(row.created_at)}</span>
+                    <p className="text-[12px] font-mono text-[#e2e8f0] truncate uppercase tracking-wide">{row.name || 'İŞLETME'}</p>
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400">{relativeTime(row.created_at)}</span>
                   </div>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-500">{businessTypeLabel(row.type)}</p>
+                  <p className="mt-1.5 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">{businessTypeLabel(row.type)}</p>
                 </Link>
               ))
             )}
           </div>
-        </article>
+        </HardwarePanel>
 
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)]">
-          <div className="flex items-center justify-between gap-2">
+        <HardwarePanel className="p-5">
+          <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-4 mb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Moderasyon</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-800">Raporlu Yorum Akışı</h3>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">Moderasyon</p>
+              <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Raporlu Yorum Akışı</h3>
             </div>
             <Link
               href="/admin/reviews"
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700"
+              className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors"
             >
               Moderasyona Git
-              <ArrowRight size={13} />
+              <ArrowRight size={12} />
             </Link>
           </div>
 
-          <div className="mt-3 space-y-2">
+          <div className="space-y-3">
             {reviewQueue.length === 0 ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
-                Açık raporlu yorum kuyruğu bulunmuyor.
+              <div className="rounded border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-emerald-400">
+                AÇIK RAPORLU YORUM KUYRUĞU BULUNMUYOR.
               </div>
             ) : (
               reviewQueue.map((row) => (
                 <Link
                   key={row.id}
                   href="/admin/reviews"
-                  className="block rounded-xl border border-slate-200 bg-white px-3 py-2.5 hover:border-rose-300 hover:bg-rose-50/45 transition-colors"
+                  className="block rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 hover:border-rose-500/50 hover:bg-rose-950/20 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-800 truncate">{row.businessName}</p>
-                    <span className="text-[11px] font-semibold text-rose-700">{relativeTime(row.createdAt)}</span>
+                    <p className="text-[12px] font-mono text-[#e2e8f0] truncate uppercase tracking-wide">{row.businessName}</p>
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-rose-400">{relativeTime(row.createdAt)}</span>
                   </div>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-500">
-                    Puan: {row.rating ?? '-'} • {row.reason}
+                  <p className="mt-1.5 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">
+                    PUAN: {row.rating ?? '-'} • {row.reason}
                   </p>
                 </Link>
               ))
             )}
           </div>
-        </article>
+        </HardwarePanel>
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] gap-4">
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)]">
-          <div className="flex items-center justify-between gap-2">
+        <HardwarePanel className="p-5">
+          <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-4 mb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Kritik Uyarılar</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-800">Önceliklendirilmiş İş Listesi</h3>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">Kritik Uyarılar</p>
+              <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Önceliklendirilmiş İş Listesi</h3>
             </div>
-            <AlertTriangle size={18} className="text-amber-500" />
+            <AlertTriangle size={16} className="text-amber-400" />
           </div>
 
-          <div className="mt-3 space-y-2">
+          <div className="space-y-3">
             {alerts.map((item) => (
               <Link
                 key={item.id}
                 href={item.href}
-                className={`block rounded-xl border px-3 py-2.5 transition-colors ${cardToneClass(item.severity)}`}
+                className={`block rounded border px-4 py-3 transition-colors ${cardToneClass(item.severity)}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-slate-800">{item.title}</p>
-                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${severityClass(item.severity)}`}>
+                  <p className="text-[11px] font-mono text-[#e2e8f0] uppercase tracking-wide">{item.title}</p>
+                  <span className={`inline-flex rounded border px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest ${severityClass(item.severity)}`}>
                     {item.severity === 'high' ? 'KRİTİK' : item.severity === 'medium' ? 'ORTA' : 'STABİL'}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-600">{item.detail}</p>
+                <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b] leading-relaxed">{item.detail}</p>
               </Link>
             ))}
           </div>
 
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Kategori Yoğunluğu</p>
-            <div className="mt-2 space-y-2">
+          <div className="mt-5 rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+            <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] border-b border-[#1e232b] pb-2 mb-3">Kategori Yoğunluğu</p>
+            <div className="space-y-3">
               {categoryMix.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-500">Kategori dağılımı için yeterli veri yok.</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-[#475569]">KATEGORİ DAĞILIMI İÇİN YETERLİ VERİ YOK.</p>
               ) : (
                 categoryMix.map((item) => (
                   <div key={item.label}>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[12px] font-semibold text-slate-700">{item.label}</p>
-                      <p className="text-[11px] font-bold text-slate-600">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <p className="text-[10px] font-mono text-[#cbd5e1] uppercase tracking-widest">{item.label}</p>
+                      <p className="text-[10px] font-mono text-[#64748b] tracking-widest">
                         {item.count} • {percent(item.ratio)}
                       </p>
                     </div>
-                    <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[#16181d] border border-[#2d313a] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
+                        className="h-full bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)]"
                         style={{ width: `${Math.max(6, item.ratio * 100)}%` }}
                       />
                     </div>
@@ -950,44 +965,44 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-        </article>
+        </HardwarePanel>
 
-        <article className="rounded-[26px] border border-white/75 bg-[linear-gradient(145deg,#ffffff_0%,#f4f8ff_100%)] p-4 md:p-5 shadow-[0_24px_30px_-24px_rgba(15,23,42,0.62)]">
-          <div className="flex items-center justify-between gap-2">
+        <HardwarePanel className="p-5">
+          <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-4 mb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Operasyon Feed</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-800">Son Yönetim Olayları</h3>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">Operasyon Feed</p>
+              <h3 className="mt-1 text-[9px] font-mono tracking-widest uppercase text-[#64748b]">Son Yönetim Olayları</h3>
             </div>
-            <BellRing size={18} className="text-blue-500" />
+            <BellRing size={16} className="text-[#38bdf8]" />
           </div>
 
-          <div className="mt-3 space-y-2 max-h-[440px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[460px] overflow-y-auto pr-2 custom-scrollbar">
             {feed.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-500">
-                Son olay verisi bulunamadı.
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                SON OLAY VERİSİ BULUNAMADI.
               </div>
             ) : (
               feed.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="block rounded-xl border border-slate-200 bg-white px-3 py-2.5 hover:border-blue-300 hover:bg-blue-50/45 transition-colors"
+                  className="block rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 hover:border-[#475569] transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-800 truncate">{item.title}</p>
-                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${severityClass(item.level)}`}>
+                    <p className="text-[11px] font-mono text-[#e2e8f0] truncate uppercase tracking-wide">{item.title}</p>
+                    <span className={`inline-flex rounded border px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest ${severityClass(item.level)}`}>
                       {item.level === 'high' ? 'YÜKSEK' : item.level === 'medium' ? 'ORTA' : 'DÜŞÜK'}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-600">{item.subtitle}</p>
+                  <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">{item.subtitle}</p>
                 </Link>
               ))
             )}
           </div>
-        </article>
+        </HardwarePanel>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 pt-2">
         {[
           { href: '/admin/approvals', title: 'Onay Merkezi', text: 'Bekleyen işletmeleri öncelik sırasıyla yönet.', icon: ClipboardCheck },
           { href: '/admin/messages', title: 'Mesaj Merkezi', text: 'Sistem mesajlarını filtreleyip hızlı yanıt ver.', icon: MessageCircleMore },
@@ -1000,16 +1015,16 @@ export default function DashboardPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group rounded-[22px] border border-white/80 bg-[linear-gradient(145deg,#ffffff_0%,#f4f7ff_100%)] px-4 py-3 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.72)] hover:-translate-y-0.5 transition-all"
+              className="group rounded border border-[#2d313a] bg-[#0a0c10] p-4 transition-all hover:border-[#475569] hover:bg-[#101419]"
             >
-              <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef4ff] text-blue-600 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.16),inset_-4px_-4px_12px_rgba(255,255,255,0.9)]">
-                <Icon size={16} />
+              <div className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#2d313a] bg-[#16181d] text-[#38bdf8]">
+                <Icon size={16} strokeWidth={1.5} />
               </div>
-              <h4 className="mt-2 text-[15px] font-bold text-slate-800">{item.title}</h4>
-              <p className="mt-1 text-[12px] font-medium text-slate-500">{item.text}</p>
-              <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-blue-700">
-                Modüle git
-                <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+              <h4 className="mt-4 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">{item.title}</h4>
+              <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b] leading-relaxed">{item.text}</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[#38bdf8]">
+                MODÜLE GİT
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
               </span>
             </Link>
           )

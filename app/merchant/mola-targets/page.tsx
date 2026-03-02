@@ -14,7 +14,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 import type { MerchantBusiness } from '../_lib/helpers'
 
@@ -147,6 +147,17 @@ function toTargetRow(raw: unknown): TargetRow {
     location_updated_at: toNullableText(row.location_updated_at),
   }
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantMolaTargetsPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -593,20 +604,24 @@ export default function MerchantMolaTargetsPage() {
   }, [selectedBusinessId])
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[28px] p-4 md:p-5 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] border border-white/70 shadow-[0_22px_30px_-24px_rgba(15,23,42,0.65)]">
+    <div className="space-y-6">
+      <div className="border-b border-[#2d313a] pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <ModuleTitle title="Mola Hedefleri" />
-            <p className="mt-1 text-xs text-slate-500">Mola listesine ekleyen kullanıcıları yönet, teklif gönder, tekil iptal et.</p>
+            <PanelTitle title="Mola Hedefleri" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-2">
+              Mola listesine ekleyen kullanıcıları yönet, teklif gönder, tekil iptal et.
+            </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
+          <div className={`inline-flex items-center gap-2 rounded px-3 py-1.5 border text-[10px] font-mono tracking-widest uppercase ${
+            isBusinessLocationReady ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-400' : 'bg-amber-950/20 border-amber-900/50 text-amber-400'
+          }`}>
             {isBusinessLocationReady ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-3.5 h-3.5" />
             )}
-            <span className="text-xs font-semibold">
+            <span>
               {isBusinessLocationReady ? 'İşletme konumu hazır' : 'İşletme konumu eksik'}
             </span>
           </div>
@@ -614,338 +629,340 @@ export default function MerchantMolaTargetsPage() {
 
         {resultText ? (
           <div
-            className={`mt-3 rounded-xl border p-3 text-sm font-semibold ${
+            className={`mt-4 rounded border px-4 py-3 text-[11px] font-mono uppercase tracking-wide flex items-start gap-2 ${
               resultTone === 'success'
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-400'
                 : resultTone === 'warn'
-                  ? 'bg-amber-50 border-amber-200 text-amber-700'
-                  : 'bg-rose-50 border-rose-200 text-rose-700'
+                  ? 'bg-amber-950/20 border-amber-900/50 text-amber-400'
+                  : 'bg-rose-950/20 border-rose-900/50 text-rose-400'
             }`}
           >
-            <span className="inline-flex items-start gap-2">
-              {resultTone === 'error' ? (
-                <AlertTriangle className="mt-0.5 h-4 w-4" />
-              ) : resultTone === 'warn' ? (
-                <Clock3 className="mt-0.5 h-4 w-4" />
-              ) : (
-                <CheckCircle2 className="mt-0.5 h-4 w-4" />
-              )}
-              {resultText}
-            </span>
+            {resultTone === 'error' ? (
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : resultTone === 'warn' ? (
+              <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : (
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
+            <span>{resultText}</span>
           </div>
         ) : null}
-      </section>
+      </div>
 
-      <section className="rounded-[28px] p-4 md:p-5 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] border border-white/70 shadow-[0_22px_30px_-24px_rgba(15,23,42,0.65)]">
-        {bootLoading ? (
-          <div className="h-44 flex items-center justify-center">
-            <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
-          </div>
-        ) : !selectedBusiness ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-600">
-            Mola hedef yönetimi için en az bir işletme gerekli.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(330px,0.8fr)] gap-3">
-            <section className="rounded-[24px] p-4 md:p-5 bg-white border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  İşletme
-                  <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
-                    value={selectedBusinessId}
-                    onChange={(event) => setSelectedBusinessId(event.target.value)}
-                  >
-                    {businesses.map((business) => (
-                      <option key={business.id} value={business.id}>
-                        {business.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  Kupon
-                  <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
-                    value={selectedCouponId}
-                    onChange={(event) => setSelectedCouponId(event.target.value)}
-                  >
-                    <option value="">Kupon bağlama</option>
-                    {coupons.map((coupon) => (
-                      <option key={coupon.id} value={coupon.id}>
-                        {(coupon.title || 'Kupon')} • {couponSummary(coupon)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                Teklif Başlığı
-                <input
-                  value={offerTitle}
-                  maxLength={80}
-                  onChange={(event) => setOfferTitle(event.target.value.slice(0, 80))}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
-                  placeholder="Mola teklifi başlığı"
-                />
-              </label>
-
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                Teklif Mesajı
-                <textarea
-                  value={offerText}
-                  maxLength={320}
-                  onChange={(event) => setOfferText(event.target.value.slice(0, 320))}
-                  className="mt-1.5 min-h-[96px] w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-sm font-semibold text-slate-700"
-                  placeholder="Örn: Sizi bekliyoruz, bu mola durağına özel kupon aktif."
-                />
-              </label>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => void loadTargets(selectedBusinessId)}
-                  disabled={targetsLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-slate-300 disabled:opacity-60"
-                >
-                  {targetsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                  Hedefleri Yenile
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => void sendOffer()}
-                  disabled={sendingAll || targets.length === 0}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-55"
-                >
-                  {sendingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  Hepsine Teklif Gönder
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Otomatik Şablon</p>
-                    <p className="mt-0.5 text-xs text-slate-600">
-                      Aktifken kullanıcı bu işletmeyi Mola Yerlerim&apos;e eklediği anda teklif otomatik gider.
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-2 text-xs font-bold text-slate-700">
-                    {templateLoading ? <Loader2 className="h-4 w-4 animate-spin text-blue-500" /> : null}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={templateActive}
-                      disabled={templateSaving || templateLoading}
-                      onClick={() => void saveTemplate(!templateActive)}
-                      className={`relative inline-flex h-7 w-14 items-center rounded-full transition disabled:opacity-55 ${
-                        templateActive ? 'bg-emerald-500' : 'bg-slate-300'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                          templateActive ? 'translate-x-8' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                    {templateActive ? 'ON' : 'OFF'}
-                  </div>
-                </div>
-
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  Şablon Başlığı
-                  <input
-                    value={templateTitle}
-                    maxLength={80}
-                    onChange={(event) => setTemplateTitle(event.target.value.slice(0, 80))}
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
-                    placeholder="Şablon başlığı"
-                  />
-                </label>
-
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  Şablon Mesajı
-                  <textarea
-                    value={templateText}
-                    maxLength={320}
-                    onChange={(event) => setTemplateText(event.target.value.slice(0, 320))}
-                    className="mt-1.5 min-h-[84px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
-                    placeholder="Kullanıcı Mola Yerlerim&apos;e eklediğinde gönderilecek metin"
-                  />
-                </label>
-
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  Şablon Kuponu
-                  <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
-                    value={templateCouponId}
-                    onChange={(event) => setTemplateCouponId(event.target.value)}
-                    disabled={templateSaving || templateLoading}
-                  >
-                    <option value="">Kupon bağlama</option>
-                    {coupons.map((coupon) => (
-                      <option key={coupon.id} value={coupon.id}>
-                        {(coupon.title || 'Kupon')} • {couponSummary(coupon)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() => void saveTemplate()}
-                  disabled={templateSaving || templateLoading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-55"
-                >
-                  {templateSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  Şablonu Kaydet
-                </button>
-              </div>
-            </section>
-
-            <section className="rounded-[24px] p-4 md:p-5 bg-[linear-gradient(155deg,#ffffff_0%,#f6f9ff_100%)] border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] space-y-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Canlı Önizleme</p>
-                <p className="mt-1 text-sm font-extrabold text-slate-900">{selectedBusiness.name}</p>
-                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Başlık</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">{offerTitle.trim() || 'Mola teklifi başlığı'}</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mesaj</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-700">{offerText.trim() || 'Mesaj metni burada görünecek.'}</p>
-                  {selectedCoupon ? (
-                    <span className="mt-2 inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
-                      <Ticket className="h-3.5 w-3.5" />
-                      {(selectedCoupon.title || 'Kupon').slice(0, 26)} • {couponSummary(selectedCoupon)}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Hedef Kullanıcı</p>
-                  <p className="mt-1 text-lg font-extrabold text-slate-800">{targets.length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Aktif Teklif</p>
-                  <p className="mt-1 text-lg font-extrabold text-slate-800">{activeOfferCount}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Aktif Kupon</p>
-                  <p className="mt-1 text-lg font-extrabold text-slate-800">{coupons.length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Konum</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">{isBusinessLocationReady ? 'Hazır' : 'Eksik'}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Oto Şablon</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">{templateActive ? 'Aktif' : 'Pasif'}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Süre</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">24 saat</p>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-[28px] p-4 md:p-5 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] border border-white/70 shadow-[0_22px_30px_-24px_rgba(15,23,42,0.65)]">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm md:text-base font-extrabold text-slate-800">Mola Hedef Listesi</h2>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-            <UserRound className="h-3.5 w-3.5" />
-            {targets.length} hedef
-          </span>
+      {bootLoading ? (
+        <div className="h-44 flex items-center justify-center">
+          <Loader2 className="h-7 w-7 animate-spin text-[#38bdf8]" />
         </div>
-
-        {targetsLoading ? (
-          <div className="mt-3 h-36 flex items-center justify-center">
-            <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
-          </div>
-        ) : targets.length === 0 ? (
-          <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-600">
-            Bu işletmeyi Mola Yerlerim listesine ekleyen kullanıcı yok.
-          </div>
-        ) : (
-          <div className="mt-3 grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-            {targets.map((target) => {
-              const actionKey = rowActionKey(target)
-              const sendingOne = sendingTargetKeys.has(`${target.user_id}|single`)
-              const cancellingOne = cancellingTargetKeys.has(actionKey)
-              const hasActiveOffer = Boolean(target.last_offer_at)
-
-              return (
-                <article
-                  key={actionKey}
-                  className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_12px_18px_-20px_rgba(15,23,42,0.7)]"
+      ) : !selectedBusiness ? (
+        <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+          Mola hedef yönetimi için en az bir işletme gerekli.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(330px,0.8fr)] gap-5">
+          <HardwarePanel className="p-5 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                İşletme Seç
+                <select
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
+                  value={selectedBusinessId}
+                  onChange={(event) => setSelectedBusinessId(event.target.value)}
                 >
-                  <div className="flex items-start gap-2.5">
-                    <div className="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 text-orange-700 grid place-items-center border border-orange-200">
-                      <UserRound className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-extrabold text-slate-900 truncate">{target.full_name}</p>
-                      <p className="mt-0.5 text-xs font-semibold text-slate-600 truncate">{target.stop_name}</p>
-                      {target.stop_address ? <p className="text-[11px] text-slate-500 truncate">{target.stop_address}</p> : null}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        disabled={sendingOne || cancellingOne}
-                        onClick={() => void sendOffer(target.user_id)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-55"
-                        title="Teklif gönder"
-                      >
-                        {sendingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={sendingOne || cancellingOne}
-                        onClick={() => void cancelOffer(target)}
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-white disabled:opacity-55 ${
-                          hasActiveOffer ? 'bg-rose-600 hover:bg-rose-700' : 'bg-slate-400 hover:bg-slate-500'
-                        }`}
-                        title="Teklifi iptal et"
-                      >
-                        {cancellingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
+                  {businesses.map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      Mola: {formatAgo(target.stop_added_at)}
-                    </span>
-                    {target.last_offer_at ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-bold text-orange-700">
-                        Son teklif: {formatAgo(target.last_offer_at)}
-                      </span>
-                    ) : null}
-                    {target.remaining_km != null ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
-                        <MapPin className="h-3.5 w-3.5" />
-                        Kalan: {formatDistance(target.remaining_km)}
-                      </span>
-                    ) : null}
-                    {target.location_updated_at ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700">
-                        Konum: {formatAgo(target.location_updated_at)}
-                      </span>
-                    ) : null}
-                  </div>
-                </article>
-              )
-            })}
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                Kupon (Opsiyonel)
+                <select
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
+                  value={selectedCouponId}
+                  onChange={(event) => setSelectedCouponId(event.target.value)}
+                >
+                  <option value="">Kupon Bağlama</option>
+                  {coupons.map((coupon) => (
+                    <option key={coupon.id} value={coupon.id}>
+                      {(coupon.title || 'Kupon')} • {couponSummary(coupon)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+              Teklif Başlığı
+              <input
+                value={offerTitle}
+                maxLength={80}
+                onChange={(event) => setOfferTitle(event.target.value.slice(0, 80))}
+                className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                placeholder="Mola teklifi başlığı"
+              />
+            </label>
+
+            <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+              Teklif Mesajı
+              <textarea
+                value={offerText}
+                maxLength={320}
+                onChange={(event) => setOfferText(event.target.value.slice(0, 320))}
+                className="mt-2 w-full min-h-[100px] px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 resize-none custom-scrollbar placeholder:text-[#475569]"
+                placeholder="Örn: Sizi bekliyoruz, bu mola durağına özel kupon aktif."
+              />
+            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => void loadTargets(selectedBusinessId)}
+                disabled={targetsLoading}
+                className="inline-flex items-center justify-center gap-2 rounded px-4 py-3 border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
+              >
+                {targetsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                Hedefleri Yenile
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void sendOffer()}
+                disabled={sendingAll || targets.length === 0}
+                className="inline-flex items-center justify-center gap-2 rounded px-4 py-3 bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
+              >
+                {sendingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Hepsine Gönder
+              </button>
+            </div>
+
+            <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 mt-6 space-y-4">
+              <div className="flex items-start justify-between gap-3 border-b border-[#1e232b] pb-3">
+                <div>
+                  <p className="text-[10px] font-mono font-semibold uppercase tracking-widest text-[#94a3b8]">Otomatik Şablon</p>
+                  <p className="mt-1.5 text-[9px] font-mono text-[#64748b] leading-relaxed uppercase tracking-wider">
+                    Aktifken kullanıcı bu işletmeyi Mola Yerlerim&#39;e eklediği anda teklif otomatik gider.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 text-[10px] font-mono font-semibold text-[#e2e8f0]">
+                  {templateLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-[#38bdf8]" /> : null}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={templateActive}
+                    disabled={templateSaving || templateLoading}
+                    onClick={() => void saveTemplate(!templateActive)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                      templateActive ? 'bg-[#38bdf8]' : 'bg-[#1e232b] border border-[#2d313a]'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-[#e2e8f0] transition-transform ${
+                        templateActive ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  {templateActive ? 'ON' : 'OFF'}
+                </div>
+              </div>
+
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                Şablon Başlığı
+                <input
+                  value={templateTitle}
+                  maxLength={80}
+                  onChange={(event) => setTemplateTitle(event.target.value.slice(0, 80))}
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                  placeholder="Şablon başlığı"
+                />
+              </label>
+
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                Şablon Mesajı
+                <textarea
+                  value={templateText}
+                  maxLength={320}
+                  onChange={(event) => setTemplateText(event.target.value.slice(0, 320))}
+                  className="mt-2 w-full min-h-[84px] px-3 py-2.5 rounded bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 resize-none custom-scrollbar placeholder:text-[#475569]"
+                  placeholder="Otomatik gönderilecek metin"
+                />
+              </label>
+
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                Şablon Kuponu
+                <select
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
+                  value={templateCouponId}
+                  onChange={(event) => setTemplateCouponId(event.target.value)}
+                  disabled={templateSaving || templateLoading}
+                >
+                  <option value="">Kupon bağlama</option>
+                  {coupons.map((coupon) => (
+                    <option key={coupon.id} value={coupon.id}>
+                      {(coupon.title || 'Kupon')} • {couponSummary(coupon)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => void saveTemplate()}
+                disabled={templateSaving || templateLoading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 bg-[#166534] border border-[#14532d] text-emerald-400 text-[10px] font-mono uppercase tracking-widest hover:bg-[#14532d] disabled:opacity-50 transition-colors"
+              >
+                {templateSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Şablonu Kaydet
+              </button>
+            </div>
+          </HardwarePanel>
+
+          <HardwarePanel className="p-5 space-y-5">
+            <div className="rounded border border-[#2d313a] bg-[#101419] p-4">
+              <p className="text-[10px] font-mono font-semibold uppercase tracking-widest text-[#64748b]">Canlı Önizleme</p>
+              <p className="mt-1.5 text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide">{selectedBusiness.name}</p>
+              <div className="mt-3 rounded border border-[#1e232b] bg-[#0a0c10] p-4">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Başlık</p>
+                <p className="mt-1 text-[12px] font-mono text-[#38bdf8] uppercase tracking-wide">{offerTitle.trim() || 'Mola teklifi başlığı'}</p>
+                <p className="mt-3 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Mesaj</p>
+                <p className="mt-1 text-[10px] font-mono text-[#94a3b8] leading-relaxed uppercase tracking-wider">{offerText.trim() || 'Mesaj metni burada görünecek.'}</p>
+                {selectedCoupon ? (
+                  <span className="mt-3 inline-flex items-center gap-1.5 rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1 text-[9px] font-mono uppercase tracking-widest text-emerald-400">
+                    <Ticket className="h-3.5 w-3.5" />
+                    KUPON: {(selectedCoupon.title || 'Kupon').slice(0, 26)} • {couponSummary(selectedCoupon)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Hedef Kullanıcı</p>
+                <p className="mt-1 text-lg font-mono text-[#e2e8f0]">{targets.length}</p>
+              </div>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Aktif Teklif</p>
+                <p className="mt-1 text-lg font-mono text-[#e2e8f0]">{activeOfferCount}</p>
+              </div>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Aktif Kupon</p>
+                <p className="mt-1 text-lg font-mono text-[#e2e8f0]">{coupons.length}</p>
+              </div>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Konum</p>
+                <p className={`mt-1 text-sm font-mono uppercase tracking-wide ${isBusinessLocationReady ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {isBusinessLocationReady ? 'Hazır' : 'Eksik'}
+                </p>
+              </div>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Oto Şablon</p>
+                <p className={`mt-1 text-sm font-mono uppercase tracking-wide ${templateActive ? 'text-[#38bdf8]' : 'text-[#64748b]'}`}>
+                  {templateActive ? 'Aktif' : 'Pasif'}
+                </p>
+              </div>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-3">
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Geçerlilik</p>
+                <p className="mt-1 text-sm font-mono text-[#e2e8f0]">24 SAAT</p>
+              </div>
+            </div>
+          </HardwarePanel>
+        </div>
+      )}
+
+      {selectedBusiness && !bootLoading && (
+        <HardwarePanel className="p-5 md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-4 mb-4">
+            <h2 className="text-[14px] font-medium text-[#e2e8f0] uppercase tracking-wide">Mola Hedef Listesi</h2>
+            <span className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
+              <UserRound className="h-3.5 w-3.5" />
+              {targets.length} HEDEF
+            </span>
           </div>
-        )}
-      </section>
+
+          {targetsLoading ? (
+            <div className="mt-4 h-32 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-[#38bdf8]" />
+            </div>
+          ) : targets.length === 0 ? (
+            <div className="mt-4 rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+              BU İŞLETMEYİ MOLA YERLERİM LİSTESİNE EKLEYEN KULLANICI YOK.
+            </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {targets.map((target) => {
+                const actionKey = rowActionKey(target)
+                const sendingOne = sendingTargetKeys.has(`${target.user_id}|single`)
+                const cancellingOne = cancellingTargetKeys.has(actionKey)
+                const hasActiveOffer = Boolean(target.last_offer_at)
+
+                return (
+                  <article
+                    key={actionKey}
+                    className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 shrink-0 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] flex items-center justify-center">
+                        <UserRound className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{target.full_name}</p>
+                        <p className="mt-1 text-[10px] font-mono text-[#64748b] uppercase tracking-widest truncate">{target.stop_name}</p>
+                        {target.stop_address ? <p className="mt-1 text-[9px] font-mono text-[#475569] truncate uppercase tracking-wider">{target.stop_address}</p> : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={sendingOne || cancellingOne}
+                          onClick={() => void sendOffer(target.user_id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#226785] bg-[#153445] text-[#38bdf8] hover:brightness-110 disabled:opacity-50 transition-colors"
+                          title="Teklif Gönder"
+                        >
+                          {sendingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={sendingOne || cancellingOne}
+                          onClick={() => void cancelOffer(target)}
+                          className={`inline-flex h-9 w-9 items-center justify-center rounded border transition-colors disabled:opacity-50 ${
+                            hasActiveOffer ? 'border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40' : 'border-[#2d313a] bg-[#16181d] text-[#475569] hover:text-[#64748b]'
+                          }`}
+                          title="Teklifi İptal Et"
+                        >
+                          {cancellingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-[#1e232b] flex flex-wrap gap-2 text-[9px] font-mono uppercase tracking-widest">
+                      <span className="inline-flex items-center gap-1.5 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-[#38bdf8]">
+                        <Clock3 className="h-3 w-3" />
+                        MOLA: {formatAgo(target.stop_added_at)}
+                      </span>
+                      {target.last_offer_at ? (
+                        <span className="inline-flex items-center gap-1.5 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-amber-400">
+                          SON TEKLİF: {formatAgo(target.last_offer_at)}
+                        </span>
+                      ) : null}
+                      {target.remaining_km != null ? (
+                        <span className="inline-flex items-center gap-1.5 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-emerald-400">
+                          <MapPin className="h-3 w-3" />
+                          KALAN: {formatDistance(target.remaining_km)}
+                        </span>
+                      ) : null}
+                      {target.location_updated_at ? (
+                        <span className="inline-flex items-center gap-1.5 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-[#64748b]">
+                          KONUM: {formatAgo(target.location_updated_at)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </HardwarePanel>
+      )}
     </div>
   )
 }

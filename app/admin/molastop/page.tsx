@@ -1,5 +1,6 @@
 'use client'
 
+import { ModuleTitle } from '../../merchant/_components/module-title'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Ban,
@@ -372,7 +373,7 @@ export default function AdminMolaStopPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-slate-500">Admin • MolaStop</p>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">MolaStop Komuta Merkezi</h1>
+            <ModuleTitle title="MolaStop Komuta Merkezi" className="mt-1" titleClassName="text-[22px] md:text-[26px]" />
             <p className="text-sm text-slate-500 mt-1">İstatistik, canlı hareket ve anlık müdahale akışı tek ekranda.</p>
           </div>
 

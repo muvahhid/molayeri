@@ -20,7 +20,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import {
   buildStoragePath,
   inferMenuModules,
@@ -230,7 +230,7 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 function formatFuelPreview(value: string): string {
   const numericValue = Number(value.replace(',', '.'))
   if (Number.isNaN(numericValue) || numericValue <= 0) {
-    return 'Güncel değil'
+    return 'GÜNCEL DEĞİL'
   }
   return `${numericValue.toFixed(2)} ₺`
 }
@@ -241,6 +241,17 @@ function toPriceText(value: number | null | undefined): string {
   }
   return `${value.toFixed(2)} TL`
 }
+
+// Ortak Donanım Paneli
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantMenuPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -1263,52 +1274,50 @@ export default function MerchantMenuPage() {
     if (moduleLoading) {
       return (
         <div className="min-h-[220px] flex items-center justify-center">
-          <div className="w-full max-w-xl rounded-2xl border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f7faff_100%)] p-5 shadow-[0_18px_26px_-20px_rgba(15,23,42,0.6)] space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-slate-700">
-                {activeModule === 'campaign' ? 'A4 kampanya verileri hazırlanıyor' : 'Modül verileri hazırlanıyor'}
-              </p>
-              <span className="text-sm font-bold text-blue-700">{moduleLoadingProgress}%</span>
+          <HardwarePanel className="w-full max-w-xl p-6 flex flex-col items-center gap-4 border border-[#2d313a]">
+            <div className="flex w-full items-center justify-between gap-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+              <span>Modül verileri hazırlanıyor</span>
+              <span className="text-[#38bdf8]">{moduleLoadingProgress}%</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a] overflow-hidden">
               <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#10b981_100%)] transition-all duration-200 ease-out"
+                className="h-full bg-[#38bdf8] transition-all duration-200 ease-out shadow-[0_0_10px_rgba(56,189,248,0.5)]"
                 style={{ width: `${moduleLoadingProgress}%` }}
               />
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#475569] mt-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#38bdf8]" />
               Lütfen bekleyin...
             </div>
-          </div>
+          </HardwarePanel>
         </div>
       )
     }
 
     if (activeModule === 'campaign') {
       return (
-        <div className="grid grid-cols-1 gap-5">
-          <section className="rounded-[24px] p-5 bg-[linear-gradient(165deg,#ffffff_0%,#f8fbff_100%)] border border-white shadow-[0_18px_26px_-20px_rgba(15,23,42,0.6)] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold tracking-widest uppercase text-slate-600">A4 Kampanya Stüdyosu</h3>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-slate-600 shadow-sm">
-                {campaignImages.length}/{MAX_A4_CAMPAIGN}
+        <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-5">
+          <HardwarePanel className="p-5 md:p-6 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d313a] pb-4">
+              <h3 className="text-[11px] font-mono tracking-widest uppercase text-[#e2e8f0]">A4 Kampanya Stüdyosu</h3>
+              <span className="px-3 py-1 rounded bg-[#0a0c10] border border-[#2d313a] text-[10px] font-mono tracking-widest text-[#64748b]">
+                {campaignImages.length} / {MAX_A4_CAMPAIGN}
               </span>
             </div>
 
-            <div className="rounded-[20px] p-3 bg-[#eaf0fb] shadow-[inset_5px_5px_14px_rgba(148,163,184,0.28),inset_-6px_-6px_14px_rgba(255,255,255,0.92)]">
+            <div className="rounded-md p-4 bg-[#0a0c10] border border-[#2d313a]">
               <div className="mx-auto max-w-[380px]">
                 <div
                   ref={campaignPreviewRef}
-                  className="relative rounded-[18px] overflow-hidden aspect-[210/297] bg-slate-100 shadow-[0_20px_26px_-20px_rgba(15,23,42,0.55)] touch-none"
+                  className="relative rounded-md overflow-hidden aspect-[210/297] bg-[#16181d] border border-[#2d313a] touch-none"
                 >
                   <canvas ref={campaignCanvasRef} className="w-full h-full" />
 
                   <button
                     type="button"
                     onPointerDown={(event) => handlePreviewDragStart('headline', event)}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                      activeLayer === 'headline' ? 'bg-blue-600 text-white' : 'bg-white/90 text-slate-700'
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                      activeLayer === 'headline' ? 'bg-[#153445] text-[#38bdf8] border-[#226785]' : 'bg-[#16181d]/90 text-[#94a3b8] border-[#2d313a]'
                     }`}
                     style={{
                       left: `${(headlineLayer.x / A4_CANVAS_WIDTH) * 100}%`,
@@ -1321,8 +1330,8 @@ export default function MerchantMenuPage() {
                   <button
                     type="button"
                     onPointerDown={(event) => handlePreviewDragStart('subline', event)}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                      activeLayer === 'subline' ? 'bg-emerald-600 text-white' : 'bg-white/90 text-slate-700'
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                      activeLayer === 'subline' ? 'bg-[#14532d]/50 text-emerald-400 border-[#166534]' : 'bg-[#16181d]/90 text-[#94a3b8] border-[#2d313a]'
                     }`}
                     style={{
                       left: `${(sublineLayer.x / A4_CANVAS_WIDTH) * 100}%`,
@@ -1335,8 +1344,8 @@ export default function MerchantMenuPage() {
                   <button
                     type="button"
                     onPointerDown={(event) => handlePreviewDragStart('emoji', event)}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                      activeLayer === 'emoji' ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700'
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                      activeLayer === 'emoji' ? 'bg-amber-950/50 text-amber-400 border-amber-900/50' : 'bg-[#16181d]/90 text-[#94a3b8] border-[#2d313a]'
                     }`}
                     style={{
                       left: `${(emojiLayer.x / A4_CANVAS_WIDTH) * 100}%`,
@@ -1348,48 +1357,46 @@ export default function MerchantMenuPage() {
                 </div>
               </div>
 
-              <p className="mt-2 text-[11px] font-semibold text-slate-500 inline-flex items-center gap-1.5">
-                <Move className="w-3.5 h-3.5" />
-                Katman etiketlerini sürükleyerek konumlandır.
+              <p className="mt-3 text-[10px] font-mono text-[#64748b] flex items-center justify-center gap-1.5 uppercase tracking-widest">
+                <Move className="w-3 h-3" /> Katman etiketlerini sürükleyerek konumlandır
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                 Başlık
                 <input
                   value={campaignHeadline}
                   onChange={(event) => setCampaignHeadline(event.target.value)}
                   maxLength={55}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white text-sm font-semibold text-slate-700 shadow-sm"
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   placeholder="Örn: Bu Hafta Özel İndirim"
                 />
               </label>
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                 Alt Başlık
                 <input
                   value={campaignSubline}
                   onChange={(event) => setCampaignSubline(event.target.value)}
                   maxLength={65}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white text-sm font-semibold text-slate-700 shadow-sm"
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   placeholder="Örn: 20 Şubat'a kadar geçerli"
                 />
               </label>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => campaignBackgroundInput.current?.click()}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white shadow-[0_12px_16px_-12px_rgba(15,23,42,0.75)]"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded text-[10px] font-mono tracking-widest uppercase border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] hover:bg-[#1a1d24]"
               >
-                <Brush className="w-4 h-4" />
-                Tasarım için Dikey A4 Foto Yükle
+                <Brush className="w-3.5 h-3.5" /> Tasarım için Dikey A4 Foto Yükle
               </button>
               <button
                 type="button"
                 onClick={() => setCampaignBackgroundData('')}
-                className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white shadow-sm"
+                className="px-3 py-2 rounded text-[10px] font-mono tracking-widest uppercase border border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40"
               >
                 Fotoğrafı Kaldır
               </button>
@@ -1408,8 +1415,8 @@ export default function MerchantMenuPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Hazır Arka Planlar</div>
+            <div className="space-y-3">
+              <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Hazır Arka Planlar</div>
               <div className="flex flex-wrap gap-2">
                 {CAMPAIGN_BACKGROUND_THEMES.map((theme) => (
                   <button
@@ -1419,15 +1426,15 @@ export default function MerchantMenuPage() {
                       setCampaignBackgroundData('')
                       setCampaignBackgroundThemeId(theme.id)
                     }}
-                    className={`px-2 py-2 rounded-xl border transition-all ${
+                    className={`p-1 rounded transition-all border ${
                       campaignBackgroundThemeId === theme.id
-                        ? 'border-slate-700 ring-2 ring-slate-200'
-                        : 'border-slate-200'
+                        ? 'border-[#38bdf8] bg-[#0a0c10]'
+                        : 'border-[#2d313a] hover:border-[#475569]'
                     }`}
                     title={theme.label}
                   >
                     <span
-                      className="block w-14 h-7 rounded-md"
+                      className="block w-12 h-6 rounded-sm border border-[#1e232b]"
                       style={{ background: `linear-gradient(135deg, ${theme.start}, ${theme.end})` }}
                     />
                   </button>
@@ -1435,8 +1442,8 @@ export default function MerchantMenuPage() {
               </div>
             </div>
 
-            <div className="space-y-2 rounded-2xl p-3 bg-[#f6f9ff] border border-slate-200">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Katman Kontrolü</div>
+            <div className="space-y-4 rounded-md p-4 bg-[#0a0c10] border border-[#2d313a]">
+              <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Katman Kontrolü</div>
               <div className="flex flex-wrap gap-2">
                 {(
                   [
@@ -1449,10 +1456,10 @@ export default function MerchantMenuPage() {
                     key={item.key}
                     type="button"
                     onClick={() => setActiveLayer(item.key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                    className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                       activeLayer === item.key
-                        ? 'bg-slate-800 text-white border-slate-800'
-                        : 'bg-white text-slate-600 border-slate-200'
+                        ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                        : 'bg-[#16181d] text-[#64748b] border-[#2d313a] hover:text-[#94a3b8]'
                     }`}
                   >
                     {item.label}
@@ -1460,8 +1467,8 @@ export default function MerchantMenuPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Boyut
                   <input
                     type="range"
@@ -1474,11 +1481,11 @@ export default function MerchantMenuPage() {
                         size: Number(event.target.value),
                       }))
                     }
-                    className="mt-2 w-full"
+                    className="mt-3 w-full accent-[#38bdf8]"
                   />
                 </label>
 
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Döndür (Hafif)
                   <input
                     type="range"
@@ -1491,11 +1498,11 @@ export default function MerchantMenuPage() {
                         rotation: Number(event.target.value),
                       }))
                     }
-                    className="mt-2 w-full"
+                    className="mt-3 w-full accent-[#38bdf8]"
                   />
                 </label>
 
-                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Stroke
                   <input
                     type="range"
@@ -1503,59 +1510,81 @@ export default function MerchantMenuPage() {
                     max={12}
                     value={campaignStrokeWidth}
                     onChange={(event) => setCampaignStrokeWidth(Number(event.target.value))}
-                    className="mt-2 w-full"
+                    className="mt-3 w-full accent-[#38bdf8]"
                   />
                 </label>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <label className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <label className="inline-flex items-center gap-2 text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Stroke Rengi
                   <input
                     type="color"
                     value={campaignStrokeColor}
                     onChange={(event) => setCampaignStrokeColor(event.target.value)}
-                    className="w-8 h-8 rounded-md border border-slate-200 bg-white p-0.5"
+                    className="w-8 h-8 rounded border border-[#2d313a] bg-[#16181d] p-0.5 cursor-pointer"
                   />
                 </label>
 
-                <span className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 bg-white text-xs font-semibold text-slate-600 shadow-sm">
-                  <Palette className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center gap-1.5 rounded px-3 py-1.5 bg-[#16181d] border border-[#2d313a] text-[10px] font-mono text-[#94a3b8] tracking-widest">
+                  <Palette className="w-3.5 h-3.5 text-[#64748b]" />
                   {currentLayer.size}px / {currentLayer.rotation}deg
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Filtre</div>
-              <div className="flex flex-wrap gap-2">
-                {CAMPAIGN_FILTERS.map((filter) => (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => setCampaignFilterId(filter.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      campaignFilterId === filter.id
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'bg-white text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Filtre</div>
+                <div className="flex flex-wrap gap-2">
+                  {CAMPAIGN_FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      onClick={() => setCampaignFilterId(filter.id)}
+                      className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest transition-colors border ${
+                        campaignFilterId === filter.id
+                          ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                          : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:border-[#475569]'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Vurgu Teması</div>
+                <div className="flex flex-wrap gap-2">
+                  {CAMPAIGN_OVERLAYS.map((overlay) => (
+                    <button
+                      key={overlay.id}
+                      type="button"
+                      onClick={() => setCampaignOverlayId(overlay.id)}
+                      className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
+                        campaignOverlayId === overlay.id
+                          ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                          : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:border-[#475569]'
+                      }`}
+                    >
+                      {overlay.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Yazı Rengi</div>
+            <div className="space-y-3">
+              <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Yazı Rengi</div>
               <div className="flex flex-wrap gap-2">
                 {CAMPAIGN_TEXT_COLORS.map((color) => (
                   <button
                     key={color}
                     type="button"
                     onClick={() => setCampaignTextColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 shadow-sm ${
-                      campaignTextColor === color ? 'border-slate-700 scale-110' : 'border-white'
+                    className={`w-7 h-7 rounded border-2 transition-transform ${
+                      campaignTextColor === color ? 'border-[#38bdf8] scale-110' : 'border-[#2d313a]'
                     }`}
                     style={{ backgroundColor: color }}
                     aria-label={`Renk ${color}`}
@@ -1564,36 +1593,16 @@ export default function MerchantMenuPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Vurgu Teması</div>
-              <div className="flex flex-wrap gap-2">
-                {CAMPAIGN_OVERLAYS.map((overlay) => (
-                  <button
-                    key={overlay.id}
-                    type="button"
-                    onClick={() => setCampaignOverlayId(overlay.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                      campaignOverlayId === overlay.id
-                        ? 'bg-emerald-100 border-emerald-200 text-emerald-700'
-                        : 'bg-white border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {overlay.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Emoji</div>
+            <div className="space-y-3">
+              <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Emoji</div>
               <div className="flex flex-wrap gap-2">
                 {CAMPAIGN_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => setCampaignEmoji(emoji)}
-                    className={`w-9 h-9 rounded-xl text-lg bg-white shadow-sm border ${
-                      campaignEmoji === emoji ? 'border-blue-300' : 'border-slate-200'
+                    className={`w-9 h-9 rounded text-lg bg-[#0a0c10] border ${
+                      campaignEmoji === emoji ? 'border-[#38bdf8] bg-[#101419]' : 'border-[#2d313a] hover:border-[#475569]'
                     }`}
                   >
                     {emoji}
@@ -1604,25 +1613,25 @@ export default function MerchantMenuPage() {
 
             {campaignNotice ? (
               <div
-                className={`rounded-xl px-3 py-2 text-xs font-semibold border ${
+                className={`rounded px-3 py-2 text-[10px] font-mono uppercase tracking-widest border ${
                   campaignNotice.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                    ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/50'
+                    : 'bg-rose-950/20 text-rose-400 border-rose-900/50'
                 }`}
               >
                 {campaignNotice.message}
               </div>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-[#2d313a]">
               <button
                 type="button"
                 onClick={saveCampaignDesign}
                 disabled={savingCampaign || !selectedBusiness}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded text-[11px] font-mono tracking-widest uppercase bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
               >
-                {savingCampaign ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {savingCampaign ? 'Kaydediliyor...' : 'Tasarımı Kaydet'}
+                {savingCampaign ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {savingCampaign ? 'KAYDEDİLİYOR...' : 'TASARIMI KAYDET'}
               </button>
 
               <button
@@ -1635,23 +1644,23 @@ export default function MerchantMenuPage() {
                   setSublineLayer((current) => ({ ...current, x: 350, y: 730, rotation: 10, size: 38 }))
                   setEmojiLayer((current) => ({ ...current, x: 180, y: 200, rotation: -16, size: 86 }))
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-3 rounded text-[10px] font-mono tracking-widest uppercase border border-[#2d313a] bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0]"
               >
-                <WandSparkles className="w-4 h-4" />
+                <WandSparkles className="w-3.5 h-3.5" />
                 Hazır Şablon
               </button>
 
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 <button
                   type="button"
                   onClick={() => campaignFileInput.current?.click()}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-3 rounded text-[10px] font-mono tracking-widest uppercase border border-[#2d313a] bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0]"
                 >
-                  <Upload className="w-4 h-4" />
-                  Direkt Görsel Kaydet
+                  <Upload className="w-3.5 h-3.5" />
+                  Direkt Görsel Yükle
                 </button>
-                <p className="text-[11px] text-slate-500">
-                  Stüdyoyu kullanmadan direkt cihazındaki tasarımı bu butonla yükleyebilirsin.
+                <p className="text-[9px] font-mono text-[#475569] uppercase tracking-wider pl-1">
+                  Stüdyo dışı görsel.
                 </p>
               </div>
 
@@ -1669,29 +1678,29 @@ export default function MerchantMenuPage() {
                 }}
               />
             </div>
-          </section>
+          </HardwarePanel>
 
-          <section className="rounded-[24px] p-5 bg-[linear-gradient(160deg,#ffffff_0%,#f8fbff_100%)] border border-white shadow-[0_18px_26px_-20px_rgba(15,23,42,0.6)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <h3 className="text-sm font-semibold tracking-widest uppercase text-slate-600">Yayın ve Arşiv</h3>
+          <HardwarePanel className="p-5 md:p-6 space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d313a] pb-4">
+              <h3 className="text-[11px] font-mono tracking-widest uppercase text-[#e2e8f0]">Yayın ve Arşiv</h3>
               <div className="inline-flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                <span className="px-2.5 py-1 rounded border border-[#166534] bg-[#14532d]/30 text-[9px] font-mono uppercase tracking-widest text-emerald-400">
                   Yayında: {activeCampaignCount}
                 </span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white text-slate-600 shadow-sm">
+                <span className="px-2.5 py-1 rounded border border-[#2d313a] bg-[#0a0c10] text-[9px] font-mono uppercase tracking-widest text-[#64748b]">
                   Toplam: {campaignImages.length}
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2 p-3 bg-[#0a0c10] border border-[#2d313a] rounded-md">
               <button
                 type="button"
                 onClick={publishSelectedCampaigns}
                 disabled={selectedCampaignCount === 0 || publishingCampaigns}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                className="px-3 py-2 rounded text-[10px] font-mono uppercase tracking-widest border border-emerald-900/50 bg-emerald-950/30 text-emerald-400 disabled:opacity-50 hover:bg-emerald-900/40 inline-flex items-center gap-2"
               >
-                {publishingCampaigns ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                {publishingCampaigns ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" strokeWidth={1.5} />}
                 Seçilenleri Yayınla ({selectedCampaignCount})
               </button>
               <button
@@ -1701,27 +1710,25 @@ export default function MerchantMenuPage() {
                     current.length === campaignImages.length ? [] : campaignImages.map((item) => item.id)
                   )
                 }
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 shadow-sm"
+                className="px-3 py-2 rounded text-[10px] font-mono uppercase tracking-widest border border-[#2d313a] bg-transparent text-[#94a3b8] hover:bg-[#1a1d24]"
               >
                 {selectedCampaignCount === campaignImages.length ? 'Seçimi Temizle' : 'Tümünü Seç'}
               </button>
-              <span className="text-[11px] font-semibold text-slate-500">
-                Bu ekranda yayın sadece seçili işletme için yapılır.
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                Kartları sürükleyerek sıralayabilirsin.
-              </span>
+              <div className="flex flex-col ml-auto text-right">
+                <span className="text-[9px] font-mono text-[#475569] uppercase tracking-wider">Kartları sürükleyerek sırala.</span>
+                <span className="text-[9px] font-mono text-[#475569] uppercase tracking-wider">Yayın sadece seçili şubedir.</span>
+              </div>
             </div>
 
             {campaignImages.length === 0 ? (
-              <div className="rounded-2xl p-6 text-center text-sm text-slate-500 bg-[#f2f6fd] border border-slate-200">
-                Henüz kayıtlı A4 kampanya yok.
+              <div className="rounded-md p-6 text-center text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#0a0c10] border border-dashed border-[#2d313a]">
+                HENÜZ KAYITLI A4 KAMPANYA YOK.
               </div>
             ) : (
               <div
-                className="grid gap-3 max-h-[980px] overflow-auto pr-1"
+                className="grid gap-4 max-h-[850px] overflow-auto pr-2 custom-scrollbar"
                 style={{
-                  gridTemplateColumns: `repeat(${Math.min(Math.max(campaignImages.length, 1), 5)}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(${Math.min(Math.max(campaignImages.length, 1), 3)}, minmax(0, 1fr))`,
                 }}
               >
                 {campaignImages.map((campaign) => (
@@ -1737,86 +1744,86 @@ export default function MerchantMenuPage() {
                       }
                       setDraggingCampaignId(null)
                     }}
-                    className={`rounded-2xl p-2.5 bg-white border shadow-sm transition-all ${
+                    className={`rounded-md p-3 bg-[#0a0c10] border transition-all ${
                       selectedCampaignIds.includes(campaign.id)
-                        ? 'border-blue-400 ring-2 ring-blue-200'
-                        : 'border-slate-200'
-                    } ${draggingCampaignId === campaign.id ? 'opacity-60' : ''} cursor-grab active:cursor-grabbing`}
+                        ? 'border-[#38bdf8] bg-[#101419]'
+                        : 'border-[#2d313a]'
+                    } ${draggingCampaignId === campaign.id ? 'opacity-40' : ''} cursor-grab active:cursor-grabbing`}
                   >
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-slate-100">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-widest text-[#64748b] bg-[#16181d] border border-[#2d313a]">
                         <GripVertical className="w-3 h-3" />
                         Sürükle
                       </span>
                     </div>
-                    <div className="rounded-xl overflow-hidden bg-slate-100 aspect-[210/297]">
+                    <div className="rounded overflow-hidden bg-[#16181d] aspect-[210/297] border border-[#2d313a]">
                       <img
                         src={campaign.image_url || ''}
                         alt="Kampanya görseli"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover mix-blend-lighten opacity-80"
                       />
                     </div>
 
-                    <div className="mt-2.5 flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700 line-clamp-1">
+                    <div className="mt-3 flex items-start justify-between gap-2 border-b border-[#1e232b] pb-2">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-mono text-[#e2e8f0] line-clamp-1 uppercase tracking-wide">
                           {campaign.text || 'A4 Kampanya'}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
+                        <p className="text-[9px] font-mono text-[#64748b] mt-1 tracking-widest">
                           {campaign.created_at
                             ? new Date(campaign.created_at).toLocaleDateString('tr-TR')
                             : '-'}
                         </p>
                       </div>
                       {campaign.is_active ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">
-                          <Check className="w-3.5 h-3.5" />
-                          Yayında
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border border-emerald-900/50 bg-emerald-950/30 text-emerald-400">
+                          <Check className="w-3 h-3" strokeWidth={2} />
+                          YAYINDA
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">
-                          Taslak
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border border-[#2d313a] bg-[#16181d] text-[#64748b]">
+                          TASLAK
                         </span>
                       )}
                     </div>
 
-                    <div className="mt-2.5 grid grid-cols-[1fr_auto_auto] gap-1.5">
+                    <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-2">
                       <button
                         type="button"
                         onClick={() => toggleCampaignSelection(campaign.id)}
-                        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1 ${
+                        className={`px-2 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors inline-flex items-center justify-center gap-1.5 ${
                           selectedCampaignIds.includes(campaign.id)
-                            ? 'bg-blue-600 text-white shadow-[0_10px_14px_-12px_rgba(37,99,235,0.85)]'
-                            : 'bg-slate-100 text-slate-600'
+                            ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                            : 'bg-transparent border-[#2d313a] text-[#94a3b8] hover:bg-[#16181d]'
                         }`}
                       >
                         {selectedCampaignIds.includes(campaign.id) ? <Check className="w-3 h-3" /> : null}
-                        {selectedCampaignIds.includes(campaign.id) ? 'Seçildi' : 'Seç'}
+                        {selectedCampaignIds.includes(campaign.id) ? 'SEÇİLDİ' : 'SEÇ'}
                       </button>
                       <button
                         type="button"
                         onClick={() => toggleCampaignPublish(campaign)}
-                        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold ${
+                        className={`px-2 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
                           campaign.is_active
-                            ? 'bg-rose-100 text-rose-700'
-                            : 'bg-emerald-100 text-emerald-700'
+                            ? 'bg-rose-950/20 border-rose-900/50 text-rose-400 hover:bg-rose-900/40'
+                            : 'bg-emerald-950/20 border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/40'
                         }`}
                       >
-                        {campaign.is_active ? 'Kaldır' : 'Yayınla'}
+                        {campaign.is_active ? 'KALDIR' : 'YAYINLA'}
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteCampaignImage(campaign.id)}
-                        className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center"
+                        className="w-7 h-7 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center hover:bg-rose-900/40"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </article>
                 ))}
               </div>
             )}
-          </section>
+          </HardwarePanel>
         </div>
       )
     }
@@ -1855,69 +1862,72 @@ export default function MerchantMenuPage() {
 
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-              <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Kategori</p>
-              <p className="mt-1 text-xl font-bold text-slate-800">{menuCategories.length}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-              <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Toplam Ürün</p>
-              <p className="mt-1 text-xl font-bold text-slate-800">{totalMenuItems}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-              <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Filtre Sonucu</p>
-              <p className="mt-1 text-xl font-bold text-slate-800">{visibleMenuItems}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-              <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Aktif Kategori</p>
-              <p className="mt-1 text-sm font-bold text-slate-800 truncate">{activeMenuCategory?.name || '-'}</p>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <HardwarePanel className="p-4 flex flex-col items-start group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Kategori</p>
+              <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{menuCategories.length}</p>
+            </HardwarePanel>
+            <HardwarePanel className="p-4 flex flex-col items-start group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Toplam Ürün</p>
+              <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{totalMenuItems}</p>
+            </HardwarePanel>
+            <HardwarePanel className="p-4 flex flex-col items-start group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Filtre Sonucu</p>
+              <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{visibleMenuItems}</p>
+            </HardwarePanel>
+            <HardwarePanel className="p-4 flex flex-col items-start group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Aktif Kategori</p>
+              <p className="mt-2 text-sm font-mono text-[#e2e8f0] truncate uppercase tracking-wider">{activeMenuCategory?.name || '-'}</p>
+            </HardwarePanel>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_1fr] gap-4">
             <section className="space-y-4">
-              <div className="rounded-2xl p-4 bg-[linear-gradient(145deg,#ffffff_0%,#f7faff_100%)] border border-slate-100 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.68)]">
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Menü Notu</div>
+              <HardwarePanel className="p-5">
+                <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest mb-3 border-b border-[#1e232b] pb-2">Menü Notu</div>
                 <textarea
                   value={menuDescription}
                   onChange={(event) => setMenuDescription(event.target.value)}
                   maxLength={200}
-                  className="w-full min-h-24 rounded-xl p-3 bg-white text-sm font-semibold text-slate-700 shadow-sm"
-                  placeholder="Menü hakkında kısa açıklama"
+                  className="w-full min-h-[100px] rounded bg-[#0a0c10] border border-[#2d313a] p-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 custom-scrollbar resize-none placeholder:text-[#475569]"
+                  placeholder="Menü hakkında kısa açıklama..."
                 />
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-slate-400">{menuDescription.length}/200</p>
+                  <p className="text-[10px] font-mono text-[#475569] tracking-widest">{menuDescription.length}/200</p>
                   <button
                     type="button"
                     onClick={saveMenuDescription}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900"
+                    className="px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest border border-[#2d313a] bg-[#1a1d24] text-[#e2e8f0] hover:bg-[#23272f] transition-colors"
                   >
                     Notu Kaydet
                   </button>
                 </div>
-              </div>
+              </HardwarePanel>
 
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.68)] space-y-3">
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Kategori Yönetimi</div>
+              <HardwarePanel className="p-5 space-y-4">
+                <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-2">Kategori Yönetimi</div>
                 <div className="flex gap-2">
                   <input
                     value={menuCategoryName}
                     onChange={(event) => setMenuCategoryName(event.target.value)}
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 border border-slate-200"
+                    className="flex-1 px-4 py-3 rounded bg-[#0a0c10] text-sm font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder="Yeni kategori adı"
                   />
                   <button
                     type="button"
                     onClick={addMenuCategory}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold"
+                    className="inline-flex items-center gap-1.5 px-4 py-3 rounded border border-[#166534] bg-[#14532d]/40 text-emerald-400 text-[10px] font-mono uppercase tracking-widest hover:bg-[#14532d]/60 transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    Ekle
+                    <Plus className="w-3.5 h-3.5" /> Ekle
                   </button>
                 </div>
 
                 {menuCategories.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-[#1e232b]">
                     {menuCategories.map((category) => {
                       const isActive = activeMenuCategory?.id === category.id
                       return (
@@ -1928,10 +1938,10 @@ export default function MerchantMenuPage() {
                             setMenuActiveCategoryId(category.id)
                             setItemCategoryId(category.id)
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                          className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                             isActive
-                              ? 'bg-blue-100 text-blue-700 border-blue-200'
-                              : 'bg-white text-slate-600 border-slate-200'
+                              ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                              : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:text-[#94a3b8] hover:border-[#475569]'
                           }`}
                         >
                           {category.name} ({category.business_menu_items?.length || 0})
@@ -1940,19 +1950,19 @@ export default function MerchantMenuPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs font-semibold text-slate-500">Henüz kategori yok.</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-[#475569]">HENÜZ KATEGORİ YOK.</p>
                 )}
-              </div>
+              </HardwarePanel>
 
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.68)] space-y-3">
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Ürün Ekle</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <HardwarePanel className="p-5 space-y-4">
+                <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-2">Ürün Ekle</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <select
                     value={itemCategoryId}
                     onChange={(event) => setItemCategoryId(event.target.value)}
-                    className="px-3 py-2.5 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 border border-slate-200"
+                    className="px-4 py-3 rounded bg-[#0a0c10] text-sm font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
                   >
-                    <option value="">Kategori seç</option>
+                    <option value="">KATEGORİ SEÇ</option>
                     {menuCategories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -1962,24 +1972,24 @@ export default function MerchantMenuPage() {
                   <input
                     value={itemName}
                     onChange={(event) => setItemName(event.target.value)}
-                    className="px-3 py-2.5 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 border border-slate-200"
+                    className="px-4 py-3 rounded bg-[#0a0c10] text-sm font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder="Ürün adı"
                   />
                   <input
                     value={itemPrice}
                     onChange={(event) => setItemPrice(event.target.value)}
-                    className="px-3 py-2.5 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 border border-slate-200"
+                    className="px-4 py-3 rounded bg-[#0a0c10] text-sm font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder="Fiyat (örn: 185.00)"
                   />
                   <input
                     value={itemDescription}
                     onChange={(event) => setItemDescription(event.target.value)}
-                    className="px-3 py-2.5 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 border border-slate-200"
+                    className="px-4 py-3 rounded bg-[#0a0c10] text-sm font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder="Kısa açıklama"
                   />
-                  <label className="md:col-span-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-500 cursor-pointer inline-flex items-center justify-between">
-                    <span>{itemImageFile ? itemImageFile.name : 'Ürün görseli ekle (opsiyonel)'}</span>
-                    <Upload className="w-4 h-4" />
+                  <label className="md:col-span-2 px-4 py-3 rounded bg-[#0a0c10] border border-dashed border-[#2d313a] hover:border-[#38bdf8]/50 text-[10px] font-mono uppercase tracking-widest text-[#64748b] hover:text-[#38bdf8] cursor-pointer inline-flex items-center justify-between transition-colors">
+                    <span className="truncate pr-2">{itemImageFile ? itemImageFile.name : 'ÜRÜN GÖRSELİ EKLE (OPSİYONEL)'}</span>
+                    <Upload className="w-4 h-4 shrink-0" />
                     <input
                       type="file"
                       accept="image/*"
@@ -1991,71 +2001,70 @@ export default function MerchantMenuPage() {
                 <button
                   type="button"
                   onClick={addMenuItem}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 hover:brightness-110 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition-all"
                 >
-                  <Plus className="w-4 h-4" />
-                  Ürünü Kaydet
+                  <Plus className="w-4 h-4" /> ÜRÜNÜ KAYDET
                 </button>
-              </div>
+              </HardwarePanel>
             </section>
 
             <section className="space-y-4">
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.68)]">
+              <HardwarePanel className="p-4">
                 <label className="relative block">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     value={menuSearch}
                     onChange={(event) => setMenuSearch(event.target.value)}
-                    className="w-full pl-11 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
-                    placeholder="Kategori veya ürün ara"
+                    className="w-full pl-12 pr-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                    placeholder="Kategori veya ürün ara..."
                   />
                 </label>
-              </div>
+              </HardwarePanel>
 
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.68)] space-y-3">
+              <HardwarePanel className="p-5 space-y-4">
                 {visibleMenuCategories.length === 0 ? (
-                  <div className="text-sm font-semibold text-slate-500">Arama kriterine uyan kategori/ürün yok.</div>
+                  <div className="text-[10px] font-mono text-[#475569] uppercase tracking-widest">ARAMA KRİTERİNE UYAN KATEGORİ/ÜRÜN YOK.</div>
                 ) : !activeMenuCategory ? (
-                  <div className="text-sm font-semibold text-slate-500">Kategori seçerek ürünleri görüntüleyin.</div>
+                  <div className="text-[10px] font-mono text-[#475569] uppercase tracking-widest">KATEGORİ SEÇEREK ÜRÜNLERİ GÖRÜNTÜLEYİN.</div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-3 border-b border-[#1e232b] pb-3">
                       <div>
-                        <h3 className="text-base font-bold text-slate-800">{activeMenuCategory.name}</h3>
-                        <p className="text-xs font-semibold text-slate-500">
-                          {visibleCategoryItems.length} ürün gösteriliyor
+                        <h3 className="text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-widest">{activeMenuCategory.name}</h3>
+                        <p className="text-[9px] font-mono text-[#64748b] mt-1 tracking-widest uppercase">
+                          {visibleCategoryItems.length} ÜRÜN GÖSTERİLİYOR
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => deleteMenuCategory(activeMenuCategory.id)}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-100 text-rose-700"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-[9px] font-mono uppercase tracking-widest border border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        Kategoriyi Sil
+                        KATEGORİYİ SİL
                       </button>
                     </div>
 
                     {visibleCategoryItems.length === 0 ? (
-                      <div className="rounded-xl p-4 bg-slate-50 text-xs font-semibold text-slate-500">
-                        Bu kategoride ürün yok.
+                      <div className="rounded p-4 bg-[#0a0c10] border border-dashed border-[#2d313a] text-[10px] font-mono text-[#475569] uppercase tracking-widest">
+                        BU KATEGORİDE ÜRÜN YOK.
                       </div>
                     ) : (
-                      <div className="space-y-2 max-h-[520px] overflow-auto pr-1">
+                      <div className="space-y-3 max-h-[520px] overflow-auto pr-2 custom-scrollbar">
                         {visibleCategoryItems.map((item) => (
-                          <div key={item.id} className="rounded-xl p-3 border border-slate-200 bg-slate-50/70">
-                            <div className="flex items-start justify-between gap-2">
+                          <div key={item.id} className="rounded p-4 border border-[#2d313a] bg-[#0a0c10] hover:border-[#38bdf8]/40 transition-colors">
+                            <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-800 truncate">{item.name}</p>
-                                <p className="text-xs font-semibold text-slate-500 mt-0.5">{toPriceText(item.price)}</p>
+                                <p className="text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{item.name}</p>
+                                <p className="text-[11px] font-mono text-[#38bdf8] mt-1">{toPriceText(item.price)}</p>
                                 {item.description ? (
-                                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+                                  <p className="text-[10px] font-mono text-[#64748b] mt-2 line-clamp-2 leading-relaxed">{item.description}</p>
                                 ) : null}
                               </div>
                               <button
                                 type="button"
                                 onClick={() => deleteMenuItem(item.id)}
-                                className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"
+                                className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center shrink-0 hover:bg-rose-900/40 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -2066,7 +2075,7 @@ export default function MerchantMenuPage() {
                     )}
                   </>
                 )}
-              </div>
+              </HardwarePanel>
             </section>
           </div>
         </div>
@@ -2074,54 +2083,55 @@ export default function MerchantMenuPage() {
     }
 
     if (activeModule === 'fuel') {
-      const fuelCards: { key: FuelKey; label: string; tone: string }[] = [
-        { key: 'benzin', label: 'Benzin (95)', tone: 'from-amber-100/80 to-orange-100/90' },
-        { key: 'motorin', label: 'Motorin', tone: 'from-sky-100/80 to-blue-100/90' },
-        { key: 'lpg', label: 'LPG / Otogaz', tone: 'from-emerald-100/80 to-teal-100/90' },
+      const fuelCards: { key: FuelKey; label: string }[] = [
+        { key: 'benzin', label: 'BENZİN (95)' },
+        { key: 'motorin', label: 'MOTORİN' },
+        { key: 'lpg', label: 'LPG / OTOGAZ' },
       ]
       const hasAnyFuelValue = fuelCards.some((card) => Number(fuelPrices[card.key].replace(',', '.')) > 0)
 
       return (
         <div className="space-y-4">
-          <section className="rounded-[24px] border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f7faff_100%)] p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)]">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                <Fuel className="w-4 h-4 text-emerald-600" />
-                <span className="text-sm font-semibold">Yakıt Fiyat Yönetimi</span>
+          <HardwarePanel className="p-5 md:p-6 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-4">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono text-[#e2e8f0] uppercase tracking-widest">
+                <Fuel className="w-4 h-4 text-[#38bdf8]" />
+                <span>Yakıt Fiyat Yönetimi</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    hasAnyFuelValue ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                  className={`px-3 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border ${
+                    hasAnyFuelValue ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400' : 'border-[#2d313a] bg-[#0a0c10] text-[#64748b]'
                   }`}
                 >
-                  {hasAnyFuelValue ? 'Güncelleme Hazır' : 'Fiyat Bekleniyor'}
+                  {hasAnyFuelValue ? 'GÜNCELLEME HAZIR' : 'FİYAT BEKLENİYOR'}
                 </span>
                 <button
                   type="button"
                   onClick={handleSaveFuelPrices}
                   disabled={!selectedBusiness || savingFuel}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[10px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
                 >
                   {savingFuel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fuel className="w-4 h-4" />}
-                  {savingFuel ? 'Kaydediliyor...' : 'Fiyatları Kaydet'}
+                  {savingFuel ? 'KAYDEDİLİYOR...' : 'FİYATLARI KAYDET'}
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {fuelCards.map((card) => (
-                <article
+                <div
                   key={card.key}
-                  className={`rounded-2xl border border-white bg-gradient-to-br ${card.tone} p-4 shadow-[0_16px_26px_-22px_rgba(15,23,42,0.72)]`}
+                  className="rounded-md border border-[#2d313a] bg-[#0a0c10] p-5 relative overflow-hidden group"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-semibold tracking-widest uppercase text-slate-600">{card.label}</h3>
-                    <span className="text-xs font-semibold text-slate-600">{formatFuelPreview(fuelPrices[card.key])}</span>
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <h3 className="text-[11px] font-mono tracking-widest uppercase text-[#94a3b8]">{card.label}</h3>
+                    <span className="text-[9px] font-mono text-[#64748b] tracking-widest">{formatFuelPreview(fuelPrices[card.key])}</span>
                   </div>
                   <input
                     inputMode="decimal"
-                    className="mt-3 w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-800 placeholder:text-slate-400 shadow-[0_12px_18px_-16px_rgba(15,23,42,0.82)] focus:border-emerald-400 focus:outline-none"
+                    className="w-full rounded border border-[#2d313a] bg-[#16181d] px-4 py-3 text-lg font-mono font-medium text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] transition-colors"
                     value={fuelPrices[card.key]}
                     onChange={(event) =>
                       setFuelPrices((current) => ({ ...current, [card.key]: event.target.value }))
@@ -2129,40 +2139,40 @@ export default function MerchantMenuPage() {
                     placeholder="0.00"
                     disabled={!selectedBusiness}
                   />
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="mt-4 grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => adjustFuelPrice(card.key, -0.1)}
-                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 shadow-sm"
+                      className="px-2 py-2 rounded border border-[#2d313a] bg-[#1a1d24] text-[11px] font-mono text-[#cbd5e1] hover:bg-[#23272f] hover:text-[#e2e8f0] transition-colors"
                     >
                       -0.10
                     </button>
                     <button
                       type="button"
                       onClick={() => adjustFuelPrice(card.key, 0.1)}
-                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 shadow-sm"
+                      className="px-2 py-2 rounded border border-[#2d313a] bg-[#1a1d24] text-[11px] font-mono text-[#cbd5e1] hover:bg-[#23272f] hover:text-[#e2e8f0] transition-colors"
                     >
                       +0.10
                     </button>
                     <button
                       type="button"
                       onClick={() => adjustFuelPrice(card.key, 0.5)}
-                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 shadow-sm"
+                      className="px-2 py-2 rounded border border-[#2d313a] bg-[#1a1d24] text-[11px] font-mono text-[#cbd5e1] hover:bg-[#23272f] hover:text-[#e2e8f0] transition-colors"
                     >
                       +0.50
                     </button>
                   </div>
-                </article>
+                </div>
               ))}
             </div>
-          </section>
+          </HardwarePanel>
 
           {fuelNotice ? (
             <div
-              className={`rounded-xl px-3 py-2 text-xs font-semibold border ${
+              className={`rounded px-4 py-3 text-[10px] font-mono uppercase tracking-widest border ${
                 fuelNotice.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                  ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/50'
+                  : 'bg-rose-950/20 text-rose-400 border-rose-900/50'
               }`}
             >
               {fuelNotice.message}
@@ -2182,25 +2192,25 @@ export default function MerchantMenuPage() {
 
       return (
         <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
-          <section className="rounded-[24px] border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f6faff_100%)] p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-              <Store className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-semibold">Yeni Mağaza</span>
+          <HardwarePanel className="p-5 space-y-4">
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+              <Store className="w-4 h-4 text-[#38bdf8]" />
+              <span>Yeni Mağaza</span>
             </div>
             <input
               value={storeName}
               onChange={(event) => setStoreName(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
               placeholder="Mağaza adı"
             />
             <input
               value={storeFloor}
               onChange={(event) => setStoreFloor(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
               placeholder="Kat / No"
             />
-            <label className="w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2.5 text-xs font-semibold text-slate-500 cursor-pointer inline-flex items-center justify-between">
-              <span className="truncate pr-2">{storeLogoFile ? storeLogoFile.name : 'Logo yükle (opsiyonel)'}</span>
+            <label className="w-full rounded border border-dashed border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b] hover:text-[#38bdf8] hover:border-[#38bdf8]/50 cursor-pointer inline-flex items-center justify-between transition-colors">
+              <span className="truncate pr-2">{storeLogoFile ? storeLogoFile.name : 'LOGO YÜKLE (OPSİYONEL)'}</span>
               <Upload className="w-4 h-4 shrink-0" />
               <input
                 type="file"
@@ -2212,63 +2222,62 @@ export default function MerchantMenuPage() {
             <button
               type="button"
               onClick={addStore}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+              className="w-full inline-flex items-center justify-center gap-2 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] px-4 py-3 text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110"
             >
-              <Plus className="w-4 h-4" />
-              Mağazayı Ekle
+              <Plus className="w-4 h-4" /> MAĞAZAYI EKLE
             </button>
-          </section>
+          </HardwarePanel>
 
-          <section className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                <Store className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-semibold">Mağaza Listesi</span>
+          <HardwarePanel className="p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d313a] pb-3">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                <Store className="w-4 h-4 text-[#38bdf8]" />
+                <span>Mağaza Listesi</span>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
-                {visibleStores.length}/{stores.length}
+              <span className="px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+                {visibleStores.length} / {stores.length}
               </span>
             </div>
 
             <label className="relative block">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 value={storeSearch}
                 onChange={(event) => setStoreSearch(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-3 text-sm font-semibold text-slate-700"
-                placeholder="Mağaza ara"
+                className="w-full rounded border border-[#2d313a] bg-[#0a0c10] py-3 pl-12 pr-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                placeholder="Mağaza ara..."
               />
             </label>
 
             {visibleStores.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
-                {stores.length === 0 ? 'Henüz mağaza kaydı yok.' : 'Aramaya uygun mağaza bulunamadı.'}
+              <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                {stores.length === 0 ? 'HENÜZ MAĞAZA KAYDI YOK.' : 'ARAMAYA UYGUN MAĞAZA BULUNAMADI.'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {visibleStores.map((store) => (
                   <article
                     key={store.id}
-                    className="rounded-2xl border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_100%)] p-3.5 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.72)]"
+                    className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                   >
-                    <div className="aspect-[16/10] overflow-hidden rounded-xl bg-slate-100">
+                    <div className="aspect-[16/10] overflow-hidden rounded border border-[#1e232b] bg-[#16181d]">
                       {store.logo_url ? (
-                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover mix-blend-lighten opacity-80" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-slate-400">
-                          <Store className="w-5 h-5" />
+                        <div className="flex h-full w-full items-center justify-center text-[#475569]">
+                          <Store className="w-6 h-6" strokeWidth={1.5} />
                         </div>
                       )}
                     </div>
-                    <div className="mt-3 flex items-start justify-between gap-2">
+                    <div className="mt-4 flex items-start justify-between gap-3 border-t border-[#1e232b] pt-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-slate-800">{store.name}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{store.floor_info || 'Konum girilmedi'}</p>
+                        <p className="truncate text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-wide">{store.name}</p>
+                        <p className="mt-1 text-[10px] font-mono text-[#64748b] uppercase tracking-widest">{store.floor_info || 'KONUM GİRİLMEDİ'}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => deleteStore(store.id)}
-                        className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"
+                        className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center shrink-0 hover:bg-rose-900/40 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -2277,7 +2286,7 @@ export default function MerchantMenuPage() {
                 ))}
               </div>
             )}
-          </section>
+          </HardwarePanel>
         </div>
       )
     }
@@ -2292,83 +2301,82 @@ export default function MerchantMenuPage() {
 
       return (
         <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
-          <section className="rounded-[24px] border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f6faff_100%)] p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-              <Wrench className="w-4 h-4 text-violet-600" />
-              <span className="text-sm font-semibold">Yeni Hizmet</span>
+          <HardwarePanel className="p-5 space-y-4">
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+              <Wrench className="w-4 h-4 text-[#38bdf8]" />
+              <span>Yeni Hizmet</span>
             </div>
             <input
               value={serviceName}
               onChange={(event) => setServiceName(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
               placeholder="Hizmet adı"
             />
             <input
               value={servicePrice}
               onChange={(event) => setServicePrice(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+              className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
               placeholder="Fiyat"
             />
             <button
               type="button"
               onClick={addService}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+              className="w-full inline-flex items-center justify-center gap-2 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] px-4 py-3 text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110"
             >
-              <Plus className="w-4 h-4" />
-              Hizmet Ekle
+              <Plus className="w-4 h-4" /> HİZMET EKLE
             </button>
-          </section>
+          </HardwarePanel>
 
-          <section className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                <Wrench className="w-4 h-4 text-violet-600" />
-                <span className="text-sm font-semibold">Hizmet Listesi</span>
+          <HardwarePanel className="p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d313a] pb-3">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                <Wrench className="w-4 h-4 text-[#38bdf8]" />
+                <span>Hizmet Listesi</span>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
-                {visibleServices.length}/{services.length}
+              <span className="px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+                {visibleServices.length} / {services.length}
               </span>
             </div>
 
             <label className="relative block">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 value={serviceSearch}
                 onChange={(event) => setServiceSearch(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-3 text-sm font-semibold text-slate-700"
-                placeholder="Hizmet ara"
+                className="w-full rounded border border-[#2d313a] bg-[#0a0c10] py-3 pl-12 pr-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                placeholder="Hizmet ara..."
               />
             </label>
 
             {visibleServices.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
-                {services.length === 0 ? 'Henüz hizmet kaydı yok.' : 'Aramaya uygun hizmet bulunamadı.'}
+              <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                {services.length === 0 ? 'HENÜZ HİZMET KAYDI YOK.' : 'ARAMAYA UYGUN HİZMET BULUNAMADI.'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {visibleServices.map((service) => (
                   <article
                     key={service.id}
-                    className="rounded-2xl border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_100%)] p-3.5 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.72)]"
+                    className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-slate-800">{service.name}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{toPriceText(service.price)}</p>
+                        <p className="truncate text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-wide">{service.name}</p>
+                        <p className="mt-2 text-[11px] font-mono text-[#38bdf8] uppercase tracking-widest">{toPriceText(service.price)}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => deleteService(service.id)}
-                        className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"
+                        className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center shrink-0 hover:bg-rose-900/40 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </article>
                 ))}
               </div>
             )}
-          </section>
+          </HardwarePanel>
         </div>
       )
     }
@@ -2385,21 +2393,21 @@ export default function MerchantMenuPage() {
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4">
-        <section className="rounded-[24px] border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f6faff_100%)] p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-            <Zap className="w-4 h-4 text-cyan-600" />
-            <span className="text-sm font-semibold">Yeni Soket Ekle</span>
+        <HardwarePanel className="p-5 space-y-4">
+          <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+            <Zap className="w-4 h-4 text-[#38bdf8]" />
+            <span>Yeni Soket Ekle</span>
           </div>
           <input
             value={chargingType}
             onChange={(event) => setChargingType(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+            className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
             placeholder="Soket başlığı"
           />
           <input
             value={chargingSocketCount}
             onChange={(event) => setChargingSocketCount(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700"
+            className="w-full rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
             placeholder="Soket sayısı"
             inputMode="numeric"
           />
@@ -2407,90 +2415,86 @@ export default function MerchantMenuPage() {
             type="button"
             onClick={addCharging}
             disabled={!chargingFormIsValid}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-55 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center gap-2 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] px-4 py-3 text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Check className="w-4 h-4" />
-            Kaydet
+            <Check className="w-4 h-4" /> KAYDET
           </button>
-        </section>
+        </HardwarePanel>
 
-        <section className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)] space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.22),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-              <Zap className="w-4 h-4 text-cyan-600" />
-              <span className="text-sm font-semibold">İstasyon Özeti</span>
+        <HardwarePanel className="p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d313a] pb-3">
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+              <Zap className="w-4 h-4 text-[#38bdf8]" />
+              <span>İstasyon Özeti</span>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
-              {visibleChargingStations.length}/{chargingStations.length}
+            <span className="px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+              {visibleChargingStations.length} / {chargingStations.length}
             </span>
           </div>
 
           <label className="relative block">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               value={chargingSearch}
               onChange={(event) => setChargingSearch(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-3 text-sm font-semibold text-slate-700"
-              placeholder="Şarj tipi ara"
+              className="w-full rounded border border-[#2d313a] bg-[#0a0c10] py-3 pl-12 pr-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+              placeholder="Şarj tipi ara..."
             />
           </label>
 
           {visibleChargingStations.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
-              {chargingStations.length === 0 ? 'Henüz şarj noktası kaydı yok.' : 'Aramaya uygun şarj noktası bulunamadı.'}
+            <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+              {chargingStations.length === 0 ? 'HENÜZ ŞARJ NOKTASI KAYDI YOK.' : 'ARAMAYA UYGUN ŞARJ NOKTASI BULUNAMADI.'}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {visibleChargingStations.map((station) => (
                 <article
                   key={station.id}
-                  className="rounded-2xl border border-slate-100 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_100%)] p-3.5 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.72)]"
+                  className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-800">{station.type}</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500">Soket: {station.socket_count ?? 1}</p>
+                      <p className="truncate text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-wide">{station.type}</p>
+                      <p className="mt-2 text-[11px] font-mono text-[#64748b] uppercase tracking-widest">SOKET: {station.socket_count ?? 1}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => deleteCharging(station.id)}
-                      className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"
+                      className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center shrink-0 hover:bg-rose-900/40 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </article>
               ))}
             </div>
           )}
-        </section>
+        </HardwarePanel>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_30px_-24px_rgba(15,23,42,0.62)]">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-slate-500">İçerik Stüdyosu</p>
-            <ModuleTitle title="Menü ve İçerik Yönetimi" />
-          </div>
-
+      <div className="border-b border-[#2d313a] pb-4">
+        <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#64748b] mb-2">İçerik Stüdyosu</p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <PanelTitle title="Menü ve İçerik Yönetimi" />
           {selectedBusiness ? (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#edf3fb] text-slate-700 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.92)]">
-              <Sparkles className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-semibold">{selectedBusiness.name}</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-[#1e232b] bg-[#0a0c10] text-[#94a3b8]">
+              <Sparkles className="w-3.5 h-3.5 text-[#38bdf8]" />
+              <span className="text-[10px] font-mono uppercase tracking-widest">{selectedBusiness.name}</span>
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] space-y-5">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+      <HardwarePanel className="p-5 md:p-6 space-y-6">
+        <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
           İşletme Seç
           <select
-            className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+            className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase tracking-wide"
             value={selectedBusinessId}
             onChange={(event) => setSelectedBusinessId(event.target.value)}
           >
@@ -2504,13 +2508,13 @@ export default function MerchantMenuPage() {
 
         {loading ? (
           <div className="h-32 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : !selectedBusiness ? (
-          <div className="text-sm text-slate-500">İşletme seçin.</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#0a0c10] border border-dashed border-[#2d313a] p-5 text-center rounded">İŞLETME SEÇİN.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
               {modules.map((moduleType) => {
                 const Icon =
                   moduleType === 'campaign'
@@ -2545,42 +2549,40 @@ export default function MerchantMenuPage() {
                     key={moduleType}
                     type="button"
                     onClick={() => setActiveModule(moduleType)}
-                    className={`group w-full rounded-2xl border px-3 py-2.5 text-left transition-all ${
+                    className={`group w-full rounded border px-4 py-3 text-left transition-all ${
                       activeModule === moduleType
-                        ? 'border-blue-300 bg-[linear-gradient(145deg,#f6f9ff_0%,#eaf1ff_100%)] text-slate-800 shadow-[0_16px_24px_-18px_rgba(37,99,235,0.45)]'
-                        : 'border-slate-200 bg-white text-slate-700 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)] hover:border-blue-200 hover:text-blue-700'
+                        ? 'border-[#226785] bg-[#153445] text-[#38bdf8]'
+                        : 'border-[#2d313a] bg-[#0a0c10] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                     }`}
                   >
                     <span className="flex items-center justify-between gap-2">
                       <span
-                        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${
-                          activeModule === moduleType ? 'bg-blue-100' : 'bg-slate-100'
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded border ${
+                          activeModule === moduleType ? 'bg-[#101920] border-[#1e232b]' : 'bg-[#16181d] border-[#2d313a]'
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${activeModule === moduleType ? 'text-blue-700' : 'text-slate-600'}`} />
+                        <Icon className={`w-4 h-4 ${activeModule === moduleType ? 'text-[#38bdf8]' : 'text-[#64748b]'}`} strokeWidth={1.5} />
                       </span>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          activeModule === moduleType ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
+                        className={`rounded px-2 py-0.5 text-[9px] font-mono tracking-widest border ${
+                          activeModule === moduleType ? 'bg-[#101920] text-[#38bdf8] border-[#1e232b]' : 'bg-[#16181d] text-[#64748b] border-[#2d313a]'
                         }`}
                       >
                         {moduleCount}
                       </span>
                     </span>
-                    <span className="mt-2 block text-xs font-semibold">{MODULE_LABELS[moduleType]}</span>
+                    <span className="mt-3 block text-[10px] font-mono uppercase tracking-widest">{MODULE_LABELS[moduleType]}</span>
                   </button>
                 )
               })}
             </div>
 
-            <div className="rounded-[24px] p-4 md:p-5 bg-[#edf3fb] shadow-[inset_4px_4px_12px_rgba(148,163,184,0.22),inset_-4px_-4px_12px_rgba(255,255,255,0.95)]">
-              <div className="rounded-[22px] p-4 md:p-5 bg-white shadow-[0_18px_28px_-24px_rgba(15,23,42,0.62)]">
-                {renderModuleContent()}
-              </div>
+            <div className="pt-4 border-t border-[#1e232b]">
+              {renderModuleContent()}
             </div>
           </>
         )}
-      </div>
+      </HardwarePanel>
     </div>
   )
 }

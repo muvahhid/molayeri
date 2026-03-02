@@ -11,17 +11,14 @@ import {
   RefreshCcw,
   Star,
   Store,
-  ToggleLeft,
+  Terminal,
+  Activity,
+  Server
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
 import { inferMenuModules, type MerchantBusiness } from '../_lib/helpers'
-import { ModuleTitle } from '../_components/module-title'
-import {
-  fetchBusinessCategoryNames,
-  fetchOwnedBusinesses,
-  requireCurrentUserId,
-} from '../_lib/queries'
+import { fetchBusinessCategoryNames, fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 
 function formatCount(value: number): string {
   return new Intl.NumberFormat('tr-TR').format(value)
@@ -249,8 +246,21 @@ type MetricItem = {
   title: string
   value: string
   icon: LucideIcon
-  tone: string
 }
+
+// --- UI Kapsayıcı Bileşenler ---
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-lg shadow-2xl ${className}`}>
+    {/* Vida Detayları */}
+    <div className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-3 left-3 w-1.5 h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="p-6 relative z-10">
+      {children}
+    </div>
+  </div>
+)
 
 export default function MerchantDashboardPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -262,14 +272,14 @@ export default function MerchantDashboardPage() {
 
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [unreadNegotiations, setUnreadNegotiations] = useState(0)
-  const [averageScore, setAverageScore] = useState<string>('Yok')
+  const [averageScore, setAverageScore] = useState<string>('Puan Yok')
   const [togglingOpen, setTogglingOpen] = useState(false)
   const [panelError, setPanelError] = useState<string | null>(null)
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [fuelModuleEnabled, setFuelModuleEnabled] = useState(false)
   const [fuelModuleLoading, setFuelModuleLoading] = useState(false)
   const [savingFuel, setSavingFuel] = useState(false)
-  const [fuelNotice, setFuelNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [, setFuelNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [fuelPrices, setFuelPrices] = useState<FuelPriceValues>(createEmptyFuelPrices())
   const [hoursModalOpen, setHoursModalOpen] = useState(false)
   const [workingHours, setWorkingHours] = useState<WeeklyHours>(createDefaultWorkingHours())
@@ -424,7 +434,7 @@ export default function MerchantDashboardPage() {
         setSelectedBusinessId('')
         setUnreadMessages(0)
         setUnreadNegotiations(0)
-        setAverageScore('Yok')
+        setAverageScore('Puan Yok')
         resetFuelModuleState()
         return
       }
@@ -443,7 +453,7 @@ export default function MerchantDashboardPage() {
       setSelectedBusinessId('')
       setUnreadMessages(0)
       setUnreadNegotiations(0)
-      setAverageScore('Yok')
+      setAverageScore('Puan Yok')
       resetFuelModuleState()
     } finally {
       setLoading(false)
@@ -454,7 +464,7 @@ export default function MerchantDashboardPage() {
     if (!userId || !selectedBusiness) {
       setUnreadMessages(0)
       setUnreadNegotiations(0)
-      setAverageScore('Yok')
+      setAverageScore('Puan Yok')
       return
     }
 
@@ -504,7 +514,7 @@ export default function MerchantDashboardPage() {
         .filter((value) => Number.isFinite(value) && value > 0)
 
       if (nonNullRatings.length === 0) {
-        setAverageScore('Yok')
+        setAverageScore('Puan Yok')
       } else {
         const total = nonNullRatings.reduce((sum, value) => sum + value, 0)
         setAverageScore((total / nonNullRatings.length).toFixed(1))
@@ -579,7 +589,7 @@ export default function MerchantDashboardPage() {
     } catch {
       setUnreadMessages(0)
       setUnreadNegotiations(0)
-      setAverageScore('Yok')
+      setAverageScore('Puan Yok')
       setPanelError((current) => current || 'Bazı veriler yüklenemedi. Sayfayı yenileyip tekrar deneyin.')
     }
   }
@@ -616,7 +626,7 @@ export default function MerchantDashboardPage() {
 
       setNotice({
         type: 'success',
-        message: nextOpen ? 'İşletme servis durumu açıldı.' : 'İşletme servis durumu kapatıldı.',
+        message: nextOpen ? 'Servis durumu açıldı.' : 'Servis durumu kapatıldı.',
       })
     } catch {
       setBusinesses((current) =>
@@ -625,7 +635,7 @@ export default function MerchantDashboardPage() {
         )
       )
       clearServiceOverrideForBusiness(selectedBusiness.id)
-      setNotice({ type: 'error', message: 'Servis durumu güncellenemedi. Tekrar deneyin.' })
+      setNotice({ type: 'error', message: 'Servis durumu güncellenemedi.' })
     } finally {
       setTogglingOpen(false)
     }
@@ -777,378 +787,298 @@ export default function MerchantDashboardPage() {
       : 'Servis Kapalı'
     : 'İşletme seçilmedi'
 
-  const averageScoreLabel = averageScore === 'Yok' ? '—' : `${averageScore} / 5`
+  const averageScoreLabel = averageScore === 'Puan Yok' ? '—' : `${averageScore} / 5`
 
   const metrics: MetricItem[] = [
-    {
-      title: 'Toplam Şube',
-      value: formatCount(businesses.length),
-      icon: Store,
-      tone: 'from-sky-500 to-indigo-500',
-    },
-    {
-      title: 'Okunmamış Mesaj',
-      value: formatCount(unreadMessages),
-      icon: MessageSquare,
-      tone: 'from-violet-500 to-indigo-500',
-    },
-    {
-      title: 'Görüşme Bekleyen',
-      value: formatCount(unreadNegotiations),
-      icon: BellRing,
-      tone: 'from-amber-500 to-orange-500',
-    },
-    {
-      title: 'Ortalama Puan',
-      value: averageScoreLabel,
-      icon: Star,
-      tone: 'from-fuchsia-500 to-rose-500',
-    },
+    { title: 'Toplam Şube', value: formatCount(businesses.length), icon: Store },
+    { title: 'Okunmamış Mesaj', value: formatCount(unreadMessages), icon: MessageSquare },
+    { title: 'Görüşme Bekleyen', value: formatCount(unreadNegotiations), icon: BellRing },
+    { title: 'Ortalama Puan', value: averageScoreLabel, icon: Star },
   ]
 
   if (loading) {
     return (
-      <div className="h-[55vh] rounded-[28px] bg-[linear-gradient(145deg,#ffffff_0%,#f2f6ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] grid place-items-center">
-        <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
+      <div className="flex h-[55vh] items-center justify-center bg-[#06080b]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-[#38bdf8] animate-spin" />
+          <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">Veriler yükleniyor...</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f2f6ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)]">
-        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
-          <ModuleTitle title="İşletmeci Ana Panel" />
+    <div className="min-h-screen bg-[#06080b] selection:bg-[#38bdf8]/30 text-[#e2e8f0] font-sans relative overflow-x-hidden">
+      
+      {/* Arka Plan Izgarası */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold ${
-                selectedBusiness && selectedBusinessIsOpen
-                  ? 'bg-emerald-50 text-emerald-700 shadow-[0_10px_16px_-14px_rgba(16,185,129,0.65)]'
-                  : selectedBusiness
-                    ? 'bg-rose-50 text-rose-700 shadow-[0_10px_16px_-14px_rgba(225,29,72,0.6)]'
-                    : 'bg-slate-100 text-slate-600 shadow-[0_10px_16px_-14px_rgba(71,85,105,0.58)]'
-              }`}
-            >
-              {selectedBusiness && selectedBusinessIsOpen ? <BadgeCheck className="w-4 h-4" /> : <CircleAlert className="w-4 h-4" />}
-              {selectedBusinessStatusLabel}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 space-y-6">
+        
+        {/* Üst Bilgi Çubuğu (Header) */}
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-[#2d313a] pb-4 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)] animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[9px] uppercase tracking-[0.2em] text-[#64748b]">Sistem</span>
+              <span className="text-sm font-mono tracking-widest text-[#e2e8f0]">İşletmeci Paneli</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className={`px-3 py-1.5 border rounded flex items-center gap-2 text-[10px] font-mono tracking-widest uppercase transition-colors ${
+              selectedBusiness && selectedBusinessIsOpen 
+                ? 'bg-[#153445] border-[#226785] text-[#38bdf8]' 
+                : selectedBusiness 
+                  ? 'bg-rose-950/30 border-rose-900/50 text-rose-400' 
+                  : 'bg-[#16181d] border-[#2d313a] text-[#64748b]'
+            }`}>
+              {selectedBusiness && selectedBusinessIsOpen ? <BadgeCheck className="w-3.5 h-3.5" /> : <CircleAlert className="w-3.5 h-3.5" />}
+              DURUM: {selectedBusinessStatusLabel}
             </span>
 
             <button
-              type="button"
               onClick={loadInitialData}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-slate-700 bg-white shadow-[0_10px_16px_-14px_rgba(15,23,42,0.6)]"
+              className="px-4 py-1.5 border border-[#2d313a] rounded bg-[#16181d] text-[10px] font-mono tracking-widest text-[#94a3b8] uppercase hover:bg-[#1a1d24] hover:text-[#e2e8f0] hover:border-[#475569] transition-all flex items-center gap-2"
             >
-              <RefreshCcw className="w-4 h-4" />
-              Yenile
+              <RefreshCcw className="w-3.5 h-3.5" /> YENİLE
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {metrics.map((item) => {
-            const Icon = item.icon
-
-            return (
-              <article
-                key={item.title}
-                className="rounded-2xl p-4 bg-[linear-gradient(150deg,#ffffff_0%,#f7faff_100%)] shadow-[0_14px_20px_-18px_rgba(15,23,42,0.62)]"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${item.tone} text-white shadow-[0_10px_14px_-10px_rgba(15,23,42,0.7)]`}>
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <p className="text-xs text-slate-500">{item.title}</p>
-                </div>
-                <p className="text-xl font-bold text-slate-800 mt-3">{item.value}</p>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-
-      {panelError ? (
-        <section className="rounded-2xl px-4 py-3 bg-rose-50 text-rose-700 border border-rose-200 text-sm font-medium">
-          {panelError}
-        </section>
-      ) : null}
-
-      {notice ? (
-        <section
-          className={`rounded-2xl px-4 py-3 text-sm font-medium border ${
-            notice.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-rose-50 text-rose-700 border-rose-200'
-          }`}
-        >
-          {notice.message}
-        </section>
-      ) : null}
-
-      <section className="rounded-[30px] p-5 md:p-6 bg-[#e8edf5] shadow-[inset_10px_10px_24px_rgba(148,163,184,0.24),inset_-10px_-10px_24px_rgba(255,255,255,0.88)]">
-        {!hasBusinesses ? (
-          <div className="rounded-2xl p-5 bg-slate-50 border border-slate-200/80">
-            <p className="text-sm font-semibold text-slate-700">Henüz işletme kaydı bulunamadı. Yeni kayıt için sol menüdeki İşletme Ekle alanını kullanın.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-            <article className="rounded-[26px] p-5 h-full min-h-[620px] bg-[#edf2f9] border border-white/70 shadow-[10px_10px_24px_rgba(148,163,184,0.28),-10px_-10px_24px_rgba(255,255,255,0.9)] flex flex-col">
-              <h4 className="text-2xl font-bold text-slate-800">İşletme Kontrolü</h4>
-
-              <div className="mt-4 rounded-2xl p-2 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.26),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                <select
-                  className="w-full px-4 py-3 rounded-xl bg-[#edf2f9] text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-orange-300"
-                  value={selectedBusinessId}
-                  onChange={(event) => setSelectedBusinessId(event.target.value)}
-                >
-                  {businesses.map((business) => (
-                    <option key={business.id} value={business.id}>
-                      {business.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="h-[96px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                  <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Durum</p>
-                  <p className="mt-2 text-base font-bold text-slate-800">{selectedBusinessStatusLabel}</p>
-                </div>
-                <div className="h-[96px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                  <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Mesajlar</p>
-                  <p className="mt-2 text-base font-bold text-slate-800">
-                    {unreadMessages > 0 ? `${formatCount(unreadMessages)} yeni` : 'Yeni yok'}
-                  </p>
-                </div>
-                <div className="h-[96px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                  <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Puan</p>
-                  <p className="mt-2 text-base font-bold text-slate-800">{averageScoreLabel}</p>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-4">
-                <button
-                  type="button"
-                  onClick={openWorkingHoursModal}
-                  className="h-12 w-full inline-flex items-center justify-center px-4 rounded-xl text-sm font-semibold text-slate-700 bg-white/80 border border-white/70 shadow-[0_10px_14px_-12px_rgba(15,23,42,0.45)]"
-                >
-                  Çalışma Saatleri Düzenle
-                </button>
-
-                <div className="mt-3 h-[84px] rounded-2xl p-3 bg-[#edf2f9] shadow-[inset_5px_5px_12px_rgba(148,163,184,0.24),inset_-5px_-5px_12px_rgba(255,255,255,0.9)]">
-                  <div className="flex items-center justify-between gap-2 h-full">
-                    <p className="text-sm font-semibold text-slate-700">Servis Durumu</p>
-                    <span
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                        selectedBusinessIsOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                      }`}
-                    >
-                      {selectedBusinessIsOpen ? <BadgeCheck className="w-4 h-4" /> : <CircleAlert className="w-4 h-4" />}
-                      {selectedBusinessIsOpen ? 'Açık' : 'Kapalı'}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleToggleBusinessOpen}
-                  disabled={!selectedBusiness || togglingOpen}
-                  className={`mt-3 h-14 w-full inline-flex items-center justify-center gap-2 px-4 rounded-xl border border-white/20 text-sm font-semibold text-white disabled:opacity-50 ${
-                    selectedBusinessIsOpen
-                      ? 'bg-[linear-gradient(145deg,#ef4444_0%,#be123c_100%)] hover:brightness-95 shadow-[0_14px_22px_-12px_rgba(190,24,93,0.92)]'
-                      : 'bg-[linear-gradient(145deg,#22c55e_0%,#16a34a_100%)] hover:brightness-95 shadow-[0_14px_22px_-12px_rgba(22,163,74,0.82)]'
-                  }`}
-                >
-                  {togglingOpen ? <Loader2 className="w-4 h-4 animate-spin" /> : <ToggleLeft className="w-4 h-4" />}
-                  {togglingOpen ? 'Güncelleniyor...' : selectedBusinessIsOpen ? 'SERVİSİ KAPAT' : 'SERVİSİ AÇ'}
-                </button>
-              </div>
-            </article>
-
-            <article
-              className={`rounded-[26px] p-5 h-full min-h-[620px] flex flex-col border ${
-                fuelModuleEnabled
-                  ? 'bg-[#edf2f9] border-white/70 shadow-[10px_10px_24px_rgba(148,163,184,0.28),-10px_-10px_24px_rgba(255,255,255,0.9)]'
-                  : 'bg-[#e1e6ef] border-slate-300/70 shadow-[inset_6px_6px_14px_rgba(148,163,184,0.35),inset_-6px_-6px_14px_rgba(255,255,255,0.55)]'
-              }`}
-            >
-              <h4 className="text-2xl font-bold text-slate-800">Yakıt Fiyatları</h4>
-
-              {fuelModuleLoading ? (
-                <div className="flex-1 grid place-items-center">
-                  <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
-                </div>
-              ) : fuelModuleEnabled ? (
-                <div className="mt-4 flex-1 flex flex-col">
-                  {fuelNotice ? (
-                    <div
-                      className={`rounded-xl px-3 py-2 text-xs font-semibold border ${
-                        fuelNotice.type === 'success'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
-                      }`}
-                    >
-                      {fuelNotice.message}
-                    </div>
-                  ) : null}
-
-                  <div className="mt-3 space-y-2">
-                    <label className="block h-[112px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Benzin (95)</span>
-                      <input
-                        inputMode="decimal"
-                        className="mt-2 w-full px-3 py-2 rounded-lg bg-[#edf2f9] text-sm font-semibold text-slate-700 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.9)]"
-                        value={fuelPrices.benzin}
-                        onChange={(event) =>
-                          setFuelPrices((current) => ({ ...current, benzin: event.target.value }))
-                        }
-                        placeholder="0.00"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">{formatFuelPreview(fuelPrices.benzin)}</p>
-                    </label>
-
-                    <label className="block h-[112px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Motorin</span>
-                      <input
-                        inputMode="decimal"
-                        className="mt-2 w-full px-3 py-2 rounded-lg bg-[#edf2f9] text-sm font-semibold text-slate-700 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.9)]"
-                        value={fuelPrices.motorin}
-                        onChange={(event) =>
-                          setFuelPrices((current) => ({ ...current, motorin: event.target.value }))
-                        }
-                        placeholder="0.00"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">{formatFuelPreview(fuelPrices.motorin)}</p>
-                    </label>
-
-                    <label className="block h-[112px] rounded-xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
-                      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">LPG / Otogaz</span>
-                      <input
-                        inputMode="decimal"
-                        className="mt-2 w-full px-3 py-2 rounded-lg bg-[#edf2f9] text-sm font-semibold text-slate-700 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.9)]"
-                        value={fuelPrices.lpg}
-                        onChange={(event) =>
-                          setFuelPrices((current) => ({ ...current, lpg: event.target.value }))
-                        }
-                        placeholder="0.00"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">{formatFuelPreview(fuelPrices.lpg)}</p>
-                    </label>
-                  </div>
-
-                  <div className="mt-auto pt-4">
-                    <button
-                      type="button"
-                      onClick={handleSaveFuelPrices}
-                      disabled={!selectedBusiness || savingFuel}
-                      className="h-14 w-full inline-flex items-center justify-center gap-2 px-4 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {savingFuel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fuel className="w-4 h-4" />}
-                      {savingFuel ? 'Kaydediliyor...' : 'Fiyatları Kaydet'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 flex-1 rounded-2xl border border-dashed border-slate-400/60 bg-[#e8edf5] px-4 py-5 grid place-items-center text-center shadow-[inset_4px_4px_10px_rgba(148,163,184,0.3),inset_-4px_-4px_10px_rgba(255,255,255,0.75)]">
-                  <div>
-                    <Fuel className="w-7 h-7 text-slate-400 mx-auto" />
-                    <p className="mt-3 text-sm font-semibold text-slate-600">Yakıt modülü pasif</p>
-                  </div>
-                </div>
-              )}
-            </article>
+        {/* Uyarı & Hata Panelleri */}
+        {panelError && (
+          <div className="rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-wide flex items-center gap-3">
+            <Server strokeWidth={1.5} className="w-4 h-4" /> Hata: {panelError}
           </div>
         )}
-      </section>
 
-      {hoursModalOpen && selectedBusiness ? (
-        <div className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-sm p-4 flex items-center justify-center">
-          <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl p-5 md:p-6 bg-[#e8edf5] border border-white/70 shadow-[12px_12px_28px_rgba(15,23,42,0.26),-10px_-10px_24px_rgba(255,255,255,0.86)]">
-            <div className="flex items-center justify-between gap-3">
-              <h4 className="text-2xl font-bold text-slate-800">Çalışma Saatleri</h4>
-              <button
-                type="button"
-                onClick={closeWorkingHoursModal}
-                className="h-10 px-4 rounded-xl text-sm font-semibold text-slate-600 bg-white/80 border border-white/70"
-              >
+        {notice && (
+          <div className={`rounded border px-4 py-3 text-[11px] font-mono uppercase tracking-wide flex items-center gap-3 ${
+            notice.type === 'success' ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400' : 'border-rose-900/50 bg-rose-950/20 text-rose-400'
+          }`}>
+            <Terminal strokeWidth={1.5} className="w-4 h-4" /> {notice.message}
+          </div>
+        )}
+
+        {/* Metrikler */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {metrics.map((item, idx) => (
+            <div key={idx} className="bg-[#0a0c10] border border-[#2d313a] rounded p-4 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <div className="flex items-center gap-3 mb-3">
+                <item.icon className="w-4 h-4 text-[#64748b]" strokeWidth={1.5} />
+                <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-[0.1em]">{item.title}</span>
+              </div>
+              <p className="text-xl font-medium text-[#e2e8f0] font-mono">{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {!hasBusinesses ? (
+           <HardwarePanel>
+             <p className="text-sm font-mono text-[#94a3b8] text-center tracking-wide py-10">
+               Kayıt bulunamadı. Lütfen menüden yeni bir işletme ekleyin.
+             </p>
+           </HardwarePanel>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            
+            {/* SOL PANEL: KONTROL */}
+            <HardwarePanel>
+              <div className="flex items-center gap-2 mb-6 border-b border-[#2d313a] pb-4">
+                <Terminal strokeWidth={1.5} className="w-4 h-4 text-[#38bdf8]" />
+                <h2 className="text-sm font-mono text-[#e2e8f0] tracking-widest uppercase">İşletme Kontrolü</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="group">
+                   <label className="text-[10px] font-mono text-[#64748b] uppercase tracking-[0.1em] mb-2 block">İşletme Seç</label>
+                   <select
+                     className="w-full bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm px-4 py-3 rounded outline-none focus:border-[#38bdf8]/50 appearance-none uppercase tracking-wide"
+                     value={selectedBusinessId}
+                     onChange={(e) => setSelectedBusinessId(e.target.value)}
+                   >
+                     {businesses.map((b) => (
+                       <option key={b.id} value={b.id}>{b.name}</option>
+                     ))}
+                   </select>
+                </div>
+
+                <div className="bg-[#0a0c10] border border-[#2d313a] rounded p-4 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest mb-1">Servis Durumu</span>
+                    <span className={`text-xs font-mono tracking-widest ${selectedBusinessIsOpen ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {selectedBusinessIsOpen ? 'Servis açık' : 'Servis kapalı'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={openWorkingHoursModal}
+                    className="px-4 py-2 bg-transparent border border-[#2d313a] text-[#94a3b8] text-[10px] font-mono tracking-widest uppercase rounded hover:text-[#e2e8f0] hover:border-[#475569] hover:bg-[#1a1d24] transition-all"
+                  >
+                    Saatleri Düzenle
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleToggleBusinessOpen}
+                  disabled={!selectedBusiness || togglingOpen}
+                  className={`w-full py-4 rounded font-mono text-[12px] tracking-widest uppercase transition-all flex items-center justify-center gap-3 disabled:opacity-50 border ${
+                    selectedBusinessIsOpen
+                      ? 'bg-[linear-gradient(180deg,#7f1d1d_0%,#450a0a_100%)] border-rose-900/50 text-rose-200 hover:brightness-110'
+                      : 'bg-[linear-gradient(180deg,#14532d_0%,#052e16_100%)] border-emerald-900/50 text-emerald-200 hover:brightness-110'
+                  }`}
+                >
+                  {togglingOpen ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+                  {togglingOpen ? 'Güncelleniyor...' : selectedBusinessIsOpen ? 'Servisi kapat' : 'Servisi aç'}
+                </button>
+              </div>
+            </HardwarePanel>
+
+            {/* SAĞ PANEL: YAKIT MODÜLÜ */}
+            <HardwarePanel>
+              <div className="flex items-center justify-between mb-6 border-b border-[#2d313a] pb-4">
+                <div className="flex items-center gap-2">
+                  <Fuel strokeWidth={1.5} className="w-4 h-4 text-[#38bdf8]" />
+                  <h2 className="text-sm font-mono text-[#e2e8f0] tracking-widest uppercase">Yakıt Fiyatları</h2>
+                </div>
+                {fuelModuleEnabled && <span className="text-[9px] font-mono text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded border border-[#38bdf8]/30">Aktif</span>}
+              </div>
+
+              {fuelModuleLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 text-[#64748b] animate-spin" />
+                </div>
+              ) : fuelModuleEnabled ? (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="group relative">
+                      <label className="text-[10px] font-mono text-[#64748b] uppercase tracking-[0.1em] mb-1.5 block">Benzin (95)</label>
+                      <input
+                        inputMode="decimal"
+                        className="w-full bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm px-4 py-3 rounded outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                        value={fuelPrices.benzin}
+                        onChange={(e) => setFuelPrices({ ...fuelPrices, benzin: e.target.value })}
+                        placeholder="0.00"
+                      />
+                      <span className="absolute right-4 top-9 text-[10px] font-mono text-[#64748b] pointer-events-none">{formatFuelPreview(fuelPrices.benzin)}</span>
+                    </div>
+
+                    <div className="group relative">
+                      <label className="text-[10px] font-mono text-[#64748b] uppercase tracking-[0.1em] mb-1.5 block">Motorin</label>
+                      <input
+                        inputMode="decimal"
+                        className="w-full bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm px-4 py-3 rounded outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                        value={fuelPrices.motorin}
+                        onChange={(e) => setFuelPrices({ ...fuelPrices, motorin: e.target.value })}
+                        placeholder="0.00"
+                      />
+                      <span className="absolute right-4 top-9 text-[10px] font-mono text-[#64748b] pointer-events-none">{formatFuelPreview(fuelPrices.motorin)}</span>
+                    </div>
+
+                    <div className="group relative">
+                      <label className="text-[10px] font-mono text-[#64748b] uppercase tracking-[0.1em] mb-1.5 block">LPG</label>
+                      <input
+                        inputMode="decimal"
+                        className="w-full bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm px-4 py-3 rounded outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                        value={fuelPrices.lpg}
+                        onChange={(e) => setFuelPrices({ ...fuelPrices, lpg: e.target.value })}
+                        placeholder="0.00"
+                      />
+                      <span className="absolute right-4 top-9 text-[10px] font-mono text-[#64748b] pointer-events-none">{formatFuelPreview(fuelPrices.lpg)}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSaveFuelPrices}
+                    disabled={!selectedBusiness || savingFuel}
+                    className="w-full py-4 rounded font-mono text-[12px] tracking-widest uppercase flex items-center justify-center gap-3 disabled:opacity-50 bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110"
+                  >
+                    {savingFuel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Server className="w-4 h-4" />}
+                    {savingFuel ? 'Kaydediliyor...' : 'Fiyatları kaydet'}
+                  </button>
+                </div>
+              ) : (
+                <div className="py-12 border border-dashed border-[#2d313a] rounded flex flex-col items-center justify-center text-center bg-[#0a0c10]">
+                  <Fuel className="w-6 h-6 text-[#475569] mb-3" strokeWidth={1.5} />
+                  <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+                    Bu işletmede yakıt modülü aktif değil
+                  </p>
+                </div>
+              )}
+            </HardwarePanel>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: ÇALIŞMA SAATLERİ */}
+      {hoursModalOpen && selectedBusiness && (
+        <div className="fixed inset-0 z-[60] bg-[#050608]/90 backdrop-blur-sm p-4 flex items-center justify-center">
+          <HardwarePanel className="w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#2d313a] pb-4 mb-4">
+              <h4 className="text-sm font-mono text-[#e2e8f0] tracking-widest uppercase">Çalışma Saatleri</h4>
+              <button onClick={closeWorkingHoursModal} className="text-[10px] font-mono text-[#64748b] hover:text-[#e2e8f0] uppercase tracking-widest border border-[#2d313a] px-3 py-1 rounded bg-[#0a0c10]">
                 Kapat
               </button>
             </div>
-            <p className="mt-2 text-xs font-medium text-slate-500">24 Saat düğmesi günü tam gün açık yapar.</p>
-
-            <div className="mt-4 space-y-2">
+            
+            <div className="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-2 mb-6">
               {DAY_DEFINITIONS.map((day) => {
                 const row = workingHours[day.key]
                 const fullDay = isFullDayHours(row)
                 return (
-                  <div
-                    key={day.key}
-                    className="rounded-2xl p-3 bg-[#edf2f9] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.24),inset_-4px_-4px_10px_rgba(255,255,255,0.88)]"
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-[150px_110px_100px_1fr_1fr] gap-2 items-center">
-                      <div className="text-sm font-semibold text-slate-700">{day.label}</div>
-                      <button
-                        type="button"
-                        onClick={() => updateDayEnabled(day.key, !row.enabled)}
-                        className={`h-10 rounded-xl text-xs font-semibold ${
-                          row.enabled
-                            ? 'bg-emerald-600 text-white shadow-[0_10px_14px_-12px_rgba(22,163,74,0.9)]'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        {row.enabled ? 'Açık' : 'Kapalı'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDayTwentyFourHours(day.key)}
-                        className={`h-10 rounded-xl text-xs font-semibold ${
-                          fullDay
-                            ? 'bg-sky-600 text-white shadow-[0_10px_14px_-12px_rgba(37,99,235,0.9)]'
-                            : 'bg-white/80 text-slate-600 border border-white/70'
-                        }`}
-                      >
-                        24 Saat
-                      </button>
-                      <input
-                        type="time"
-                        value={row.open}
-                        disabled={!row.enabled}
-                        onChange={(event) => updateDayTime(day.key, 'open', event.target.value)}
-                        className="h-10 px-3 rounded-xl bg-[#edf2f9] text-sm font-semibold text-slate-700 outline-none disabled:opacity-50 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.9)]"
-                      />
-                      <input
-                        type="time"
-                        value={row.close}
-                        disabled={!row.enabled}
-                        onChange={(event) => updateDayTime(day.key, 'close', event.target.value)}
-                        className="h-10 px-3 rounded-xl bg-[#edf2f9] text-sm font-semibold text-slate-700 outline-none disabled:opacity-50 shadow-[inset_3px_3px_8px_rgba(148,163,184,0.22),inset_-3px_-3px_8px_rgba(255,255,255,0.9)]"
-                      />
-                    </div>
+                  <div key={day.key} className="bg-[#0a0c10] border border-[#2d313a] rounded p-3 grid grid-cols-1 sm:grid-cols-[140px_1fr_1fr_1fr_1fr] gap-3 items-center">
+                    <div className="text-xs font-mono text-[#cbd5e1] uppercase tracking-wide">{day.label}</div>
+                    
+                    <button
+                      onClick={() => updateDayEnabled(day.key, !row.enabled)}
+                      className={`py-2 rounded border text-[10px] font-mono tracking-widest uppercase transition-colors ${
+                        row.enabled ? 'bg-[#153445] border-[#226785] text-[#38bdf8]' : 'bg-[#16181d] border-[#2d313a] text-[#64748b] hover:border-[#475569]'
+                      }`}
+                    >
+                      {row.enabled ? 'Açık' : 'Kapalı'}
+                    </button>
+                    
+                    <button
+                      onClick={() => setDayTwentyFourHours(day.key)}
+                      className={`py-2 rounded border text-[10px] font-mono tracking-widest uppercase transition-colors ${
+                        fullDay ? 'bg-[#153445] border-[#226785] text-[#38bdf8]' : 'bg-[#16181d] border-[#2d313a] text-[#64748b] hover:border-[#475569]'
+                      }`}
+                    >
+                      24 Saat
+                    </button>
+                    
+                    <input
+                      type="time"
+                      value={row.open}
+                      disabled={!row.enabled}
+                      onChange={(e) => updateDayTime(day.key, 'open', e.target.value)}
+                      className="bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono px-3 py-2 rounded outline-none focus:border-[#38bdf8]/50 disabled:opacity-50 [color-scheme:dark]"
+                    />
+                    
+                    <input
+                      type="time"
+                      value={row.close}
+                      disabled={!row.enabled}
+                      onChange={(e) => updateDayTime(day.key, 'close', e.target.value)}
+                      className="bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono px-3 py-2 rounded outline-none focus:border-[#38bdf8]/50 disabled:opacity-50 [color-scheme:dark]"
+                    />
                   </div>
                 )
               })}
             </div>
 
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={closeWorkingHoursModal}
-                className="h-12 rounded-xl text-sm font-semibold text-slate-700 bg-white/80 border border-white/70"
-              >
-                Vazgeç
-              </button>
-              <button
-                type="button"
-                onClick={saveWorkingHours}
-                disabled={savingHours}
-                className="h-12 rounded-xl text-sm font-semibold text-white bg-[linear-gradient(145deg,#2563eb_0%,#1d4ed8_100%)] disabled:opacity-50"
-              >
-                {savingHours ? 'Kaydediliyor...' : 'Saatleri Kaydet'}
-              </button>
-            </div>
-          </div>
+            <button
+              onClick={saveWorkingHours}
+              disabled={savingHours}
+              className="w-full py-4 rounded font-mono text-[12px] tracking-widest uppercase flex items-center justify-center gap-3 disabled:opacity-50 bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 shrink-0"
+            >
+              {savingHours ? <Loader2 className="w-4 h-4 animate-spin" /> : <Terminal className="w-4 h-4" />}
+              {savingHours ? 'Kaydediliyor...' : 'Saatleri kaydet'}
+            </button>
+          </HardwarePanel>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

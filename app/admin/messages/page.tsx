@@ -17,6 +17,7 @@ import {
   UserCircle2,
   Users,
 } from 'lucide-react'
+import { ModuleTitle } from '../../merchant/_components/module-title'
 
 type GenericRow = Record<string, unknown>
 
@@ -43,9 +44,6 @@ type ProfileRecord = {
 
 type TabValue = 'inbox' | 'sent' | 'compose'
 type TargetType = 'broadcast_all' | 'broadcast_business' | 'single'
-
-const cardClass =
-  'rounded-2xl border border-white/80 bg-white/95 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] backdrop-blur'
 
 function toTs(raw: string): number {
   const ts = new Date(raw).getTime()
@@ -107,6 +105,17 @@ function normalizeText(value: string): string {
     .replaceAll('ö', 'o')
     .replaceAll('ç', 'c')
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 function MessagesCenterContent() {
   const searchParams = useSearchParams()
@@ -381,129 +390,139 @@ function MessagesCenterContent() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-4 text-slate-700">
-      <section className={`${cardClass} p-4 md:p-5`}>
+    <div className="h-full flex flex-col gap-4 text-[#e2e8f0]">
+      <HardwarePanel className="p-5 border-b border-[#2d313a]">
         <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Mesaj Merkezi</h1>
+            <ModuleTitle title="Mesaj Merkezi" />
+            <p className="mt-2 text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Sistem içi iletişim, duyuru ve kullanıcı mesajları.</p>
           </div>
           <button
             type="button"
             onClick={() => void loadData(true)}
             disabled={refreshing}
-            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center gap-2 disabled:opacity-60"
+            className="h-11 px-4 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] inline-flex items-center justify-center gap-2 hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
           >
-            {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             Yenile
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2.5">
-          <div className="rounded-xl border border-slate-200/80 bg-blue-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-blue-700">Gelen Toplam</p>
-            <p className="mt-1 text-xl font-bold text-blue-900">{inboxMessages.length}</p>
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Gelen Toplam</p>
+            <p className="mt-1 text-xl font-mono text-[#e2e8f0]">{inboxMessages.length}</p>
           </div>
-          <div className="rounded-xl border border-slate-200/80 bg-emerald-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-700">Okunmamış</p>
-            <p className="mt-1 text-xl font-bold text-emerald-900">{inboxUnreadCount}</p>
+          <div className="rounded border border-[#166534] bg-[#14532d]/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-emerald-500/0 group-hover:bg-emerald-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-emerald-500/70">Okunmamış</p>
+            <p className="mt-1 text-xl font-mono text-emerald-400">{inboxUnreadCount}</p>
           </div>
-          <div className="rounded-xl border border-slate-200/80 bg-amber-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-700">Gönderilen Duyuru</p>
-            <p className="mt-1 text-xl font-bold text-amber-900">{sentBroadcastCount}</p>
+          <div className="rounded border border-amber-900/50 bg-amber-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-amber-500/0 group-hover:bg-amber-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-amber-500/70">Gönderilen Duyuru</p>
+            <p className="mt-1 text-xl font-mono text-amber-400">{sentBroadcastCount}</p>
           </div>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className={`${cardClass} p-3 md:p-4`}>
-        <div className="inline-flex items-center gap-1.5 p-1 rounded-2xl border border-slate-200/70 bg-white">
+      <HardwarePanel className="p-4">
+        <div className="inline-flex rounded border border-[#2d313a] p-1 bg-[#0a0c10]">
           <button
             type="button"
             onClick={() => setTab('inbox')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold inline-flex items-center gap-1.5 ${
-              tab === 'inbox' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' : 'text-slate-500 hover:bg-slate-50'
+            className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-1.5 transition-colors ${
+              tab === 'inbox' ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]' : 'text-[#64748b] hover:text-[#94a3b8] border border-transparent'
             }`}
           >
-            <Inbox size={14} />
+            <Inbox size={13} />
             Gelen
           </button>
           <button
             type="button"
             onClick={() => setTab('sent')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold inline-flex items-center gap-1.5 ${
-              tab === 'sent' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'text-slate-500 hover:bg-slate-50'
+            className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-1.5 transition-colors ${
+              tab === 'sent' ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]' : 'text-[#64748b] hover:text-[#94a3b8] border border-transparent'
             }`}
           >
-            <Megaphone size={14} />
+            <Megaphone size={13} />
             Gönderilen
           </button>
           <button
             type="button"
             onClick={() => setTab('compose')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold inline-flex items-center gap-1.5 ${
-              tab === 'compose' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'text-slate-500 hover:bg-slate-50'
+            className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-1.5 transition-colors ${
+              tab === 'compose' ? 'bg-emerald-950/30 border border-emerald-900/50 text-emerald-400' : 'text-[#64748b] hover:text-[#94a3b8] border border-transparent'
             }`}
           >
-            <PencilLine size={14} />
+            <PencilLine size={13} />
             Yeni Mesaj
           </button>
         </div>
-      </section>
+      </HardwarePanel>
 
       {loading ? (
-        <section className={`${cardClass} p-8 min-h-[420px] flex items-center justify-center`}>
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-        </section>
+        <HardwarePanel className="p-10 min-h-[420px] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#38bdf8] animate-spin" />
+        </HardwarePanel>
       ) : tab === 'compose' ? (
-        <section className={`${cardClass} p-4 md:p-5`}>
-          <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-            <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Hedef</p>
+        <HardwarePanel className="p-5 md:p-6 min-h-[420px]">
+          <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] h-full">
+            <div className="space-y-4">
+              <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Hedef Kitle</p>
+              
               <button
                 type="button"
                 onClick={() => setTargetType('broadcast_all')}
-                className={`w-full h-11 rounded-xl border text-sm font-semibold inline-flex items-center justify-center gap-2 ${
+                className={`w-full h-11 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 transition-colors ${
                   targetType === 'broadcast_all'
-                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                    : 'bg-white border-slate-200 text-slate-700'
+                    ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                 }`}
               >
-                <Users size={15} />
+                <Users size={14} />
                 Tüm Kullanıcılar
               </button>
+
               <button
                 type="button"
                 onClick={() => setTargetType('broadcast_business')}
-                className={`w-full h-11 rounded-xl border text-sm font-semibold inline-flex items-center justify-center gap-2 ${
+                className={`w-full h-11 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 transition-colors ${
                   targetType === 'broadcast_business'
-                    ? 'bg-amber-50 border-amber-200 text-amber-700'
-                    : 'bg-white border-slate-200 text-slate-700'
+                    ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                 }`}
               >
-                <Megaphone size={15} />
+                <Megaphone size={14} />
                 İşletmeci Duyurusu
               </button>
+
               <button
                 type="button"
                 onClick={() => setTargetType('single')}
-                className={`w-full h-11 rounded-xl border text-sm font-semibold inline-flex items-center justify-center gap-2 ${
+                className={`w-full h-11 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 transition-colors ${
                   targetType === 'single'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    : 'bg-white border-slate-200 text-slate-700'
+                    ? 'bg-[#14532d]/40 border-[#166534] text-emerald-400'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                 }`}
               >
-                <MessageCircleReply size={15} />
+                <MessageCircleReply size={14} />
                 Tek Kullanıcı
               </button>
 
               {targetType === 'single' ? (
-                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                  <input
-                    value={recipientSearch}
-                    onChange={(event) => setRecipientSearch(event.target.value)}
-                    placeholder="İsim, e-posta veya ID ile ara..."
-                    className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
-                  />
-                  <div className="max-h-[240px] overflow-y-auto space-y-1 pr-1">
+                <div className="space-y-3 rounded border border-[#2d313a] bg-[#101419] p-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" />
+                    <input
+                      value={recipientSearch}
+                      onChange={(event) => setRecipientSearch(event.target.value)}
+                      placeholder="İsim, e-posta, ID..."
+                      className="w-full h-10 rounded bg-[#0a0c10] border border-[#2d313a] pl-9 pr-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                    />
+                  </div>
+                  <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-2 custom-scrollbar">
                     {recipientCandidates.map((profile) => (
                       <button
                         key={profile.id}
@@ -512,83 +531,96 @@ function MessagesCenterContent() {
                           setRecipientId(profile.id)
                           setRecipientSearch(profile.full_name || profile.email || profile.id)
                         }}
-                        className={`w-full p-2 rounded-lg border text-left ${
+                        className={`w-full p-3 rounded border text-left transition-colors ${
                           recipientId === profile.id
-                            ? 'bg-emerald-50 border-emerald-200'
-                            : 'bg-white border-slate-200 hover:border-slate-300'
+                            ? 'bg-[#14532d]/40 border-[#166534]'
+                            : 'bg-[#0a0c10] border-[#2d313a] hover:border-[#475569]'
                         }`}
                       >
-                        <p className="text-sm font-semibold text-slate-800 truncate">
-                          {profile.full_name || 'İsimsiz kullanıcı'}
+                        <p className={`text-[12px] font-medium uppercase tracking-wide truncate ${recipientId === profile.id ? 'text-emerald-400' : 'text-[#e2e8f0]'}`}>
+                          {profile.full_name || 'İSİMSİZ KULLANICI'}
                         </p>
-                        <p className="text-xs text-slate-500 truncate">{profile.email || profile.id}</p>
-                        <p className="text-[11px] text-slate-500 mt-1">{roleLabel(profile.role)}</p>
+                        <p className="text-[10px] font-mono text-[#64748b] truncate mt-1">{profile.email || profile.id}</p>
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#475569] mt-2">{roleLabel(profile.role)}</p>
                       </button>
                     ))}
                     {recipientCandidates.length === 0 ? (
-                      <p className="text-xs text-slate-500">Eşleşen kullanıcı bulunamadı.</p>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-[#475569] py-2 text-center">SONUÇ YOK.</p>
                     ) : null}
                   </div>
                 </div>
               ) : null}
             </div>
 
-            <div className="space-y-3">
-              <input
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-                placeholder="Mesaj başlığı"
-                className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none"
-              />
-              <textarea
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                placeholder="Mesaj içeriği"
-                className="w-full min-h-[320px] rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none resize-y"
-              />
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">
-                  Hedef: <span className="font-semibold text-slate-700">{messageTypeLabel(targetType === 'single' ? 'direct' : targetType)}</span>
+            <div className="space-y-4 flex flex-col h-full">
+              <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">İçerik Editörü</p>
+              
+              <label className="block">
+                <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest block mb-2">Başlık</span>
+                <input
+                  value={subject}
+                  onChange={(event) => setSubject(event.target.value)}
+                  placeholder="Mesaj başlığı"
+                  className="w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                />
+              </label>
+
+              <label className="block flex-1 flex flex-col">
+                <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest block mb-2">Mesaj Metni</span>
+                <textarea
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="Mesaj içeriğini buraya yazın..."
+                  className="w-full flex-1 min-h-[240px] rounded bg-[#0a0c10] border border-[#2d313a] p-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 resize-none custom-scrollbar placeholder:text-[#475569]"
+                />
+              </label>
+
+              <div className="flex items-center justify-between gap-4 pt-2">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                  GÖNDERİM: <span className="text-[#38bdf8]">{messageTypeLabel(targetType === 'single' ? 'direct' : targetType)}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => void sendNewMessage()}
                   disabled={sendDisabled}
-                  className="h-11 px-5 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-flex items-center gap-2 hover:bg-blue-700 disabled:opacity-55"
+                  className="h-11 px-6 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 inline-flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
                 >
-                  {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                  Gönder
+                  {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  GÖNDER
                 </button>
               </div>
+
               {sendMessage ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  {sendMessage}
+                <div className="rounded border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-emerald-400">
+                  [SİSTEM] {sendMessage}
                 </div>
               ) : null}
             </div>
           </div>
-        </section>
+        </HardwarePanel>
       ) : (
-        <section className={`${cardClass} p-3 md:p-4`}>
-          <div className="grid gap-4 xl:grid-cols-[400px_minmax(0,1fr)]">
-            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/75 overflow-hidden min-h-[420px]">
-              <div className="p-3 border-b border-slate-200/80">
+        <HardwarePanel className="p-0 overflow-hidden min-h-[500px]">
+          <div className="grid gap-0 xl:grid-cols-[400px_minmax(0,1fr)] h-[calc(100vh-320px)] min-h-[500px]">
+            
+            {/* LİSTE */}
+            <div className="border-r border-[#2d313a] bg-[#0a0c10] flex flex-col h-full">
+              <div className="p-4 border-b border-[#2d313a]">
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
                   <input
                     value={searchValue}
                     onChange={(event) => setSearchValue(event.target.value)}
-                    placeholder="Konu, içerik veya kullanıcı ara..."
-                    className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-700 outline-none"
+                    placeholder="Konu, içerik, kullanıcı..."
+                    className="w-full h-10 rounded bg-[#16181d] border border-[#2d313a] pl-9 pr-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   />
                 </div>
               </div>
 
-              <div className="max-h-[560px] overflow-y-auto p-2 space-y-1.5">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                 {filteredMessages.length === 0 ? (
-                  <div className="h-[320px] flex flex-col items-center justify-center text-center px-6">
-                    <ShieldAlert className="w-8 h-8 text-slate-400" />
-                    <p className="mt-2 text-sm font-semibold text-slate-500">Kayıt bulunamadı.</p>
+                  <div className="h-[200px] flex flex-col items-center justify-center text-center">
+                    <ShieldAlert className="w-6 h-6 text-[#475569] mb-3" />
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">KAYIT BULUNAMADI.</p>
                   </div>
                 ) : (
                   filteredMessages.map((message) => {
@@ -601,30 +633,31 @@ function MessagesCenterContent() {
                         key={message.id}
                         type="button"
                         onClick={() => void handleOpenMessage(message)}
-                        className={`w-full p-3 rounded-xl border text-left ${
+                        className={`w-full p-4 rounded border text-left transition-colors ${
                           selected
-                            ? 'border-blue-300 bg-blue-50'
+                            ? 'bg-[#153445]/30 border-[#38bdf8] border-l-[3px]'
                             : unread
-                              ? 'border-emerald-200 bg-emerald-50/70'
-                              : 'border-transparent bg-white hover:border-slate-200'
+                              ? 'bg-emerald-950/10 border-emerald-900/50 border-l-[3px] border-l-emerald-400'
+                              : 'bg-[#16181d] border-[#2d313a] hover:border-[#475569] border-l-[3px] border-l-transparent'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-bold text-slate-800 line-clamp-1">
-                            {message.subject || 'Başlıksız'}
+                          <p className={`text-[12px] uppercase tracking-wide truncate ${selected || unread ? 'text-[#e2e8f0] font-medium' : 'text-[#cbd5e1]'}`}>
+                            {message.subject || 'BAŞLIKSIZ'}
                           </p>
-                          <span className="text-[10px] font-semibold text-slate-500">
+                          <span className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] shrink-0">
                             {new Date(message.created_at).toLocaleDateString('tr-TR')}
                           </span>
                         </div>
-                        <p className="mt-1 text-xs text-slate-600 line-clamp-2">{message.content || '-'}</p>
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-slate-500">
+                        <p className="mt-2 text-[11px] font-mono text-[#94a3b8] line-clamp-2 leading-relaxed">{message.content || '-'}</p>
+                        
+                        <div className="mt-3 pt-2 border-t border-[#1e232b] flex items-center justify-between">
+                          <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest truncate max-w-[180px]">
                             {tab === 'inbox'
-                              ? sender?.full_name || sender?.email || message.sender_id || '-'
+                              ? sender?.full_name || sender?.email || message.sender_id || 'SİSTEM'
                               : sentTargetLabel(message)}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#475569] font-mono uppercase tracking-widest">
                             {messageTypeLabel(message.message_type)}
                           </span>
                         </div>
@@ -635,43 +668,46 @@ function MessagesCenterContent() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white min-h-[420px] p-4">
+            {/* DETAY */}
+            <div className="bg-[#0c0e12] h-full flex flex-col overflow-hidden">
               {!selectedMessage ? (
-                <div className="h-full min-h-[320px] flex items-center justify-center text-sm font-semibold text-slate-500">
-                  Mesaj seçildiğinde detay burada açılır.
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-[10px] font-mono uppercase tracking-widest text-[#475569]">
+                  <MessageCircleReply className="w-8 h-8 mb-3 opacity-30" />
+                  MESAJ SEÇİLDİĞİNDE DETAY BURADA AÇILIR.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 overflow-y-auto p-5 md:p-6 custom-scrollbar space-y-6">
+                  
+                  <div className="flex items-start justify-between gap-4 border-b border-[#2d313a] pb-4">
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-                        {selectedMessage.subject || 'Başlıksız'}
+                      <h2 className="text-[18px] font-medium text-[#e2e8f0] uppercase tracking-wide">
+                        {selectedMessage.subject || 'BAŞLIKSIZ'}
                       </h2>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1.5 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
                         {new Date(selectedMessage.created_at).toLocaleString('tr-TR')}
                       </p>
                     </div>
                     {tab === 'inbox' && selectedMessage.recipient_id === currentUserId && !selectedMessage.is_read ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <CheckCircle2 size={13} />
-                        Yeni
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-emerald-900/50 bg-emerald-950/20 text-[9px] font-mono uppercase tracking-widest text-emerald-400 shrink-0">
+                        <CheckCircle2 size={12} />
+                        YENİ
                       </span>
                     ) : null}
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Gönderen</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="rounded border border-[#2d313a] bg-[#101419] px-4 py-3">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">GÖNDEREN</p>
+                      <p className="mt-1.5 text-[12px] font-mono text-[#e2e8f0] truncate">
                         {(() => {
                           const sender = resolveProfile(selectedMessage.sender_id)
-                          return sender?.full_name || sender?.email || selectedMessage.sender_id || '-'
+                          return sender?.full_name || sender?.email || selectedMessage.sender_id || 'SİSTEM'
                         })()}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Hedef</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">
+                    <div className="rounded border border-[#2d313a] bg-[#101419] px-4 py-3">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">HEDEF</p>
+                      <p className="mt-1.5 text-[12px] font-mono text-[#e2e8f0] truncate">
                         {selectedMessage.recipient_id
                           ? (() => {
                               const recipient = resolveProfile(selectedMessage.recipient_id)
@@ -682,26 +718,26 @@ function MessagesCenterContent() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Mesaj İçeriği</p>
-                    <div className="mt-2 text-sm leading-6 text-slate-800 whitespace-pre-wrap">
+                  <div className="rounded border border-[#1e232b] bg-[#0a0c10] p-5">
+                    <p className="text-[9px] uppercase tracking-widest font-mono text-[#475569] mb-3">MESAJ İÇERİĞİ</p>
+                    <div className="text-[13px] font-sans leading-relaxed text-[#cbd5e1] whitespace-pre-wrap">
                       {selectedMessage.content || '-'}
                     </div>
                   </div>
 
                   {selectedMessage.attachments && selectedMessage.attachments.length > 0 ? (
-                    <div className="rounded-xl border border-slate-200 bg-white p-3">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Ekler</p>
-                      <div className="mt-2 space-y-1.5">
+                    <div className="rounded border border-[#2d313a] bg-[#101419] p-4">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b] mb-3">EKLER</p>
+                      <div className="flex flex-wrap gap-3">
                         {selectedMessage.attachments.map((url, index) => (
                           <a
                             key={`${selectedMessage.id}-att-${index}`}
                             href={url}
                             target="_blank"
                             rel="noreferrer"
-                            className="block text-sm font-semibold text-blue-700 hover:underline break-all"
+                            className="px-3 py-1.5 rounded bg-[#16181d] border border-[#2d313a] text-[10px] font-mono text-[#38bdf8] hover:bg-[#1a1d24] transition-colors break-all max-w-full truncate"
                           >
-                            Ek {index + 1}
+                            EK DOSYA {index + 1}
                           </a>
                         ))}
                       </div>
@@ -709,30 +745,28 @@ function MessagesCenterContent() {
                   ) : null}
 
                   {selectedMessage.sender_id ? (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">
-                        Gönderen Profil
-                      </p>
-                      <div className="mt-2 flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
+                    <div className="rounded border border-[#2d313a] bg-[#101419] p-4">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b] mb-3">GÖNDEREN PROFİLİ</p>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded border border-[#2d313a] bg-[#16181d] overflow-hidden flex items-center justify-center shrink-0">
                           {resolveProfile(selectedMessage.sender_id)?.avatar_url ? (
                             <img
                               src={resolveProfile(selectedMessage.sender_id)?.avatar_url || ''}
                               alt="Gönderen"
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover mix-blend-lighten opacity-80"
                             />
                           ) : (
-                            <UserCircle2 size={17} className="text-slate-500" />
+                            <UserCircle2 size={20} className="text-[#475569]" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 truncate">
-                            {resolveProfile(selectedMessage.sender_id)?.full_name || 'İsimsiz kullanıcı'}
+                          <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">
+                            {resolveProfile(selectedMessage.sender_id)?.full_name || 'İSİMSİZ KULLANICI'}
                           </p>
-                          <p className="text-xs text-slate-500 truncate">
+                          <p className="mt-1 text-[10px] font-mono text-[#64748b] truncate">
                             {resolveProfile(selectedMessage.sender_id)?.email || selectedMessage.sender_id}
                           </p>
-                          <p className="text-[11px] text-slate-500">
+                          <p className="mt-1 text-[9px] font-mono uppercase tracking-widest text-[#475569]">
                             {roleLabel(resolveProfile(selectedMessage.sender_id)?.role || null)}
                           </p>
                         </div>
@@ -743,7 +777,7 @@ function MessagesCenterContent() {
               )}
             </div>
           </div>
-        </section>
+        </HardwarePanel>
       )}
     </div>
   )
@@ -754,7 +788,7 @@ export default function AdminMessagesPage() {
     <Suspense
       fallback={
         <div className="h-full flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#38bdf8] animate-spin" />
         </div>
       }
     >

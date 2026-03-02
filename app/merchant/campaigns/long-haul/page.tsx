@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Plus, Power, Trash2, Truck } from 'lucide-react'
+import { Loader2, Plus, Power, Terminal, Trash2, Truck } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../../_components/module-title'
+import { PanelTitle } from '../../_components/panel-title'
 import { CampaignSubNav } from '../_components/campaign-subnav'
 import { categorySlugFromName, type MerchantBusiness } from '../../_lib/helpers'
 import {
@@ -86,6 +86,17 @@ function couponSummary(coupon: CouponOption): string {
   }
   return 'Kupon'
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantLongHaulCampaignsPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -306,21 +317,21 @@ export default function MerchantLongHaulCampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)]">
-        <ModuleTitle title="Uzun Yol Kampanyası" />
+      <div className="border-b border-[#2d313a] pb-4">
+        <PanelTitle title="Uzun Yol Kampanyası" />
         <div className="mt-4">
           <CampaignSubNav active="long-haul" />
         </div>
-        <p className="text-sm text-slate-500 mt-3">
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-3">
           İşletme kategorisine göre uzun yol kullanıcılarına mesafe bazlı kampanya yayınlayın.
         </p>
       </div>
 
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] space-y-5">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+      <div className="space-y-5">
+        <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
           İşletme Seç
           <select
-            className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm border border-slate-200"
+            className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase tracking-wide"
             value={selectedBusinessId}
             onChange={(event) => setSelectedBusinessId(event.target.value)}
           >
@@ -334,42 +345,44 @@ export default function MerchantLongHaulCampaignsPage() {
 
         {bootLoading ? (
           <div className="h-20 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : !selectedBusiness ? (
-          <div className="text-sm text-slate-500">İşletme bulunamadı.</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#0a0c10] border border-dashed border-[#2d313a] p-5 text-center rounded">İşletme bulunamadı.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Aktif Uzun Yol</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{activeCount}</p>
-              </div>
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Kayıtlı Uzun Yol</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{campaigns.length}</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Aktif Uzun Yol</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{activeCount}</p>
+              </HardwarePanel>
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Kayıtlı Uzun Yol</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{campaigns.length}</p>
+              </HardwarePanel>
             </div>
 
             {errorText ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm font-semibold px-4 py-3">
-                {errorText}
+              <div className="rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-wide">
+                [HATA] {errorText}
               </div>
             ) : null}
 
             {allowedKinds.length === 0 ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 font-semibold">
-                Bu işletme yalnızca yakıt, yemek veya servis kategorilerinde ise uzun yol kampanyası yayınlayabilir.
+              <div className="rounded border border-amber-900/50 bg-amber-950/20 p-4 text-[11px] font-mono uppercase tracking-wide text-amber-400">
+                BU İŞLETME YALNIZCA YAKIT, YEMEK VEYA SERVİS KATEGORİLERİNDE İSE UZUN YOL KAMPANYASI YAYINLAYABİLİR.
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
-                <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)] space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                    <Truck className="w-4 h-4 text-sky-700" />
-                    <span className="text-sm font-semibold">Uzun Yol Kampanyası Oluştur</span>
+              <div className="grid grid-cols-1 lg:grid-cols-[430px_1fr] gap-5">
+                <HardwarePanel className="p-5 space-y-5">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+                    <Truck className="w-4 h-4 text-[#38bdf8]" />
+                    <span>Uzun Yol Kampanyası Oluştur</span>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {KIND_OPTIONS.filter((kind) => allowedKinds.includes(kind.value)).map((kind) => {
                       const selected = campaignKind === kind.value
                       return (
@@ -377,23 +390,23 @@ export default function MerchantLongHaulCampaignsPage() {
                           key={kind.value}
                           type="button"
                           onClick={() => setCampaignKind(kind.value)}
-                          className={`w-full text-left rounded-xl px-3 py-2 border transition-all ${
+                          className={`w-full text-left rounded-md px-4 py-3 border transition-all ${
                             selected
-                              ? 'border-sky-500 bg-sky-50 text-sky-800 shadow-[0_10px_16px_-14px_rgba(3,105,161,0.6)]'
-                              : 'border-slate-200 bg-slate-50 text-slate-600'
+                              ? 'border-[#226785] bg-[#153445] text-[#38bdf8]'
+                              : 'border-[#2d313a] bg-[#0a0c10] text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0]'
                           }`}
                         >
-                          <div className="text-sm font-bold">{kind.label}</div>
-                          <div className="text-xs font-medium opacity-80">{kind.helper}</div>
+                          <div className="text-[11px] font-mono tracking-widest uppercase">{kind.label}</div>
+                          <div className="text-[10px] font-mono text-[#64748b] mt-1">{kind.helper}</div>
                         </button>
                       )
                     })}
                   </div>
 
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Başlık
                     <input
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-bold border border-slate-200"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                       maxLength={90}
                       value={title}
                       onChange={(event) => setTitle(event.target.value)}
@@ -401,10 +414,10 @@ export default function MerchantLongHaulCampaignsPage() {
                     />
                   </label>
 
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Detay
                     <textarea
-                      className="mt-2 w-full min-h-24 px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-semibold border border-slate-200"
+                      className="mt-2 w-full min-h-[100px] px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 custom-scrollbar resize-none placeholder:text-[#475569]"
                       maxLength={420}
                       value={details}
                       onChange={(event) => setDetails(event.target.value)}
@@ -413,17 +426,17 @@ export default function MerchantLongHaulCampaignsPage() {
                   </label>
 
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Mesafe Yarıçapı</p>
+                    <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5 mb-3">Mesafe Yarıçapı</p>
                     <div className="flex flex-wrap gap-2">
                       {DISTANCE_OPTIONS.map((km) => (
                         <button
                           key={km}
                           type="button"
                           onClick={() => setDistanceKm(km)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                          className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                             distanceKm === km
-                              ? 'bg-sky-100 text-sky-700 border border-sky-300'
-                              : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                              : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:border-[#475569] hover:text-[#e2e8f0]'
                           }`}
                         >
                           {km} km
@@ -432,14 +445,14 @@ export default function MerchantLongHaulCampaignsPage() {
                     </div>
                   </div>
 
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Kupon Bağla (Opsiyonel)
                     <select
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-semibold border border-slate-200"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
                       value={selectedCouponId}
                       onChange={(event) => setSelectedCouponId(event.target.value)}
                     >
-                      <option value="">Kupon bağlama</option>
+                      <option value="">KUPON BAĞLAMA</option>
                       {coupons.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
                           {coupon.title || 'Kupon'} • {couponSummary(coupon)}
@@ -452,71 +465,74 @@ export default function MerchantLongHaulCampaignsPage() {
                     type="button"
                     onClick={createCampaign}
                     disabled={saving}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                    Yayınla
+                    {saving ? 'İŞLENİYOR...' : 'YAYINLA'}
                   </button>
-                </section>
+                </HardwarePanel>
 
-                <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)]">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <h2 className="text-base font-bold text-slate-800">Uzun Yol Yayınları</h2>
-                    {recordsLoading ? <Loader2 className="w-4 h-4 animate-spin text-sky-600" /> : null}
+                <HardwarePanel className="p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-3">
+                    <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                      <Terminal className="w-4 h-4 text-[#38bdf8]" />
+                      <span>Uzun Yol Yayınları</span>
+                    </div>
+                    {recordsLoading ? <Loader2 className="w-4 h-4 animate-spin text-[#38bdf8]" /> : null}
                   </div>
 
                   {campaigns.length === 0 ? (
-                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
-                      Henüz uzun yol kampanyası yok.
+                    <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                      HENÜZ UZUN YOL KAMPANYASI YOK.
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
                       {campaigns.map((campaign) => {
                         const campaignCoupon = parseCoupon(campaign.coupon_campaigns)
                         const isBusy = togglingId === campaign.id || deletingId === campaign.id
                         const isActive = Boolean(campaign.is_active)
-                        const kindLabel =
-                          KIND_OPTIONS.find((item) => item.value === campaign.campaign_kind)?.label || 'Kampanya'
+                        const kindLabel = KIND_OPTIONS.find((item) => item.value === campaign.campaign_kind)?.label || 'Kampanya'
 
                         return (
                           <article
                             key={campaign.id}
-                            className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5"
+                            className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                               <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-800 truncate">
+                                <p className="text-sm font-mono font-medium text-[#e2e8f0] uppercase tracking-wide truncate">
                                   {campaign.title || 'Kampanya'}
                                 </p>
-                                <p className="mt-1 text-[11px] font-semibold text-slate-500">
-                                  {kindLabel} • {campaign.distance_km || '-'} km • {formatDate(campaign.created_at)}
+                                <p className="mt-1.5 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                                  {kindLabel} • {campaign.distance_km || '-'} KM • {formatDate(campaign.created_at)}
                                 </p>
-                                <p className="mt-2 text-sm font-medium text-slate-600">
+                                <p className="mt-3 text-[11px] font-mono text-[#94a3b8] leading-relaxed">
                                   {campaign.details || '-'}
                                 </p>
                                 {campaignCoupon ? (
-                                  <p className="mt-2 text-xs font-semibold text-sky-700">
-                                    Kupon: {(campaignCoupon.code || '-').toUpperCase()} •{' '}
-                                    {campaignCoupon.title || 'Kupon'}
+                                  <p className="mt-3 inline-flex items-center px-2 py-1 rounded bg-[#101920] border border-[#1e232b] text-[10px] font-mono text-[#38bdf8] uppercase tracking-widest">
+                                    KUPON: {(campaignCoupon.code || '-')} • {campaignCoupon.title || 'Kupon'}
                                   </p>
                                 ) : null}
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex items-center gap-2 shrink-0 border-t border-[#1e232b] sm:border-t-0 pt-3 sm:pt-0">
                                 <button
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => toggleCampaign(campaign)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                                    isActive ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                                  className={`px-3 py-2 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                                    isActive 
+                                      ? 'bg-rose-950/20 text-rose-400 border-rose-900/50 hover:bg-rose-900/40' 
+                                      : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/50 hover:bg-emerald-900/40'
                                   }`}
                                 >
                                   {togglingId === campaign.id ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    'İŞLENİYOR'
                                   ) : (
                                     <span className="inline-flex items-center gap-1">
-                                      <Power className="w-3.5 h-3.5" />
-                                      {isActive ? 'Yayından Al' : 'Yayınla'}
+                                      <Power className="w-3 h-3" />
+                                      {isActive ? 'YAYINDAN AL' : 'YAYINLA'}
                                     </span>
                                   )}
                                 </button>
@@ -524,7 +540,7 @@ export default function MerchantLongHaulCampaignsPage() {
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => deleteCampaign(campaign.id)}
-                                  className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center"
+                                  className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center hover:bg-rose-900/40 transition-colors"
                                 >
                                   {deletingId === campaign.id ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -539,7 +555,7 @@ export default function MerchantLongHaulCampaignsPage() {
                       })}
                     </div>
                   )}
-                </section>
+                </HardwarePanel>
               </div>
             )}
           </>

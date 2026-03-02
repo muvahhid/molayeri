@@ -24,7 +24,7 @@ import {
 import { getBrowserSupabase } from '@/lib/browser-client'
 import type { MerchantBusiness } from '../_lib/helpers'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import {
   distanceKmBetween,
   getConvoyHeadcountBulk,
@@ -344,17 +344,17 @@ function offerStatusLabel(status: OfferStatusFilter): string {
 function offerStatusClasses(status: OfferStatusFilter): string {
   switch (status) {
     case 'accepted':
-      return 'bg-emerald-100 text-emerald-700'
+      return 'border border-emerald-900/50 bg-emerald-950/30 text-emerald-400'
     case 'rejected':
-      return 'bg-rose-100 text-rose-700'
+      return 'border border-rose-900/50 bg-rose-950/30 text-rose-400'
     case 'expired':
-      return 'bg-amber-100 text-amber-700'
+      return 'border border-amber-900/50 bg-amber-950/30 text-amber-400'
     case 'cancelled':
-      return 'bg-slate-200 text-slate-600'
+      return 'border border-[#2d313a] bg-[#16181d] text-[#64748b]'
     case 'completed':
-      return 'bg-indigo-100 text-indigo-700'
+      return 'border border-indigo-900/50 bg-indigo-950/30 text-indigo-400'
     default:
-      return 'bg-blue-100 text-blue-700'
+      return 'border border-blue-900/50 bg-blue-950/30 text-blue-400'
   }
 }
 
@@ -396,6 +396,17 @@ function sortOptionsForTab(tab: ListTab): { value: SortMode; label: string }[] {
     { value: 'recent', label: 'En Yeni' },
   ]
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 function MerchantConvoysPageContent() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -1124,25 +1135,27 @@ function MerchantConvoysPageContent() {
   }, [selectedBusinessId])
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-[28px] p-4 md:p-4 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] border border-white/70 shadow-[0_20px_24px_-24px_rgba(15,23,42,0.72)]">
+    <div className="space-y-6">
+      <div className="border-b border-[#2d313a] pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <ModuleTitle title="Konvoy Yönetimi" />
-            <p className="text-xs text-slate-500 mt-1">Konvoy takibi ve teklif akışı</p>
+            <PanelTitle title="Konvoy Yönetimi" />
+            <p className="text-[10px] font-mono text-[#64748b] tracking-widest uppercase mt-2">Konvoy takibi ve teklif akışı</p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-            {refreshing ? <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> : <Radar className="w-4 h-4 text-emerald-600" />}
-            <span className="text-xs font-semibold">{refreshing ? 'Canlı senkron...' : 'Canlı senkron aktif'}</span>
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded border text-[10px] font-mono tracking-widest uppercase transition-colors ${
+            refreshing ? 'border-[#226785] bg-[#153445] text-[#38bdf8]' : 'border-[#166534] bg-[#14532d]/40 text-emerald-400'
+          }`}>
+            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
+            <span>{refreshing ? 'CANLI SENKRON...' : 'CANLI SENKRON AKTİF'}</span>
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(260px,1fr)_auto_auto] gap-2 items-end">
-          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+        <div className="mt-5 grid grid-cols-1 xl:grid-cols-[minmax(260px,1fr)_auto_auto] gap-3 items-end">
+          <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             İşletme
             <select
-              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white text-slate-700 font-bold shadow-sm border border-slate-200"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
               value={selectedBusinessId}
               onChange={(event) => setSelectedBusinessId(event.target.value)}
             >
@@ -1159,9 +1172,9 @@ function MerchantConvoysPageContent() {
             onClick={() => {
               void resolveMerchantDistanceOrigin(true)
             }}
-            className="px-3 py-2.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 shadow-sm inline-flex items-center gap-2"
+            className="px-4 py-3 rounded text-[10px] font-mono uppercase tracking-widest bg-[#0a0c10] border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors inline-flex items-center gap-2"
           >
-            <MapPin className="w-4 h-4" />
+            <MapPin className="w-3.5 h-3.5" />
             Konumu Güncelle
           </button>
 
@@ -1170,93 +1183,97 @@ function MerchantConvoysPageContent() {
             onClick={() => {
               void fetchData(true)
             }}
-            className="px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 inline-flex items-center gap-2 shadow-sm"
+            className="px-4 py-3 rounded text-[10px] font-mono uppercase tracking-widest bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 hover:brightness-110 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] inline-flex items-center gap-2"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
             Yenile
           </button>
         </div>
 
-        <div className="mt-2.5 grid grid-cols-2 xl:grid-cols-4 gap-2">
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Aktif</p>
-            <p className="mt-0.5 text-lg font-bold text-slate-800">{activeConvoys.length}</p>
-            <p className="text-[11px] text-slate-500">Canlı: {liveTrackedCount}</p>
-          </div>
+        <div className="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Aktif</p>
+            <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{activeConvoys.length}</p>
+            <p className="text-[10px] font-mono text-[#64748b] mt-1 tracking-widest">Canlı: {liveTrackedCount}</p>
+          </HardwarePanel>
 
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Planlanan</p>
-            <p className="mt-0.5 text-lg font-bold text-slate-800">{plannedConvoys.length}</p>
-            <p className="text-[11px] text-slate-500">Yaklaşan rota</p>
-          </div>
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Planlanan</p>
+            <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{plannedConvoys.length}</p>
+            <p className="text-[10px] font-mono text-[#64748b] mt-1 tracking-widest uppercase">Yaklaşan Rota</p>
+          </HardwarePanel>
 
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Bekleyen Teklif</p>
-            <p className="mt-0.5 text-lg font-bold text-slate-800">{pendingOfferCount}</p>
-            <p className="text-[11px] text-slate-500">Açık: {activeOfferCount}</p>
-          </div>
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Bekleyen Teklif</p>
+            <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{pendingOfferCount}</p>
+            <p className="text-[10px] font-mono text-[#64748b] mt-1 tracking-widest uppercase">Açık: {activeOfferCount}</p>
+          </HardwarePanel>
 
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">En Yakın</p>
-            <p className="mt-0.5 text-lg font-bold text-slate-800">
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">En Yakın</p>
+            <p className="mt-2 text-xl font-mono text-[#e2e8f0]">
               {nearestActiveDistance != null ? `${nearestActiveDistance.toFixed(1)} km` : '-'}
             </p>
-            <p className="text-[11px] text-slate-500">Mesafeli: {activeWithDistanceCount}</p>
-          </div>
+            <p className="text-[10px] font-mono text-[#64748b] mt-1 tracking-widest uppercase">Mesafeli: {activeWithDistanceCount}</p>
+          </HardwarePanel>
         </div>
       </div>
 
-      <div className="rounded-[28px] p-4 md:p-4 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] border border-white/70 shadow-[0_20px_24px_-24px_rgba(15,23,42,0.72)]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-semibold">Operasyon Akışı ve Filtreler</span>
+      <HardwarePanel className="p-5 md:p-6 space-y-5">
+        <div className="flex items-center justify-between gap-3 border-b border-[#2d313a] pb-4">
+          <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+            <SlidersHorizontal className="w-4 h-4 text-[#38bdf8]" />
+            <span>Operasyon Akışı ve Filtreler</span>
           </div>
 
           <button
             type="button"
             onClick={() => setFiltersExpanded((current) => !current)}
-            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm flex items-center justify-center"
+            className="w-8 h-8 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] flex items-center justify-center transition-colors"
           >
             {filtersExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
 
         {filtersExpanded ? (
-          <div className="mt-3 space-y-3">
-            <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1.1fr_220px_auto] gap-2">
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1.1fr_220px_auto] gap-3">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Konvoy / Teklif Ara
-                <div className="relative mt-1.5">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <div className="relative mt-2">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
                   <input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700"
-                    placeholder="Konvoy adı, kaptan veya teklif..."
+                    className="w-full pl-10 pr-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                    placeholder="Konvoy adı, kaptan..."
                   />
                 </div>
               </label>
 
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Konum Filtresi
-                <div className="relative mt-1.5">
-                  <MapPin className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <div className="relative mt-2">
+                  <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
                   <input
                     value={locationQuery}
                     onChange={(event) => setLocationQuery(event.target.value)}
-                    className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700"
-                    placeholder="Başlangıç / varış lokasyonu..."
+                    className="w-full pl-10 pr-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                    placeholder="Başlangıç / varış..."
                   />
                 </div>
               </label>
 
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Sıralama
                 <select
                   value={sortMode}
                   onChange={(event) => setSortMode(event.target.value as SortMode)}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700"
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none"
                 >
                   {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -1269,50 +1286,50 @@ function MerchantConvoysPageContent() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="self-end px-3 py-2.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700"
+                className="self-end px-4 py-3 rounded text-[10px] font-mono uppercase tracking-widest bg-[#0a0c10] border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
               >
-                Filtreleri Sıfırla
+                FİLTRELERİ SIFIRLA
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setSelectedTab('active')}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
+                className={`px-4 py-3 rounded text-[11px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 border transition-colors ${
                   selectedTab === 'active'
-                    ? 'bg-[#ff8f3f] text-white shadow-[0_14px_24px_-20px_rgba(255,143,63,0.9)]'
-                    : 'bg-white border border-slate-200 text-slate-600'
+                    ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                 }`}
               >
                 <Radar className="w-4 h-4" />
-                Aktif ({activeConvoys.length})
+                AKTİF ({activeConvoys.length})
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedTab('planned')}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
+                className={`px-4 py-3 rounded text-[11px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 border transition-colors ${
                   selectedTab === 'planned'
-                    ? 'bg-[#4F83CC] text-white shadow-[0_14px_24px_-20px_rgba(79,131,204,0.9)]'
-                    : 'bg-white border border-slate-200 text-slate-600'
+                    ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                 }`}
               >
                 <Clock3 className="w-4 h-4" />
-                Planlanan ({plannedConvoys.length})
+                PLANLANAN ({plannedConvoys.length})
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedTab('offers')}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
+                className={`px-4 py-3 rounded text-[11px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 border transition-colors ${
                   selectedTab === 'offers'
-                    ? 'bg-[#00A86B] text-white shadow-[0_14px_24px_-20px_rgba(0,168,107,0.9)]'
-                    : 'bg-white border border-slate-200 text-slate-600'
+                    ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                 }`}
               >
                 <Route className="w-4 h-4" />
-                Teklif/Görüşme ({negotiations.length})
+                TEKLİF / GÖRÜŞME ({negotiations.length})
               </button>
             </div>
 
@@ -1324,10 +1341,10 @@ function MerchantConvoysPageContent() {
                     key={category}
                     type="button"
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold ${
+                    className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                       selected
-                        ? 'bg-slate-800 text-white'
-                        : 'bg-white border border-slate-200 text-slate-600'
+                        ? 'bg-[#e2e8f0] text-[#0a0c10] border-[#e2e8f0]'
+                        : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                     }`}
                   >
                     {category}
@@ -1337,9 +1354,9 @@ function MerchantConvoysPageContent() {
             </div>
 
             {selectedTab === 'offers' ? (
-              <div className="rounded-xl border border-slate-200 bg-white/80 p-2.5 space-y-2">
-                <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-600">
-                  <Filter className="w-4 h-4" />
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-4 space-y-3">
+                <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                  <Filter className="w-3.5 h-3.5" />
                   Teklif Durumu
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1350,10 +1367,10 @@ function MerchantConvoysPageContent() {
                         key={status.value}
                         type="button"
                         onClick={() => setOfferStatusFilter(status.value)}
-                        className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold ${
+                        className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                           selected
-                            ? 'bg-slate-800 text-white'
-                            : 'bg-white border border-slate-200 text-slate-600'
+                            ? 'bg-[#e2e8f0] text-[#0a0c10] border-[#e2e8f0]'
+                            : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                         }`}
                       >
                         {status.label}
@@ -1362,42 +1379,44 @@ function MerchantConvoysPageContent() {
                   })}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200">
+                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-[#1e232b]">
                   <button
                     type="button"
                     onClick={() => setShowOfferArchive(false)}
-                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold ${
-                      !showOfferArchive ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-600'
+                    className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
+                      !showOfferArchive ? 'bg-[#e2e8f0] text-[#0a0c10] border-[#e2e8f0]' : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569]'
                     }`}
                   >
-                    Aktif Teklifler ({activeOfferCount})
+                    AKTİF TEKLİFLER ({activeOfferCount})
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowOfferArchive(true)}
                     disabled={archivedOfferCount === 0}
-                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold inline-flex items-center gap-1 ${
-                      showOfferArchive ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-600'
+                    className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 transition-colors ${
+                      showOfferArchive ? 'bg-[#e2e8f0] text-[#0a0c10] border-[#e2e8f0]' : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569]'
                     } disabled:opacity-50`}
                   >
                     <Archive className="w-3.5 h-3.5" />
-                    Arşiv ({archivedOfferCount})
+                    ARŞİV ({archivedOfferCount})
                   </button>
                   {negotiations.length > OFFER_ARCHIVE_LIMIT ? (
-                    <span className="text-[11px] text-slate-500">
-                      {`20+ kayıtta 5 günü geçenler otomatik arşive alınır.`}
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#475569]">
+                      20+ KAYITTA 5 GÜNÜ GEÇENLER OTOMATİK ARŞİVE ALINIR.
                     </span>
                   ) : null}
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-slate-200 bg-white/80 p-2.5 space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-700">
-                    <Radar className="w-3.5 h-3.5 text-blue-500" />
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-4 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
+                    <Radar className="w-3.5 h-3.5 text-[#38bdf8]" />
                     Menzil Filtresi
                   </div>
-                  <div className="text-[11px] font-semibold text-blue-600">{distanceTargetKm} km</div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-[#38bdf8] border border-[#38bdf8]/30 px-2 py-1 rounded bg-[#38bdf8]/10">
+                    {distanceTargetKm} KM
+                  </div>
                 </div>
 
                 <input
@@ -1407,7 +1426,7 @@ function MerchantConvoysPageContent() {
                   step={5}
                   value={distanceTargetKm}
                   onChange={(event) => setDistanceTargetKm(Number(event.target.value))}
-                  className="w-full"
+                  className="w-full accent-[#38bdf8]"
                 />
 
                 <div className="flex flex-wrap gap-2">
@@ -1416,29 +1435,29 @@ function MerchantConvoysPageContent() {
                       key={preset}
                       type="button"
                       onClick={() => setDistanceTargetKm(preset)}
-                      className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700"
+                      className="px-2.5 py-1.5 rounded border border-[#2d313a] text-[10px] font-mono uppercase tracking-widest bg-[#0a0c10] text-[#64748b] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
                     >
-                      {preset} km
+                      {preset} KM
                     </button>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => setAppliedDistanceKm(distanceTargetKm)}
                     disabled={!hasDistanceOrigin || isLiveSchemaMissing}
-                    className="px-3 py-2 rounded-lg text-[11px] font-semibold text-white bg-blue-600 disabled:opacity-50"
+                    className="px-4 py-2.5 rounded text-[10px] font-mono uppercase tracking-widest bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 hover:brightness-110 disabled:opacity-50"
                   >
-                    Menzili Uygula
+                    MENZİLİ UYGULA
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setAppliedDistanceKm(null)}
-                    className="px-3 py-2 rounded-lg text-[11px] font-semibold text-slate-700 bg-slate-200"
+                    className="px-4 py-2.5 rounded text-[10px] font-mono uppercase tracking-widest bg-[#0a0c10] border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
                   >
-                    Menzili Kaldır
+                    MENZİLİ KALDIR
                   </button>
 
                   <button
@@ -1446,60 +1465,60 @@ function MerchantConvoysPageContent() {
                     onClick={() => {
                       void resolveMerchantDistanceOrigin(true)
                     }}
-                    className="px-3 py-2 rounded-lg text-[11px] font-semibold text-blue-700 bg-blue-100"
+                    className="px-4 py-2.5 rounded text-[10px] font-mono uppercase tracking-widest bg-[#153445] border border-[#226785] text-[#38bdf8] hover:brightness-110 transition-colors"
                   >
-                    Konumu Yenile
+                    KONUMU YENİLE
                   </button>
                 </div>
 
-                <div className={`text-[11px] ${isLiveSchemaMissing || !hasDistanceOrigin ? 'text-rose-600' : 'text-slate-600'}`}>
+                <div className={`text-[10px] font-mono uppercase tracking-widest ${isLiveSchemaMissing || !hasDistanceOrigin ? 'text-rose-400' : 'text-[#64748b]'}`}>
                   {isLiveSchemaMissing
-                    ? "Canlı konum alanları DB'de yok. 'supabase_convoy_live_position_safe.sql' çalıştırılmalı."
+                    ? "[HATA] CANLI KONUM ALANLARI DB'DE YOK."
                     : hasDistanceOrigin
                       ? appliedDistanceKm == null
-                        ? `Menzil kapalı. Kaynak: cihaz konumu${formatClock(merchantLiveUpdatedAt) ? ` (${formatClock(merchantLiveUpdatedAt)})` : ''}.`
-                        : `Aktif filtre: 0-${appliedDistanceKm} km. Uygun konvoy: ${activeWithinAppliedCount}.`
+                        ? `MENZİL KAPALI. KAYNAK: CİHAZ KONUMU${formatClock(merchantLiveUpdatedAt) ? ` (${formatClock(merchantLiveUpdatedAt)})` : ''}.`
+                        : `AKTİF FİLTRE: 0-${appliedDistanceKm} KM. UYGUN KONVOY: ${activeWithinAppliedCount}.`
                       : locationAttempted
-                        ? 'Cihaz konumu alınamadı. Yanlış yüksek km önlemek için mesafe hesaplaması beklemede.'
-                        : 'Cihaz konumu bekleniyor. Mesafe hesaplaması başlayacak.'}
+                        ? '[HATA] CİHAZ KONUMU ALINAMADI. MESAFE HESAPLAMASI BEKLEMEDE.'
+                        : 'CİHAZ KONUMU BEKLENİYOR...'}
                 </div>
               </div>
             )}
 
-            <div className="rounded-xl border border-slate-200 bg-white/85 p-2.5 text-[11px] text-slate-600">
-              <span className="font-semibold text-slate-700">Akış:</span> 1) Filtrele 2) Konvoyu seç 3) Teklifi gönder 4) Görüşmeyi takip et
+            <div className="rounded border border-[#1e232b] bg-[#0a0c10] p-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+              <span className="text-[#94a3b8]">AKIŞ:</span> 1) FİLTRELE 2) KONVOYU SEÇ 3) TEKLİFİ GÖNDER 4) GÖRÜŞMEYİ TAKİP ET
             </div>
           </div>
         ) : (
-          <div className="mt-3 text-xs text-slate-500">Filtre paneli kapalı. Görünür kayıt: {totalVisibleCount}</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#475569]">FİLTRE PANELİ KAPALI. GÖRÜNÜR KAYIT: {totalVisibleCount}</div>
         )}
-      </div>
+      </HardwarePanel>
 
-      <div className="rounded-[30px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] border border-white/70 shadow-[0_22px_28px_-24px_rgba(15,23,42,0.72)] min-h-[360px]">
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+      <HardwarePanel className="p-5 md:p-6 min-h-[360px]">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-5 border-b border-[#2d313a] pb-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">{listTitle}</h3>
-            <p className="text-xs text-slate-500 mt-1">{listDescription}</p>
+            <h3 className="text-[14px] font-medium text-[#e2e8f0] uppercase tracking-wide">{listTitle}</h3>
+            <p className="text-[10px] font-mono text-[#64748b] mt-1 tracking-widest uppercase">{listDescription}</p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600">
-            <Users className="w-4 h-4" />
-            Filtre Sonucu: {totalVisibleCount} / {sourceCount}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
+            <Users className="w-3.5 h-3.5" />
+            SONUÇ: {totalVisibleCount} / {sourceCount}
           </div>
         </div>
 
         {loading ? (
-          <div className="h-[300px] flex items-center justify-center">
-            <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+          <div className="h-[260px] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : totalVisibleCount === 0 ? (
-          <div className="h-[300px] flex items-center justify-center text-sm font-semibold text-slate-500 text-center px-4">
+          <div className="h-[200px] flex items-center justify-center text-[11px] font-mono uppercase tracking-widest text-[#475569] text-center border border-dashed border-[#2d313a] rounded bg-[#0a0c10]">
             {selectedTab === 'active' && hasDistanceOrigin && appliedDistanceKm != null
-              ? `Seçilen menzilde (0-${appliedDistanceKm} km) aktif konvoy bulunamadı.`
-              : 'Filtrelere uygun kayıt bulunamadı.'}
+              ? `SEÇİLEN MENZİLDE (0-${appliedDistanceKm} KM) AKTİF KONVOY BULUNAMADI.`
+              : 'FİLTRELERE UYGUN KAYIT BULUNAMADI.'}
           </div>
         ) : selectedTab === 'offers' ? (
-          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {negotiationItems.map((item) => {
               const convoyCategory = resolveConvoyCategory(item, true)
               const color = categoryColor(convoyCategory)
@@ -1511,46 +1530,46 @@ function MerchantConvoysPageContent() {
                   key={item.id}
                   type="button"
                   onClick={() => openNegotiation(item)}
-                  className="w-full text-left rounded-2xl p-4 bg-white border border-slate-200 shadow-[0_14px_26px_-24px_rgba(15,23,42,0.82)] hover:border-slate-300"
+                  className="w-full text-left rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-4">
                     <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-100"
-                      style={{ color }}
+                      className="w-10 h-10 rounded border flex items-center justify-center shrink-0"
+                      style={{ borderColor: `${color}50`, color, backgroundColor: `${color}10` }}
                     >
-                      <Route className="w-5 h-5" />
+                      <Route className="w-4 h-4" />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-base font-semibold text-slate-800 line-clamp-1">{item.convoy?.name || 'Konvoy'}</p>
-                          <p className="text-xs font-semibold text-slate-500">Kaptan: {item.captain?.full_name || 'Kaptan'}</p>
+                          <p className="text-[13px] font-medium text-[#e2e8f0] line-clamp-1 uppercase tracking-wide">{item.convoy?.name || 'KONVOY'}</p>
+                          <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest mt-1">KAPTAN: {item.captain?.full_name || 'BİLİNMİYOR'}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 mt-0.5" />
+                        <ChevronRight className="w-4 h-4 text-[#475569] shrink-0" />
                       </div>
 
-                      <div className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 line-clamp-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] line-clamp-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#64748b]" />
                         {item.convoy?.start_location || '-'} → {item.convoy?.end_location || '-'}
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">{convoyCategory}</span>
-                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">{formatDateTime(item.convoy?.start_time || null)}</span>
-                        <span className={`px-2 py-1 rounded-full font-semibold ${offerStatusClasses(status)}`}>
+                      <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-mono uppercase tracking-widest">
+                        <span className="px-2 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#64748b]">{convoyCategory}</span>
+                        <span className="px-2 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#64748b]">{formatDateTime(item.convoy?.start_time || null)}</span>
+                        <span className={`px-2 py-1 rounded ${offerStatusClasses(status)}`}>
                           {offerStatusLabel(status)}
                         </span>
                       </div>
 
-                      <div className="mt-2 rounded-xl bg-slate-50 border border-slate-200 p-2.5">
-                        <p className="text-xs font-semibold text-slate-700 line-clamp-1">{item.offer_title || 'Teklif başlığı yok'}</p>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.offer_details || 'Teklif detayı yok'}</p>
+                      <div className="mt-3 rounded border border-[#1e232b] bg-[#101419] p-3">
+                        <p className="text-[11px] font-medium text-[#e2e8f0] uppercase tracking-wide line-clamp-1">{item.offer_title || 'BAŞLIK YOK'}</p>
+                        <p className="text-[10px] font-mono text-[#64748b] mt-1.5 line-clamp-2 leading-relaxed">{item.offer_details || 'DETAY YOK'}</p>
                       </div>
 
                       {coupon ? (
-                        <div className="mt-2 text-[11px] font-semibold text-emerald-700">
-                          Kupon: {coupon.title || 'Kupon'} • {couponBenefitText(coupon)}
+                        <div className="mt-3 text-[10px] font-mono uppercase tracking-widest text-emerald-400 border border-emerald-900/50 bg-emerald-950/20 px-2 py-1 rounded inline-block">
+                          KUPON: {coupon.title || 'KUPON'} • {couponBenefitText(coupon)}
                         </div>
                       ) : null}
                     </div>
@@ -1560,7 +1579,7 @@ function MerchantConvoysPageContent() {
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {(selectedTab === 'active' ? activeItems : plannedItems).map((convoy) => {
               const convoyCategory = resolveConvoyCategory(convoy, false)
               const convoyColor = categoryColor(convoyCategory)
@@ -1586,43 +1605,43 @@ function MerchantConvoysPageContent() {
                   key={convoyId}
                   type="button"
                   onClick={() => openConvoyDetail(convoy)}
-                  className="w-full text-left rounded-2xl p-4 bg-white border border-slate-200 shadow-[0_14px_26px_-24px_rgba(15,23,42,0.82)] hover:border-slate-300"
+                  className="w-full text-left rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-100" style={{ color: convoyColor }}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded border flex items-center justify-center shrink-0" style={{ borderColor: `${convoyColor}50`, color: convoyColor, backgroundColor: `${convoyColor}10` }}>
                       {categoryIcon(convoyCategory)}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-base font-semibold text-slate-800 line-clamp-1">{convoy.name || 'Konvoy'}</p>
-                          <p className="text-xs font-semibold text-slate-500">Kaptan: {convoy.profiles?.full_name || 'Kaptan'}</p>
+                          <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide line-clamp-1">{convoy.name || 'KONVOY'}</p>
+                          <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest mt-1">KAPTAN: {convoy.profiles?.full_name || 'BİLİNMİYOR'}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 mt-0.5" />
+                        <ChevronRight className="w-4 h-4 text-[#475569] shrink-0 mt-0.5" />
                       </div>
 
-                      <div className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 line-clamp-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] line-clamp-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#64748b]" />
                         {convoy.start_location || '-'} → {convoy.end_location || '-'}
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">{convoyCategory}</span>
-                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">{formatDateTime(convoy.start_time)}</span>
+                      <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-mono uppercase tracking-widest">
+                        <span className="px-2 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#64748b]">{convoyCategory}</span>
+                        <span className="px-2 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#64748b]">{formatDateTime(convoy.start_time)}</span>
 
                         {selectedTab === 'active' ? (
                           distance != null ? (
-                            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700">{distance.toFixed(1)} km</span>
+                            <span className="px-2 py-1 rounded bg-[#153445] border border-[#226785] text-[#38bdf8]">{distance.toFixed(1)} KM</span>
                           ) : (
-                            <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-500">Canlı konum yok</span>
+                            <span className="px-2 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#475569]">KONUM YOK</span>
                           )
                         ) : null}
 
                         {selectedTab === 'active' && trend ? (
                           <span
-                            className="px-2 py-1 rounded-full"
-                            style={{ backgroundColor: `${trendColor(trend)}22`, color: trendColor(trend) }}
+                            className="px-2 py-1 rounded border"
+                            style={{ borderColor: `${trendColor(trend)}50`, backgroundColor: `${trendColor(trend)}15`, color: trendColor(trend) }}
                           >
                             {trendLabel(trend)}
                           </span>
@@ -1630,10 +1649,11 @@ function MerchantConvoysPageContent() {
 
                         {leaderUpdatedAt ? (
                           <span
-                            className="px-2 py-1 rounded-full"
+                            className="px-2 py-1 rounded border"
                             style={{
-                              backgroundColor: isLikelyLive(leaderUpdatedAt) ? '#00A86B22' : '#64748B22',
-                              color: isLikelyLive(leaderUpdatedAt) ? '#00A86B' : '#64748B',
+                              borderColor: isLikelyLive(leaderUpdatedAt) ? '#166534' : '#2d313a',
+                              backgroundColor: isLikelyLive(leaderUpdatedAt) ? '#14532d40' : '#16181d',
+                              color: isLikelyLive(leaderUpdatedAt) ? '#34d399' : '#64748b',
                             }}
                           >
                             {formatRelativeAgo(leaderUpdatedAt)}
@@ -1641,17 +1661,17 @@ function MerchantConvoysPageContent() {
                         ) : null}
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                          <span>Doluluk: {confirmedCount}/{Math.max(1, capacityCount || 1)}</span>
-                          <span>Bekleyen: {pendingCount}</span>
+                      <div className="mt-4 rounded border border-[#1e232b] bg-[#101419] p-3">
+                        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                          <span>DOLULUK: {confirmedCount}/{Math.max(1, capacityCount || 1)}</span>
+                          <span>BEKLEYEN: {pendingCount}</span>
                         </div>
-                        <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div className="mt-2 h-1.5 rounded-full bg-[#16181d] border border-[#2d313a] overflow-hidden">
                           <div
                             className="h-full rounded-full"
                             style={{
                               width: `${occupancyPercent}%`,
-                              background: `linear-gradient(90deg, ${convoyColor} 0%, #334155 100%)`,
+                              background: `linear-gradient(90deg, ${convoyColor} 0%, #1e232b 100%)`,
                             }}
                           />
                         </div>
@@ -1663,146 +1683,153 @@ function MerchantConvoysPageContent() {
             })}
           </div>
         )}
-      </div>
+      </HardwarePanel>
 
       {activeDetail ? (
-        <div className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-sm p-4 flex items-center justify-center">
-          <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[32px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f8ff_100%)] border border-white/80 shadow-2xl space-y-4">
-            <div className="flex items-start justify-between gap-3">
+        <div className="fixed inset-0 z-50 bg-[#050608]/90 backdrop-blur-sm p-4 flex items-center justify-center">
+          <HardwarePanel className="w-full max-w-5xl max-h-[94vh] flex flex-col p-0 overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-[#2d313a] bg-[#0f1115] flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">{activeDetail.convoy.name || 'Konvoy'}</h2>
-                <div className="text-sm text-slate-500 mt-1">Kaptan: {activeDetail.convoy.profiles?.full_name || 'Bilinmiyor'}</div>
+                <h2 className="text-[16px] font-medium text-[#e2e8f0] uppercase tracking-wide">{activeDetail.convoy.name || 'KONVOY'}</h2>
+                <div className="text-[10px] font-mono text-[#64748b] mt-1.5 uppercase tracking-widest">KAPTAN: {activeDetail.convoy.profiles?.full_name || 'BİLİNMİYOR'}</div>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveDetail(null)}
-                className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200"
+                className="px-4 py-2 rounded text-[10px] font-mono tracking-widest uppercase border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
               >
-                Kapat
+                KAPAT
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4">
-              <section className="rounded-2xl p-4 bg-white border border-slate-200 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.9)] space-y-3">
-                <h3 className="text-sm font-bold text-slate-800">Operasyon Özeti</h3>
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6 bg-[#0c0e12] custom-scrollbar">
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-6">
+                
+                <section className="space-y-4">
+                  <h3 className="text-[11px] font-mono font-medium text-[#e2e8f0] uppercase tracking-widest border-b border-[#2d313a] pb-2">OPERASYON ÖZETİ</h3>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                  <div className="inline-flex items-center gap-1.5 font-semibold">
-                    <MapPin className="w-4 h-4 text-slate-500" />
-                    {activeDetail.convoy.start_location || '-'} → {activeDetail.convoy.end_location || '-'}
+                  <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                    <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#94a3b8]">
+                      <MapPin className="w-4 h-4 text-[#64748b]" />
+                      {activeDetail.convoy.start_location || '-'} → {activeDetail.convoy.end_location || '-'}
+                    </div>
+                    <div className="text-[10px] font-mono text-[#64748b] mt-2 uppercase tracking-widest">BAŞLANGIÇ: {formatDateTime(activeDetail.convoy.start_time)}</div>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">Başlangıç: {formatDateTime(activeDetail.convoy.start_time)}</div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Mesafe</p>
-                    <p className="text-lg font-bold text-slate-800 mt-1">
-                      {activeDetail.leaderDistanceKm != null ? `${activeDetail.leaderDistanceKm.toFixed(1)} km` : '-'}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">MESAFE</p>
+                      <p className="text-lg font-mono text-[#e2e8f0] mt-1">
+                        {activeDetail.leaderDistanceKm != null ? `${activeDetail.leaderDistanceKm.toFixed(1)} KM` : '-'}
+                      </p>
+                    </div>
+                    <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">TREND</p>
+                      <p className="text-[13px] font-mono uppercase tracking-widest mt-2" style={{ color: trendColor(activeDetail.distanceTrend) }}>
+                        {trendLabel(activeDetail.distanceTrend)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Trend</p>
-                    <p className="text-lg font-bold mt-1" style={{ color: trendColor(activeDetail.distanceTrend) }}>
-                      {trendLabel(activeDetail.distanceTrend)}
-                    </p>
+
+                  <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                    SON CANLI GÜNCELLEME:{' '}
+                    <span className="text-[#94a3b8]">
+                      {activeDetail.leaderLastUpdatedAt
+                        ? `${formatDateTime(activeDetail.leaderLastUpdatedAt)} (${formatRelativeAgo(activeDetail.leaderLastUpdatedAt)})`
+                        : 'BİLİNMİYOR'}
+                    </span>
                   </div>
-                </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                  Son canlı güncelleme:{' '}
-                  <span className="font-semibold text-slate-700">
-                    {activeDetail.leaderLastUpdatedAt
-                      ? `${formatDateTime(activeDetail.leaderLastUpdatedAt)} (${formatRelativeAgo(activeDetail.leaderLastUpdatedAt)})`
-                      : 'Bilinmiyor'}
-                  </span>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                  <div className="font-semibold text-slate-700 mb-1">Hazır Teklif Şablonları</div>
-                  <div className="flex flex-wrap gap-2">
-                    {offerTemplates.map((template) => (
-                      <button
-                        key={template.title}
-                        type="button"
-                        onClick={() => {
-                          setOfferTitle(template.title)
-                          setOfferDetails(template.details)
-                        }}
-                        className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700"
-                      >
-                        {template.title}
-                      </button>
-                    ))}
+                  <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] mb-3 border-b border-[#1e232b] pb-2">HAZIR TEKLİF ŞABLONLARI</div>
+                    <div className="flex flex-wrap gap-2">
+                      {offerTemplates.map((template) => (
+                        <button
+                          key={template.title}
+                          type="button"
+                          onClick={() => {
+                            setOfferTitle(template.title)
+                            setOfferDetails(template.details)
+                          }}
+                          className="px-3 py-2 rounded border border-[#2d313a] bg-[#16181d] text-[9px] font-mono uppercase tracking-widest text-[#64748b] hover:text-[#e2e8f0] hover:border-[#475569] transition-colors"
+                        >
+                          {template.title}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section className="rounded-2xl p-4 bg-white border border-slate-200 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.9)] space-y-3">
-                <h3 className="text-sm font-bold text-slate-800">Teklif Oluştur</h3>
+                <section className="space-y-4">
+                  <h3 className="text-[11px] font-mono font-medium text-[#e2e8f0] uppercase tracking-widest border-b border-[#2d313a] pb-2">TEKLİF OLUŞTUR</h3>
 
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                  Teklif Başlığı
-                  <input
-                    value={offerTitle}
-                    onChange={(event) => setOfferTitle(event.target.value)}
-                    maxLength={80}
-                    className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
-                    placeholder="Örn: Konvoy Katılımcılarına Özel"
-                  />
-                </label>
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+                    TEKLİF BAŞLIĞI
+                    <input
+                      value={offerTitle}
+                      onChange={(event) => setOfferTitle(event.target.value)}
+                      maxLength={80}
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                      placeholder="Örn: Konvoy Katılımcılarına Özel"
+                    />
+                  </label>
 
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                  Teklif Detayı
-                  <textarea
-                    value={offerDetails}
-                    onChange={(event) => setOfferDetails(event.target.value)}
-                    maxLength={420}
-                    className="mt-2 w-full min-h-[140px] px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
-                    placeholder="Konvoy ekibi için sağlayacağınız avantajları açıkça yazın."
-                  />
-                  <div className="mt-1 text-[11px] text-slate-500 text-right">{offerDetails.length}/420</div>
-                </label>
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+                    TEKLİF DETAYI
+                    <textarea
+                      value={offerDetails}
+                      onChange={(event) => setOfferDetails(event.target.value)}
+                      maxLength={420}
+                      className="mt-2 w-full min-h-[140px] px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 custom-scrollbar resize-none placeholder:text-[#475569]"
+                      placeholder="Konvoy ekibi için sağlayacağınız avantajları açıkça yazın."
+                    />
+                    <div className="mt-1.5 text-[9px] text-[#475569] text-right">{offerDetails.length}/420</div>
+                  </label>
 
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                  Kupon (Opsiyonel)
-                  <select
-                    value={selectedCouponId}
-                    onChange={(event) => setSelectedCouponId(event.target.value)}
-                    className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+                    KUPON BAĞLA (OPSİYONEL)
+                    <select
+                      value={selectedCouponId}
+                      onChange={(event) => setSelectedCouponId(event.target.value)}
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
+                    >
+                      <option value="__none__">KUPON EKLEME</option>
+                      {activeCoupons.map((coupon) => (
+                        <option key={coupon.id} value={coupon.id}>
+                          {couponLabel(coupon)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="rounded border border-[#1e232b] bg-[#101419] p-4">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] mb-2 border-b border-[#1e232b] pb-2">TEKLİF ÖNİZLEME</div>
+                    <div className="text-[12px] font-mono uppercase tracking-wide text-[#38bdf8]">{offerTitle.trim() || 'BAŞLIK BEKLENİYOR...'}</div>
+                    <div className="mt-2 text-[10px] font-mono text-[#94a3b8] leading-relaxed uppercase tracking-wider">{offerDetails.trim() || 'DETAY BEKLENİYOR...'}</div>
+                    {selectedCoupon ? (
+                      <div className="mt-3 inline-block px-2 py-1 rounded bg-emerald-950/20 border border-emerald-900/50 text-[9px] font-mono uppercase tracking-widest text-emerald-400">
+                        KUPON: {couponLabel(selectedCoupon)}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={sendOffer}
+                    disabled={sendingOffer || !offerTitle.trim() || !offerDetails.trim()}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
                   >
-                    <option value="__none__">Kupon ekleme</option>
-                    {activeCoupons.map((coupon) => (
-                      <option key={coupon.id} value={coupon.id}>
-                        {couponLabel(coupon)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="rounded-xl p-3 bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                  <div className="font-semibold text-slate-800 mb-1">Teklif Önizleme</div>
-                  <div className="text-orange-600 font-bold">{offerTitle.trim() || 'Başlık bekleniyor...'}</div>
-                  <div className="mt-1 leading-relaxed">{offerDetails.trim() || 'Detay bekleniyor...'}</div>
-                  {selectedCoupon ? (
-                    <div className="mt-2 text-emerald-700 font-semibold">Kupon: {couponLabel(selectedCoupon)}</div>
-                  ) : null}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={sendOffer}
-                  disabled={sendingOffer || !offerTitle.trim() || !offerDetails.trim()}
-                  className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50"
-                >
-                  <span className="inline-flex items-center gap-2 justify-center">
                     {sendingOffer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    Teklifi Gönder
-                  </span>
-                </button>
-              </section>
+                    {sendingOffer ? 'GÖNDERİLİYOR...' : 'TEKLİFİ GÖNDER'}
+                  </button>
+                </section>
+
+              </div>
             </div>
-          </div>
+          </HardwarePanel>
         </div>
       ) : null}
     </div>
@@ -1814,7 +1841,7 @@ export default function MerchantConvoysPage() {
     <Suspense
       fallback={
         <div className="h-[55vh] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#38bdf8] animate-spin" />
         </div>
       }
     >

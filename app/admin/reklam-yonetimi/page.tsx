@@ -15,6 +15,7 @@ import {
   UploadCloud,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
+import { ModuleTitle } from '../../merchant/_components/module-title'
 
 type TabKey = 'reklam1' | 'reklam2' | 'reklam3' | 'slot_rules'
 type SlotKey = 'uzun_yol_featured' | 'reklam_2' | 'reklam_3'
@@ -100,7 +101,7 @@ const TAB_ITEMS: Array<{
   key: TabKey
   label: string
   hint: string
-  icon: typeof Megaphone
+  icon: typeof Megaphone | typeof BarChart3
 }> = [
   {
     key: 'reklam1',
@@ -242,6 +243,17 @@ function toErrorMessage(err: unknown, fallback: string): string {
   }
   return fallback
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function AdminReklamYonetimiPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -741,13 +753,12 @@ export default function AdminReklamYonetimiPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] border border-white/75">
+    <div className="space-y-6 text-[#e2e8f0]">
+      <HardwarePanel className="p-5 md:p-6 border-b border-[#2d313a]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-blue-600">Admin Modülü</p>
-            <h1 className="mt-1 text-xl font-bold text-slate-800">Reklam Yönetimi</h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <ModuleTitle title="Reklam Yönetimi" />
+            <p className="mt-2 text-[10px] font-mono tracking-widest uppercase text-[#64748b]">
               Reklam 1-2-3 alanlarını yönet, slot bazlı yerleşim kurallarını ayarla, performansı izle.
             </p>
           </div>
@@ -755,14 +766,14 @@ export default function AdminReklamYonetimiPage() {
             type="button"
             onClick={() => void refreshAll()}
             disabled={refreshing || isAdmin !== true}
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 shadow-[0_12px_20px_-16px_rgba(15,23,42,0.55)] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded px-4 py-3 border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
           >
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
             Yenile
           </button>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-1.5 rounded-2xl p-1.5 bg-[#e8edf6] border border-slate-200/80 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
+        <div className="mt-6 inline-flex rounded border border-[#2d313a] p-1 bg-[#0a0c10] flex-wrap gap-1">
           {TAB_ITEMS.map((tab) => {
             const active = activeTab === tab.key
             const Icon = tab.icon
@@ -771,287 +782,291 @@ export default function AdminReklamYonetimiPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left transition-all ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded text-left transition-all ${
                   active
-                    ? 'bg-white text-slate-900 shadow-[0_10px_14px_-12px_rgba(15,23,42,0.8)]'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]'
+                    : 'bg-transparent border border-transparent text-[#64748b] hover:text-[#94a3b8]'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                 <span>
-                  <span className="block text-sm font-bold leading-tight">{tab.label}</span>
-                  <span className="block text-[11px] font-medium opacity-80 leading-tight">{tab.hint}</span>
+                  <span className="block text-[11px] font-mono uppercase tracking-widest leading-none mb-1">{tab.label}</span>
+                  <span className="block text-[9px] font-mono tracking-widest leading-none opacity-70">{tab.hint}</span>
                 </span>
               </button>
             )
           })}
         </div>
-      </section>
+      </HardwarePanel>
 
       {initialLoading ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-8 text-center shadow-[0_16px_26px_-24px_rgba(15,23,42,0.45)]">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-500" />
-          <p className="mt-3 text-sm text-slate-600">Reklam yönetimi hazırlanıyor...</p>
-        </div>
+        <HardwarePanel className="p-10 flex flex-col items-center justify-center text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-[#38bdf8]" />
+          <p className="mt-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Reklam yönetimi hazırlanıyor...</p>
+        </HardwarePanel>
       ) : null}
 
       {!initialLoading && isAdmin !== true ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-700 text-sm font-semibold">
-          {error || 'Bu sayfaya erişim yetkin yok.'}
-        </div>
+        <HardwarePanel className="p-5 border-rose-900/50 bg-rose-950/20 text-rose-400 text-[11px] font-mono uppercase tracking-widest">
+          {error || 'Bu sayfaya erişim yetkiniz yok.'}
+        </HardwarePanel>
       ) : null}
 
       {!initialLoading && isAdmin === true && activeSlot ? (
-        <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <section className="rounded-2xl bg-white/90 border border-slate-200/80 p-4 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.45)]">
-            <div className="flex items-center justify-between gap-3">
+        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <HardwarePanel className="p-5 space-y-5">
+            <div className="flex items-center justify-between gap-3 border-b border-[#1e232b] pb-3">
               <div>
-                <h2 className="text-base font-bold text-slate-800">{activeSlotLabel}</h2>
-                <p className="text-xs font-medium text-slate-500">{editingId ? 'Kayıt düzenleme' : 'Yeni reklam kaydı'}</p>
+                <h2 className="text-[12px] font-mono uppercase tracking-widest text-[#e2e8f0]">{activeSlotLabel}</h2>
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] mt-1">{editingId ? 'Kayıt Düzenleme' : 'Yeni Reklam Kaydı'}</p>
               </div>
               {editingId ? (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                  className="px-3 py-1.5 rounded border border-[#2d313a] bg-transparent text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
                 >
-                  Formu Sıfırla
+                  FORMU SIFIRLA
                 </button>
               ) : null}
             </div>
 
-            <form className="mt-3 space-y-3" onSubmit={handleSave}>
+            <form className="space-y-4" onSubmit={handleSave}>
               <label className="block">
-                <span className="text-xs font-semibold text-slate-600">Başlık</span>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Başlık</span>
                 <input
                   value={form.title}
                   onChange={(event) => setField('title', event.target.value)}
                   maxLength={90}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                  className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   placeholder="Örn: Gece Yakıt Fırsatı"
                 />
               </label>
 
               <label className="block">
-                <span className="text-xs font-semibold text-slate-600">Alt Başlık (opsiyonel)</span>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Alt Başlık (Opsiyonel)</span>
                 <input
                   value={form.subtitle}
                   onChange={(event) => setField('subtitle', event.target.value)}
                   maxLength={140}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                  className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   placeholder="Örn: MolaYeri anlaşmalı istasyonlarda geçerli"
                 />
               </label>
 
-              <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
-                <p className="text-xs font-semibold text-slate-600">Reklam Görseli</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] || null
-                      setPickedImage(file)
-                    }}
-                    className="block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-2.5 file:py-1.5 file:font-semibold file:text-slate-700"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleUploadImage}
-                    disabled={uploadingImage || !pickedImage}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-60"
-                  >
-                    {uploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                    Görsel Yükle
-                  </button>
+              <div className="space-y-3 rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Reklam Görseli</p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null
+                        setPickedImage(file)
+                      }}
+                      className="block w-full text-[10px] font-mono text-[#64748b] file:mr-3 file:rounded file:border-0 file:bg-[#16181d] file:px-3 file:py-1.5 file:font-mono file:text-[#94a3b8] file:uppercase file:tracking-widest file:cursor-pointer hover:file:bg-[#1a1d24]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUploadImage}
+                      disabled={uploadingImage || !pickedImage}
+                      className="inline-flex items-center justify-center gap-1.5 rounded border border-[#2d313a] bg-[#16181d] px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] disabled:opacity-50 hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors shrink-0"
+                    >
+                      {uploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
+                      YÜKLE
+                    </button>
+                  </div>
+                  <label className="block">
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-[#475569] block mb-1.5">VEYA GÖRSEL URL</span>
+                    <input
+                      value={form.image_url}
+                      onChange={(event) => setField('image_url', event.target.value)}
+                      className="w-full rounded bg-[#16181d] border border-[#2d313a] px-3 py-2 text-xs font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
+                      placeholder="https://..."
+                    />
+                  </label>
                 </div>
-
-                <label className="block">
-                  <span className="text-[11px] font-medium text-slate-500">veya Görsel URL</span>
-                  <input
-                    value={form.image_url}
-                    onChange={(event) => setField('image_url', event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
-                    placeholder="https://..."
-                  />
-                </label>
               </div>
 
               <label className="block">
-                <span className="text-xs font-semibold text-slate-600">Hedef Link (opsiyonel)</span>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Hedef Link (Opsiyonel)</span>
                 <input
                   value={form.target_url}
                   onChange={(event) => setField('target_url', event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                  className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                   placeholder="https://molayeri.app/..."
                 />
               </label>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block">
-                  <span className="text-xs font-semibold text-slate-600">Görüntüleme Sırası</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Sıra</span>
                   <input
                     type="number"
                     value={form.display_order}
                     onChange={(event) => setField('display_order', event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                    className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50"
                   />
                 </label>
 
-                <label className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 mt-[21px]">
+                <label className="flex items-center gap-3 mt-[26px] px-4 py-3 rounded border border-[#2d313a] bg-[#0a0c10] cursor-pointer hover:border-[#475569] transition-colors">
                   <input
                     type="checkbox"
                     checked={form.is_active}
                     onChange={(event) => setField('is_active', event.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300"
+                    className="h-4 w-4 rounded border-[#2d313a] bg-[#16181d] accent-[#38bdf8]"
                   />
-                  <span className="text-sm font-semibold text-slate-700">Aktif</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">AKTİF</span>
                 </label>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block">
-                  <span className="text-xs font-semibold text-slate-600">Başlangıç (opsiyonel)</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Başlangıç (Opsiyonel)</span>
                   <input
                     type="datetime-local"
                     value={form.starts_at}
                     onChange={(event) => setField('starts_at', event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                    className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
                   />
                 </label>
-
                 <label className="block">
-                  <span className="text-xs font-semibold text-slate-600">Bitiş (opsiyonel)</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Bitiş (Opsiyonel)</span>
                   <input
                     type="datetime-local"
                     value={form.ends_at}
                     onChange={(event) => setField('ends_at', event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-300"
+                    className="w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
                   />
                 </label>
               </div>
 
               {form.image_url ? (
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                  <img src={form.image_url} alt="Reklam önizleme" className="h-28 w-full object-cover" />
+                <div className="overflow-hidden rounded border border-[#2d313a] bg-[#0a0c10] mt-4 aspect-video">
+                  <img src={form.image_url} alt="Reklam önizleme" className="w-full h-full object-cover mix-blend-lighten opacity-80" />
                 </div>
               ) : null}
 
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(145deg,#ffb347_0%,#ff9100_100%)] px-4 py-2.5 text-sm font-bold text-white shadow-[0_12px_18px_-12px_rgba(249,115,22,0.7)] disabled:opacity-60"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] px-4 py-3.5 text-[11px] font-mono uppercase tracking-widest text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {editingId ? 'Reklamı Güncelle' : 'Reklamı Kaydet'}
+                {editingId ? 'GÜNCELLE' : 'KAYDET'}
               </button>
             </form>
-          </section>
+          </HardwarePanel>
 
-          <section className="rounded-2xl bg-white/90 border border-slate-200/80 p-4 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.45)]">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-bold text-slate-800">{activeSlotLabel} Kayıtları</h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                <Megaphone className="h-3.5 w-3.5" /> {filteredAds.length}
+          <HardwarePanel className="p-0 overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[600px]">
+            <div className="flex items-center justify-between gap-3 border-b border-[#2d313a] bg-[#0f1115] p-5">
+              <h2 className="text-[12px] font-mono uppercase tracking-widest text-[#e2e8f0]">{activeSlotLabel} Kayıtları</h2>
+              <span className="inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[9px] font-mono uppercase tracking-widest bg-[#101419] border border-[#1e232b] text-[#64748b]">
+                <Megaphone className="h-3 w-3 text-[#38bdf8]" /> {filteredAds.length} KAYIT
               </span>
             </div>
 
-            <div className="mt-3 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0c0e12] custom-scrollbar">
               {filteredAds.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
-                  <ImagePlus className="mx-auto h-6 w-6 text-slate-400" />
-                  <p className="mt-2 text-sm font-semibold text-slate-600">Bu slotta henüz reklam kaydı yok.</p>
+                <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-8 text-center flex flex-col items-center justify-center">
+                  <ImagePlus className="mx-auto h-6 w-6 text-[#475569] mb-3" />
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">BU SLOTTA HENÜZ REKLAM KAYDI YOK.</p>
                 </div>
               ) : null}
 
               {filteredAds.map((ad) => (
-                <article key={ad.id} className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-[0_10px_18px_-18px_rgba(15,23,42,0.8)]">
-                  <div className="flex gap-3">
-                    <img src={ad.image_url} alt={ad.title || 'Reklam görseli'} className="h-16 w-24 rounded-lg object-cover bg-slate-100" />
+                <article key={ad.id} className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="w-full sm:w-32 aspect-video shrink-0 rounded border border-[#1e232b] bg-[#16181d] overflow-hidden">
+                      <img src={ad.image_url} alt="Reklam" className="w-full h-full object-cover mix-blend-lighten opacity-80" />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-sm font-bold text-slate-800">{ad.title}</p>
+                      <div className="flex items-start justify-between gap-2 border-b border-[#1e232b] pb-2">
+                        <p className="truncate text-[13px] font-medium uppercase tracking-wide text-[#e2e8f0]">{ad.title}</p>
                         <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                            ad.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                          className={`shrink-0 inline-flex rounded border px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest ${
+                            ad.is_active ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400' : 'border-[#2d313a] bg-[#16181d] text-[#64748b]'
                           }`}
                         >
-                          {ad.is_active ? 'Aktif' : 'Pasif'}
+                          {ad.is_active ? 'AKTİF' : 'PASİF'}
                         </span>
                       </div>
-                      {ad.subtitle ? <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">{ad.subtitle}</p> : null}
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        Sıra: <strong>{ad.display_order}</strong> • Gösterim: <strong>{ad.impressions_count}</strong> • Tıklama:{' '}
-                        <strong>{ad.clicks_count}</strong>
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">Oluşturma: {formatDate(ad.created_at)}</p>
+                      {ad.subtitle ? <p className="mt-2 line-clamp-1 text-[10px] font-mono text-[#94a3b8] tracking-widest uppercase">{ad.subtitle}</p> : null}
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[9px] font-mono text-[#64748b] uppercase tracking-widest">
+                        <span>Sıra: <strong className="text-[#cbd5e1]">{ad.display_order}</strong></span>
+                        <span>Gösterim: <strong className="text-[#cbd5e1]">{ad.impressions_count}</strong></span>
+                        <span>Tıklama: <strong className="text-[#cbd5e1]">{ad.clicks_count}</strong></span>
+                        <span>Oluşturma: {formatDate(ad.created_at)}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-4 pt-3 border-t border-[#1e232b] flex flex-wrap items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => handlePickEdit(ad)}
-                      className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white"
+                      className="rounded border border-[#2d313a] bg-[#16181d] px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors"
                     >
-                      Düzenle
+                      DÜZENLE
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleToggleActive(ad)}
                       disabled={togglingId === ad.id}
-                      className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white disabled:opacity-60"
+                      className={`rounded border px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest disabled:opacity-50 transition-colors ${
+                        ad.is_active ? 'border-amber-900/50 bg-amber-950/20 text-amber-400 hover:bg-amber-900/40' : 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/40'
+                      }`}
                     >
-                      {togglingId === ad.id ? 'Güncelleniyor...' : ad.is_active ? 'Pasife Al' : 'Aktifleştir'}
+                      {togglingId === ad.id ? 'İŞLENİYOR...' : ad.is_active ? 'PASİFE AL' : 'AKTİFLEŞTİR'}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleDelete(ad.id)}
                       disabled={deletingId === ad.id}
-                      className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40 disabled:opacity-50 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {deletingId === ad.id ? 'Siliniyor...' : 'Sil'}
                     </button>
                   </div>
                 </article>
               ))}
             </div>
-          </section>
+          </HardwarePanel>
         </div>
       ) : null}
 
       {!initialLoading && isAdmin === true && activeTab === 'slot_rules' ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="rounded-2xl bg-white/90 border border-slate-200/80 p-4 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.45)]">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-sky-600" />
-              <h2 className="text-base font-bold text-slate-800">Slot Bazlı Yerleşim Kuralları</h2>
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <HardwarePanel className="p-5">
+            <div className="flex items-center gap-2 border-b border-[#2d313a] pb-3 mb-4">
+              <SlidersHorizontal className="h-4 w-4 text-[#38bdf8]" />
+              <h2 className="text-[12px] font-mono uppercase tracking-widest text-[#e2e8f0]">Slot Yerleşim Kuralları</h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500">Her reklam alanı için aktif limit, rotasyon ve yayın durumunu ayrı yönet.</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] mb-5">Her reklam alanı için aktif limit, rotasyon ve yayın durumunu ayrı yönetin.</p>
 
-            <div className="mt-3 space-y-3">
+            <div className="space-y-4">
               {slotRules.map((rule) => (
-                <article key={rule.slot_key} className="rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="flex items-center justify-between gap-2">
+                <article key={rule.slot_key} className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-3">
                     <div>
-                      <p className="text-sm font-bold text-slate-800">{rule.slot_label}</p>
-                      <p className="text-[11px] text-slate-500">{rule.slot_key}</p>
+                      <p className="text-[12px] font-medium text-[#e2e8f0] uppercase tracking-wide">{rule.slot_label}</p>
+                      <p className="text-[9px] font-mono text-[#64748b] mt-1">{rule.slot_key}</p>
                     </div>
-                    <label className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
+                    <label className="inline-flex items-center gap-2 rounded border border-[#2d313a] bg-[#16181d] px-3 py-1.5 cursor-pointer hover:border-[#475569] transition-colors">
                       <input
                         type="checkbox"
                         checked={rule.is_enabled}
                         onChange={(event) => updateSlotRule(rule.slot_key, { is_enabled: event.target.checked })}
-                        className="h-3.5 w-3.5"
+                        className="h-3.5 w-3.5 rounded border-[#2d313a] bg-[#0a0c10] accent-[#38bdf8]"
                       />
-                      <span className="text-[11px] font-semibold text-slate-700">Aktif</span>
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-[#cbd5e1]">AKTİF</span>
                     </label>
                   </div>
 
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
-                      <span className="text-[11px] font-semibold text-slate-600">Maks. Aktif Reklam</span>
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Maks. Aktif Reklam</span>
                       <input
                         type="number"
                         min={1}
@@ -1062,12 +1077,12 @@ export default function AdminReklamYonetimiPage() {
                             max_active_ads: Math.max(1, toInt(event.target.value, 1)),
                           })
                         }
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-blue-300"
+                        className="w-full rounded bg-[#16181d] border border-[#2d313a] px-3 py-2 text-xs font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50"
                       />
                     </label>
 
                     <label className="block">
-                      <span className="text-[11px] font-semibold text-slate-600">Rotasyon (sn)</span>
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] block mb-2">Rotasyon (Saniye)</span>
                       <input
                         type="number"
                         min={5}
@@ -1078,82 +1093,81 @@ export default function AdminReklamYonetimiPage() {
                             rotation_seconds: Math.max(5, toInt(event.target.value, 45)),
                           })
                         }
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-blue-300"
+                        className="w-full rounded bg-[#16181d] border border-[#2d313a] px-3 py-2 text-xs font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50"
                       />
                     </label>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <p className="text-[11px] text-slate-500">Son güncelleme: {formatDate(rule.updated_at)}</p>
+                  <div className="mt-4 pt-3 border-t border-[#1e232b] flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest">
+                      SON GÜNCELLEME: {formatDate(rule.updated_at)}
+                    </p>
                     <button
                       type="button"
                       onClick={() => void handleSaveRule(rule.slot_key)}
                       disabled={savingRuleSlot === rule.slot_key}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] px-4 py-2 text-[9px] font-mono uppercase tracking-widest text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
                     >
                       {savingRuleSlot === rule.slot_key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                      Kaydet
+                      KURALI KAYDET
                     </button>
                   </div>
                 </article>
               ))}
             </div>
-          </section>
+          </HardwarePanel>
 
-          <section className="rounded-2xl bg-white/90 border border-slate-200/80 p-4 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.45)]">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-indigo-600" />
-              <h2 className="text-base font-bold text-slate-800">Performans Raporu</h2>
+          <HardwarePanel className="p-0 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-[#2d313a] bg-[#0f1115] flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-emerald-400" />
+              <h2 className="text-[12px] font-mono uppercase tracking-widest text-[#e2e8f0]">Performans Raporu</h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500">Slot bazında yayın adedi, canlı aktif kayıt, gösterim, tıklama ve CTR özeti.</p>
 
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="text-slate-500 border-b border-slate-200">
-                    <th className="py-2 pr-3 font-semibold">Slot</th>
-                    <th className="py-2 pr-3 font-semibold">Toplam</th>
-                    <th className="py-2 pr-3 font-semibold">Canlı</th>
-                    <th className="py-2 pr-3 font-semibold">Planlı</th>
-                    <th className="py-2 pr-3 font-semibold">Biten</th>
-                    <th className="py-2 pr-3 font-semibold">Gösterim</th>
-                    <th className="py-2 pr-3 font-semibold">Tıklama</th>
-                    <th className="py-2 pr-3 font-semibold">CTR</th>
+            <div className="flex-1 overflow-x-auto bg-[#16181d]">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#101419] border-b border-[#2d313a]">
+                  <tr className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">
+                    <th className="px-5 py-3">Slot / Ayarlar</th>
+                    <th className="px-3 py-3">Toplam</th>
+                    <th className="px-3 py-3">Canlı</th>
+                    <th className="px-3 py-3">Planlı</th>
+                    <th className="px-3 py-3">Biten</th>
+                    <th className="px-3 py-3">Gösterim</th>
+                    <th className="px-3 py-3">Tık</th>
+                    <th className="px-5 py-3">CTR</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#1e232b]">
                   {slotPerformanceRows.map((row) => (
-                    <tr key={row.slot_key} className="border-b border-slate-100 text-slate-700">
-                      <td className="py-2 pr-3">
-                        <p className="font-semibold">{row.slot_label}</p>
-                        <p className="text-[11px] text-slate-500">
-                          max {row.max_active_ads} • {row.rotation_seconds}sn • {row.is_enabled ? 'aktif' : 'pasif'}
+                    <tr key={row.slot_key} className="hover:bg-[#1a1d24] transition-colors">
+                      <td className="px-5 py-3">
+                        <p className="text-[11px] font-mono text-[#e2e8f0] uppercase tracking-widest">{row.slot_label}</p>
+                        <p className="mt-1 text-[9px] font-mono text-[#64748b] uppercase tracking-widest">
+                          Maks: {row.max_active_ads} • Rot: {row.rotation_seconds}sn • {row.is_enabled ? 'ON' : 'OFF'}
                         </p>
                       </td>
-                      <td className="py-2 pr-3 font-semibold">{row.total_ads}</td>
-                      <td className="py-2 pr-3 font-semibold text-emerald-700">{row.active_live}</td>
-                      <td className="py-2 pr-3">{row.scheduled}</td>
-                      <td className="py-2 pr-3">{row.ended}</td>
-                      <td className="py-2 pr-3">{row.impressions}</td>
-                      <td className="py-2 pr-3">{row.clicks}</td>
-                      <td className="py-2 pr-3">%{row.ctr_percent.toFixed(2)}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-[#cbd5e1]">{row.total_ads}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-emerald-400">{row.active_live}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-[#94a3b8]">{row.scheduled}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-[#64748b]">{row.ended}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-[#38bdf8]">{row.impressions}</td>
+                      <td className="px-3 py-3 text-[11px] font-mono text-amber-400">{row.clicks}</td>
+                      <td className="px-5 py-3 text-[11px] font-mono text-[#e2e8f0]">%{row.ctr_percent.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </section>
+          </HardwarePanel>
         </div>
       ) : null}
 
       {!initialLoading && isAdmin === true && (error || info) ? (
-        <section
-          className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-            error ? 'border border-rose-200 bg-rose-50 text-rose-700' : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-          }`}
-        >
-          {error || info}
-        </section>
+        <HardwarePanel className={`p-4 ${error ? 'border-rose-900/50 bg-rose-950/20 text-rose-400' : 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400'}`}>
+          <p className="text-[11px] font-mono uppercase tracking-widest">
+            {error ? `[HATA] ${error}` : `[SİSTEM] ${info}`}
+          </p>
+        </HardwarePanel>
       ) : null}
     </div>
   )

@@ -17,6 +17,7 @@ import {
   User2,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
+import { ModuleTitle } from '../../merchant/_components/module-title'
 
 const PAGE_SIZE = 12
 type ReviewFilter = 'all' | 'critical' | 'low_rating' | 'no_reply' | 'replied'
@@ -72,8 +73,16 @@ type ModerationHistoryEntry = {
   happened_at: string
 }
 
-const cardClass =
-  'rounded-2xl border border-white/80 bg-white/95 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] backdrop-blur'
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 function normalizeText(value: string): string {
   return value
@@ -538,51 +547,55 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <section className={`${cardClass} p-4 md:p-5`}>
+    <div className="space-y-6 text-[#e2e8f0]">
+      <HardwarePanel className="p-5 md:p-6 border-b border-[#2d313a]">
         <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">Yorum Şikayet Merkezi</h2>
+            <ModuleTitle title="Yorum Şikayet Merkezi" />
           </div>
           <button
             type="button"
             onClick={() => void loadReportedReviews(true)}
             disabled={refreshing}
-            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center gap-2 disabled:opacity-60"
+            className="h-11 px-4 rounded bg-[#16181d] border border-[#2d313a] text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:bg-[#1a1d24] disabled:opacity-60 transition-colors"
           >
-            {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {refreshing ? <Loader2 className="w-4 h-4 animate-spin text-[#38bdf8]" /> : <RefreshCw className="w-4 h-4 text-[#64748b]" />}
             Yenile
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-          <article className="rounded-xl border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Toplam Bildirim</p>
-            <p className="mt-1 text-xl font-bold text-slate-900">{stats.total}</p>
-          </article>
-          <article className="rounded-xl border border-rose-200/80 bg-rose-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-rose-700">Kritik İçerik</p>
-            <p className="mt-1 text-xl font-bold text-rose-900">{stats.critical}</p>
-          </article>
-          <article className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-700">Düşük Puan</p>
-            <p className="mt-1 text-xl font-bold text-amber-900">{stats.low}</p>
-          </article>
-          <article className="rounded-xl border border-blue-200/80 bg-blue-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-blue-700">Cevapsız</p>
-            <p className="mt-1 text-xl font-bold text-blue-900">{stats.noReply}</p>
-          </article>
+        <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Toplam Bildirim</p>
+            <p className="mt-1 text-xl font-mono text-[#e2e8f0]">{stats.total}</p>
+          </div>
+          <div className="rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-rose-500/0 group-hover:bg-rose-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-rose-500/70">Kritik İçerik</p>
+            <p className="mt-1 text-xl font-mono text-rose-400">{stats.critical}</p>
+          </div>
+          <div className="rounded border border-amber-900/50 bg-amber-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-amber-500/0 group-hover:bg-amber-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-amber-500/70">Düşük Puan</p>
+            <p className="mt-1 text-xl font-mono text-amber-400">{stats.low}</p>
+          </div>
+          <div className="rounded border border-[#226785] bg-[#153445]/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#38bdf8]">Cevapsız</p>
+            <p className="mt-1 text-xl font-mono text-[#38bdf8]">{stats.noReply}</p>
+          </div>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className={`${cardClass} p-3 md:p-4`}>
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr] gap-2.5">
+      <HardwarePanel className="p-4 md:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr] gap-4">
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Ara</span>
-            <div className="mt-1.5 relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Ara</span>
+            <div className="mt-2 relative">
+              <Search className="w-4 h-4 text-[#475569] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                className="w-full pl-9 pr-3 h-11 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white outline-none"
+                className="w-full pl-9 pr-3 h-11 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                 placeholder="İşletme, kullanıcı, yorum, sebep..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -591,58 +604,58 @@ export default function AdminReviewsPage() {
           </label>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Filtre</span>
-            <div className="mt-1.5 relative">
-              <Filter className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Filtre</span>
+            <div className="mt-2 relative">
+              <Filter className="w-4 h-4 text-[#475569] absolute left-3 top-1/2 -translate-y-1/2" />
               <select
-                className="w-full pl-9 pr-3 h-11 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white outline-none appearance-none"
+                className="w-full pl-9 pr-3 h-11 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
                 value={filter}
                 onChange={(event) => setFilter(event.target.value as ReviewFilter)}
               >
-                <option value="all">Tümü</option>
-                <option value="critical">Kritik içerik</option>
-                <option value="low_rating">Düşük puan (0-2)</option>
-                <option value="no_reply">Cevapsız yorum</option>
-                <option value="replied">Cevaplanan yorum</option>
+                <option value="all">TÜMÜ</option>
+                <option value="critical">KRİTİK İÇERİK</option>
+                <option value="low_rating">DÜŞÜK PUAN (0-2)</option>
+                <option value="no_reply">CEVAPSIZ YORUM</option>
+                <option value="replied">CEVAPLANAN YORUM</option>
               </select>
             </div>
           </label>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Sıralama</span>
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Sıralama</span>
             <select
-              className="mt-1.5 w-full px-3 h-11 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white outline-none"
+              className="mt-2 w-full px-4 h-11 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
               value={sort}
               onChange={(event) => setSort(event.target.value as ReviewSort)}
             >
-              <option value="reported_newest">Bildirim tarihi (yeni)</option>
-              <option value="newest">Yorum tarihi (yeni)</option>
-              <option value="oldest">Yorum tarihi (eski)</option>
-              <option value="rating_low">Puan düşükten yükseğe</option>
-              <option value="rating_high">Puan yüksekten düşüğe</option>
+              <option value="reported_newest">BİLDİRİM TARİHİ (YENİ)</option>
+              <option value="newest">YORUM TARİHİ (YENİ)</option>
+              <option value="oldest">YORUM TARİHİ (ESKİ)</option>
+              <option value="rating_low">PUAN (DÜŞÜKTEN YÜKSEĞE)</option>
+              <option value="rating_high">PUAN (YÜKSEKTEN DÜŞÜĞE)</option>
             </select>
           </label>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-4">
-        <aside className={`${cardClass} p-3 min-h-[560px] max-h-[calc(100vh-310px)] flex flex-col`}>
-          <div className="px-2 pb-2 flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Şikayet Kuyruğu</p>
-            <span className="text-xs font-semibold text-slate-500">{filtered.length}</span>
+      <section className="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-5">
+        <HardwarePanel className="p-0 flex flex-col min-h-[560px] max-h-[calc(100vh-310px)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#2d313a] bg-[#0f1115] flex items-center justify-between">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-widest text-[#e2e8f0]">Şikayet Kuyruğu</p>
+            <span className="px-2.5 py-1 rounded bg-[#101419] border border-[#1e232b] text-[9px] font-mono text-[#64748b]">{filtered.length} ADET</span>
           </div>
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
             </div>
           ) : pageRows.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-              <ShieldCheck className="w-10 h-10 text-emerald-600" />
-              <p className="mt-2 text-sm font-semibold text-slate-500">Bildirilen yorum bulunamadı.</p>
+              <ShieldCheck className="w-8 h-8 text-emerald-400 mb-3 opacity-70" />
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">BİLDİRİLEN YORUM BULUNAMADI.</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0a0c10] custom-scrollbar">
               {pageRows.map((review) => {
                 const active = currentSelected?.id === review.id
                 const noReply = !review.reply?.trim()
@@ -651,29 +664,29 @@ export default function AdminReviewsPage() {
                     key={review.id}
                     type="button"
                     onClick={() => setSelectedReviewId(review.id)}
-                    className={`w-full text-left rounded-xl border p-3 ${
+                    className={`w-full text-left rounded border p-4 transition-all ${
                       active
-                        ? 'border-blue-300 bg-blue-50 shadow-[0_12px_18px_-14px_rgba(59,130,246,0.55)]'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
+                        ? 'border-[#226785] bg-[#153445] shadow-[inset_4px_0_0_#38bdf8]'
+                        : 'border-[#2d313a] bg-[#16181d] hover:border-[#475569]'
                     }`}
                   >
-                    <p className="text-sm font-bold text-slate-800 truncate">{review.business_name}</p>
-                    <p className="mt-1 text-xs text-slate-500 truncate">{review.reviewer_name}</p>
-                    <p className="mt-1 text-[12px] font-semibold text-amber-600">
+                    <p className={`text-[12px] font-medium uppercase tracking-wide truncate ${active ? 'text-[#38bdf8]' : 'text-[#e2e8f0]'}`}>{review.business_name}</p>
+                    <p className="mt-1 text-[10px] font-mono text-[#64748b] truncate">{review.reviewer_name}</p>
+                    <p className="mt-2 text-[11px] font-mono text-amber-400 tracking-widest">
                       {starText(review.rating)} ({review.rating || 0}/5)
                     </p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                    <div className="mt-3 pt-2 border-t border-[#1e232b] flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest inline-flex items-center gap-1.5">
                         <Clock3 className="w-3 h-3" />
                         {formatDate(review.reported_at || review.created_at)}
                       </span>
                       {noReply ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 font-semibold">
-                          Cevapsız
+                        <span className="text-[8px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400">
+                          CEVAPSIZ
                         </span>
                       ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold">
-                          Cevaplı
+                        <span className="text-[8px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border border-emerald-900/50 bg-emerald-950/20 text-emerald-400">
+                          CEVAPLI
                         </span>
                       )}
                     </div>
@@ -684,167 +697,168 @@ export default function AdminReviewsPage() {
           )}
 
           {!loading && filtered.length > 0 ? (
-            <div className="pt-3 flex items-center justify-between gap-2">
-              <p className="text-xs text-slate-500 font-semibold">
-                Sayfa {safePage}/{totalPages}
+            <div className="border-t border-[#2d313a] bg-[#101419] px-4 py-3 flex items-center justify-between gap-2">
+              <p className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest">
+                SAYFA {safePage}/{totalPages}
               </p>
-              <div className="inline-flex items-center gap-1">
+              <div className="inline-flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={safePage === 1}
-                  className="px-3 h-8 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 disabled:opacity-40"
+                  className="px-3 h-8 rounded border border-[#2d313a] bg-[#16181d] text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 transition-colors"
                 >
-                  Geri
+                  GERİ
                 </button>
                 <button
                   type="button"
                   onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                   disabled={safePage === totalPages}
-                  className="px-3 h-8 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 disabled:opacity-40"
+                  className="px-3 h-8 rounded border border-[#2d313a] bg-[#16181d] text-[9px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 transition-colors"
                 >
-                  İleri
+                  İLERİ
                 </button>
               </div>
             </div>
           ) : null}
-        </aside>
+        </HardwarePanel>
 
-        <article className={`${cardClass} p-4 md:p-5 min-h-[560px] max-h-[calc(100vh-310px)] overflow-y-auto`}>
+        <HardwarePanel className="p-0 min-h-[560px] max-h-[calc(100vh-310px)] overflow-hidden flex flex-col">
           {!currentSelected ? (
-            <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center px-6">
-              <ShieldX className="w-10 h-10 text-slate-400" />
-              <p className="mt-2 text-sm font-semibold text-slate-500">Soldan bir kayıt seçin.</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+              <ShieldX className="w-10 h-10 text-[#475569] mb-3 opacity-50" />
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">SOLDAN BİR KAYIT SEÇİN.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+            <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-5 bg-[#0c0e12] custom-scrollbar">
+              
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-5">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">Yorum Şikayeti</p>
-                    <h3 className="mt-1 text-2xl font-bold text-slate-900">{currentSelected.business_name}</h3>
-                    <p className="mt-1 text-sm text-slate-600 inline-flex items-center gap-1.5">
-                      <User2 className="w-4 h-4" />
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] mb-1.5">Yorum Şikayeti</p>
+                    <h3 className="text-[18px] font-medium text-[#e2e8f0] uppercase tracking-wide">{currentSelected.business_name}</h3>
+                    <p className="mt-1.5 text-[10px] font-mono text-[#94a3b8] inline-flex items-center gap-1.5 uppercase tracking-widest">
+                      <User2 className="w-3.5 h-3.5" />
                       {currentSelected.reviewer_name}
                       {currentSelected.reviewer_email ? ` • ${currentSelected.reviewer_email}` : ''}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 min-w-[260px]">
+                  <div className="grid grid-cols-2 gap-3 min-w-[280px]">
                     <button
                       type="button"
                       onClick={() => void handleCloseReport(currentSelected)}
                       disabled={Boolean(actioningKey)}
-                      className="h-11 rounded-xl bg-emerald-600 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-emerald-700 disabled:opacity-60"
+                      className="h-11 rounded border border-emerald-900/50 bg-[linear-gradient(180deg,#065f46_0%,#14532d_100%)] text-[#34d399] text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                     >
                       {actioningKey === `${currentSelected.id}:close` ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <ShieldCheck className="w-4 h-4" />
+                        <ShieldCheck className="w-3.5 h-3.5" />
                       )}
-                      Raporu Kapat
+                      RAPORU KAPAT
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleRemoveReview(currentSelected)}
                       disabled={Boolean(actioningKey)}
-                      className="h-11 rounded-xl bg-rose-600 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-rose-700 disabled:opacity-60"
+                      className="h-11 rounded border border-rose-900/50 bg-[linear-gradient(180deg,#9f1239_0%,#881337_100%)] text-[#fb7185] text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                     >
                       {actioningKey === `${currentSelected.id}:remove` ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       )}
-                      Yorumu Kaldır
+                      YORUMU KALDIR
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Puan</p>
-                  <p className="mt-1 text-sm font-bold text-amber-600 inline-flex items-center gap-1">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Puan</p>
+                  <p className="mt-1.5 text-[11px] font-mono text-amber-400 inline-flex items-center gap-1.5 tracking-widest">
                     <Star className="w-3.5 h-3.5" />
                     {starText(currentSelected.rating)} ({currentSelected.rating || 0}/5)
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Yorum Tarihi</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">{formatDate(currentSelected.created_at)}</p>
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Yorum Tarihi</p>
+                  <p className="mt-1.5 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{formatDate(currentSelected.created_at)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Bildirim Tarihi</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">{formatDate(currentSelected.reported_at)}</p>
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Bildirim Tarihi</p>
+                  <p className="mt-1.5 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{formatDate(currentSelected.reported_at)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Cevap Durumu</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {currentSelected.reply?.trim() ? 'İşletmeci cevaplamış' : 'Cevap yok'}
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Cevap Durumu</p>
+                  <p className="mt-1.5 text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                    {currentSelected.reply?.trim() ? 'İŞLETMECİ CEVAPLAMIŞ' : 'CEVAP YOK'}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500 inline-flex items-center gap-1.5">
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-5">
+                <p className="text-[10px] uppercase tracking-widest font-mono text-[#64748b] inline-flex items-center gap-2 mb-3 border-b border-[#1e232b] pb-2 w-full">
                   <MessageSquareQuote className="w-3.5 h-3.5" />
                   Kullanıcı Yorumu
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-800">{currentSelected.comment || '-'}</p>
+                <p className="text-[13px] leading-relaxed text-[#cbd5e1] font-sans whitespace-pre-wrap">{currentSelected.comment || '-'}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-700 inline-flex items-center gap-1.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded border border-amber-900/50 bg-amber-950/10 p-4">
+                  <p className="text-[10px] uppercase tracking-widest font-mono text-amber-500/80 inline-flex items-center gap-2 mb-3 border-b border-amber-900/30 pb-2 w-full">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Bildirim Sebebi
                   </p>
-                  <p className="mt-2 text-sm text-slate-800">{currentSelected.report_reason || 'Belirtilmedi'}</p>
+                  <p className="text-[12px] font-mono text-[#e2e8f0]">{currentSelected.report_reason || 'BELİRTİLMEDİ'}</p>
                   {currentSelected.report_note ? (
-                    <p className="mt-2 text-xs text-slate-600">Not: {currentSelected.report_note}</p>
+                    <p className="mt-3 text-[10px] font-mono text-[#94a3b8] uppercase tracking-widest">NOT: {currentSelected.report_note}</p>
                   ) : null}
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500 inline-flex items-center gap-1.5">
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                  <p className="text-[10px] uppercase tracking-widest font-mono text-[#64748b] inline-flex items-center gap-2 mb-3 border-b border-[#1e232b] pb-2 w-full">
                     <Store className="w-3.5 h-3.5" />
                     İşletmeci Cevabı
                   </p>
-                  <p className="mt-2 text-sm text-slate-800">
-                    {currentSelected.reply?.trim() ? currentSelected.reply : 'Henüz cevap yok.'}
+                  <p className="text-[12px] font-sans text-[#cbd5e1] leading-relaxed">
+                    {currentSelected.reply?.trim() ? currentSelected.reply : 'HENÜZ CEVAP YOK.'}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500 inline-flex items-center gap-1.5">
-                  <Clock3 className="w-3.5 h-3.5" />
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-5">
+                <p className="text-[10px] uppercase tracking-widest font-mono text-[#e2e8f0] inline-flex items-center gap-2 border-b border-[#1e232b] pb-3 mb-4 w-full">
+                  <Clock3 className="w-3.5 h-3.5 text-[#38bdf8]" />
                   Moderasyon Geçmişi
                 </p>
                 {currentHistory.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">Bu kayıt için geçmiş bulunamadı.</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">BU KAYIT İÇİN GEÇMİŞ BULUNAMADI.</p>
                 ) : (
-                  <div className="mt-2 space-y-2">
+                  <div className="space-y-3">
                     {currentHistory.map((entry) => (
                       <div
                         key={entry.id}
-                        className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_auto] gap-2 md:items-center"
+                        className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_auto] gap-3 md:items-center"
                       >
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{entry.action}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-[11px] font-mono text-[#e2e8f0] uppercase tracking-widest">{entry.action}</p>
+                          <p className="text-[9px] font-mono text-[#64748b] mt-1.5 uppercase tracking-widest">
                             {entry.actor_name} • {entry.actor_role}
                           </p>
                         </div>
-                        <div className="text-xs text-slate-500">
-                          <p className="font-semibold text-slate-600">Ne zaman</p>
+                        <div className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest">
+                          <p className="text-[#94a3b8] mb-1">NE ZAMAN</p>
                           <p>{formatDate(entry.happened_at)}</p>
                         </div>
                         <span
-                          className={`inline-flex h-7 px-2.5 rounded-md text-[10px] font-semibold items-center justify-center ${
+                          className={`inline-flex px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-widest border ${
                             normalizeText(entry.action).includes('kaldir')
-                              ? 'bg-rose-50 border border-rose-200 text-rose-700'
+                              ? 'bg-rose-950/20 border-rose-900/50 text-rose-400'
                               : normalizeText(entry.action).includes('kapat')
-                                ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                                : 'bg-blue-50 border border-blue-200 text-blue-700'
+                                ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-400'
+                                : 'bg-[#153445]/30 border-[#226785] text-[#38bdf8]'
                           }`}
                         >
                           {entry.action}
@@ -855,17 +869,17 @@ export default function AdminReviewsPage() {
                 )}
               </div>
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-xs text-blue-800">
-                <span className="font-semibold inline-flex items-center gap-1">
+              <div className="rounded border border-[#226785] bg-[#153445]/20 p-4 text-[10px] font-mono uppercase tracking-widest text-[#38bdf8] leading-relaxed">
+                <span className="font-bold inline-flex items-center gap-1.5 border-b border-[#226785]/50 pb-1 mb-2 block w-fit">
                   <ShieldX className="w-3.5 h-3.5" />
-                  Moderasyon garantisi:
-                </span>{' '}
-                “Yorumu Kaldır” ve “Raporu Kapat” işlemleri artık veritabanı doğrulaması ile çalışır. Kalıcı yazım
-                başarısızsa liste güncellenmez ve hata gösterilir.
+                  MODERASYON GARANTİSİ:
+                </span>
+                <br />
+                “Yorumu Kaldır” ve “Raporu Kapat” işlemleri artık veritabanı doğrulaması ile çalışır. Kalıcı yazım başarısızsa liste güncellenmez ve hata gösterilir.
               </div>
             </div>
           )}
-        </article>
+        </HardwarePanel>
       </section>
     </div>
   )

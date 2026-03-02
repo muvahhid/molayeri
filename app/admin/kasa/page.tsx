@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Download, Loader2, RefreshCcw, Save } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
+import { ModuleTitle } from '../../merchant/_components/module-title'
 
 type AdminBusiness = {
   id: string
@@ -176,6 +177,17 @@ function parseTxItems(rawItems: unknown[]): TxRow[] {
 }
 
 const TX_CSV_LIMIT = 50000
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function AdminKasaPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -678,20 +690,20 @@ export default function AdminKasaPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800">Admin Kasa</h1>
-        <p className="mt-1 text-sm text-slate-500">
+    <div className="space-y-6">
+      <div className="border-b border-[#2d313a] pb-4">
+        <ModuleTitle title="Admin Kasa" />
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-2">
           Isletme bazinda, kategori bazinda ve toplam kupon/odeme hareketlerini buradan yonetebilirsiniz.
         </p>
-      </section>
+      </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <label className="text-sm font-semibold text-slate-700">
+      <HardwarePanel className="p-5 md:p-6 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             Isletme
             <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
               value={selectedBusinessId}
               onChange={(event) => setSelectedBusinessId(event.target.value)}
             >
@@ -703,10 +715,10 @@ export default function AdminKasaPage() {
               ))}
             </select>
           </label>
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             Kategori
             <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
               value={selectedCategory}
               onChange={(event) => setSelectedCategory(event.target.value)}
             >
@@ -718,42 +730,42 @@ export default function AdminKasaPage() {
               ))}
             </select>
           </label>
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             Baslangic
             <input
               type="date"
               value={fromDate}
               onChange={(event) => setFromDate(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
             />
           </label>
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             Bitis
             <input
               type="date"
               value={toDate}
               onChange={(event) => setToDate(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
             />
           </label>
           <div className="flex items-end">
             <button
               type="button"
               onClick={() => setToDate(defaultDate(0))}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] transition-colors"
             >
-              <RefreshCcw size={14} />
+              <RefreshCcw size={14} className="text-[#64748b]" />
               Bugun
             </button>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="pt-2 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={exportTransactionsCsv}
             disabled={exportingTxCsv || loading || refreshing}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] disabled:opacity-50 transition-colors"
           >
             {exportingTxCsv ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             CSV Islemler
@@ -762,7 +774,7 @@ export default function AdminKasaPage() {
             type="button"
             onClick={exportBusinessCsv}
             disabled={exportingBusinessCsv || loading || refreshing}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] disabled:opacity-50 transition-colors"
           >
             {exportingBusinessCsv ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             CSV Isletme Ozeti
@@ -771,26 +783,28 @@ export default function AdminKasaPage() {
             type="button"
             onClick={exportCategoryCsv}
             disabled={exportingCategoryCsv || loading || refreshing}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] disabled:opacity-50 transition-colors"
           >
             {exportingCategoryCsv ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             CSV Kategori Ozeti
           </button>
         </div>
-      </section>
+      </HardwarePanel>
 
       {loading ? (
-        <section className="rounded-2xl border border-slate-200 bg-white/85 p-10 text-center">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-500" />
-        </section>
+        <HardwarePanel className="p-10 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
+        </HardwarePanel>
       ) : null}
 
       {error ? (
-        <section className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</section>
+        <div className="rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 text-[11px] font-mono uppercase tracking-widest text-rose-400">
+          [HATA] {error}
+        </div>
       ) : null}
 
-      {overview ? (
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {overview && !loading ? (
+        <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard label="Toplam Islem" value={String(overview.totals.tx_count)} />
           <MetricCard label="Toplam Tahsilat" value={toMoney(overview.totals.collected_amount)} />
           <MetricCard label="Toplam Komisyon" value={toMoney(overview.totals.commission_amount)} />
@@ -804,253 +818,268 @@ export default function AdminKasaPage() {
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800">Gunluk Tahsilat Trendi</h2>
-        <p className="mt-1 text-xs text-slate-500">Secili tarih araliginda gun gun tahsilat dagilimi.</p>
-        {dailySeries.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">Trend verisi bulunamadi.</p>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {dailySeries.map((row) => {
-              const ratio = Math.max((row.collected_amount / maxDailyAmount) * 100, row.collected_amount > 0 ? 3 : 0)
-              return (
-                <div key={row.day} className="grid grid-cols-[72px_minmax(0,1fr)_120px] items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-600">{formatDayLabel(row.day)}</span>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-2 rounded-full bg-sky-500" style={{ width: `${ratio}%` }} />
+      {!loading && (
+        <HardwarePanel className="p-5">
+          <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3 mb-4">Gunluk Tahsilat Trendi</h2>
+          <p className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest mb-5">Secili tarih araliginda gun gun tahsilat dagilimi.</p>
+          {dailySeries.length === 0 ? (
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-6">Trend verisi bulunamadi.</p>
+          ) : (
+            <div className="space-y-3">
+              {dailySeries.map((row) => {
+                const ratio = Math.max((row.collected_amount / maxDailyAmount) * 100, row.collected_amount > 0 ? 3 : 0)
+                return (
+                  <div key={row.day} className="grid grid-cols-[72px_minmax(0,1fr)_120px] items-center gap-3">
+                    <span className="text-[10px] font-mono tracking-widest text-[#94a3b8] uppercase">{formatDayLabel(row.day)}</span>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#16181d] border border-[#2d313a]">
+                      <div className="h-full bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)] transition-all" style={{ width: `${ratio}%` }} />
+                    </div>
+                    <span className="text-right text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(row.collected_amount)}</span>
                   </div>
-                  <span className="text-right text-xs font-semibold text-slate-700">{toMoney(row.collected_amount)}</span>
+                )
+              })}
+            </div>
+          )}
+        </HardwarePanel>
+      )}
+
+      {!loading && (
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <HardwarePanel className="p-5">
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3 mb-4">Kategori Dagilimi</h2>
+            {overview && overview.byCategory.length > 0 ? (
+              <div className="space-y-3">
+                {overview.byCategory.slice(0, 8).map((row) => {
+                  const ratio = Math.max((row.collected_amount / maxCategoryAmount) * 100, row.collected_amount > 0 ? 3 : 0)
+                  return (
+                    <div key={row.category_key || row.category_label} className="grid grid-cols-[130px_minmax(0,1fr)_110px] items-center gap-3">
+                      <span className="truncate text-[10px] font-mono text-[#cbd5e1] uppercase tracking-widest">{businessTypeLabel(row.category_label)}</span>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[#16181d] border border-[#2d313a]">
+                        <div className="h-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] transition-all" style={{ width: `${ratio}%` }} />
+                      </div>
+                      <span className="text-right text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(row.collected_amount)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-6">Secili filtrede kategori verisi bulunamadi.</p>
+            )}
+          </HardwarePanel>
+
+          <HardwarePanel className="p-5">
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3 mb-4">Isletme Dagilimi</h2>
+            {overview && overview.byBusiness.length > 0 ? (
+              <div className="space-y-3">
+                {overview.byBusiness.slice(0, 8).map((row) => {
+                  const ratio = Math.max((row.collected_amount / maxBusinessAmount) * 100, row.collected_amount > 0 ? 3 : 0)
+                  return (
+                    <div key={row.business_id} className="grid grid-cols-[160px_minmax(0,1fr)_110px] items-center gap-3">
+                      <span className="truncate text-[10px] font-mono text-[#cbd5e1] uppercase tracking-widest">{row.business_name}</span>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[#16181d] border border-[#2d313a]">
+                        <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all" style={{ width: `${ratio}%` }} />
+                      </div>
+                      <span className="text-right text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(row.collected_amount)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-6">Secili filtrede isletme verisi bulunamadi.</p>
+            )}
+          </HardwarePanel>
+        </section>
+      )}
+
+      {!loading && (
+        <>
+          <HardwarePanel className="p-0 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-[#2d313a] bg-[#0f1115]">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Kategori Bazli Ozet</h2>
+            </div>
+            {overview && overview.byCategory.length > 0 ? (
+              <div className="overflow-x-auto bg-[#16181d]">
+                <table className="min-w-full text-left border-collapse">
+                  <thead className="bg-[#101419] border-b border-[#2d313a]">
+                    <tr className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                      <th className="px-5 py-3">Kategori</th>
+                      <th className="px-5 py-3">Islem</th>
+                      <th className="px-5 py-3">Tahsilat</th>
+                      <th className="px-5 py-3">Komisyon</th>
+                      <th className="px-5 py-3">Net</th>
+                      <th className="px-5 py-3">Hizmet Kuponu</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e232b]">
+                    {overview.byCategory.map((row) => (
+                      <tr key={row.category_key || row.category_label} className="hover:bg-[#1a1d24] transition-colors">
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] uppercase tracking-widest">{businessTypeLabel(row.category_label)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">{row.tx_count}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(row.collected_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#94a3b8] tracking-widest">{toMoney(row.commission_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-emerald-400 tracking-widest">{toMoney(row.merchant_net_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">{row.service_coupon_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-8">Secili filtrede kategori verisi bulunamadi.</p>
+            )}
+          </HardwarePanel>
+
+          <HardwarePanel className="p-0 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-[#2d313a] bg-[#0f1115] flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Isletme Bazli Ozet</h2>
+              <span className="text-[9px] font-mono text-[#64748b] tracking-widest uppercase">TOPLAM {overview?.businessTotal || 0} IŞLETME</span>
+            </div>
+            {overview && overview.byBusiness.length > 0 ? (
+              <div className="overflow-x-auto bg-[#16181d] max-h-[500px] custom-scrollbar">
+                <table className="min-w-full text-left border-collapse">
+                  <thead className="sticky top-0 bg-[#101419] border-b border-[#2d313a] shadow-sm">
+                    <tr className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                      <th className="px-5 py-3">Isletme</th>
+                      <th className="px-5 py-3">Kategori</th>
+                      <th className="px-5 py-3">Islem</th>
+                      <th className="px-5 py-3">Tahsilat</th>
+                      <th className="px-5 py-3">Komisyon</th>
+                      <th className="px-5 py-3">Net</th>
+                      <th className="px-5 py-3">Hizmet</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e232b]">
+                    {overview.byBusiness.map((row) => (
+                      <tr key={row.business_id} className="hover:bg-[#1a1d24] transition-colors">
+                        <td className="px-5 py-3 text-[11px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{row.business_name}</td>
+                        <td className="px-5 py-3 text-[10px] font-mono text-[#94a3b8] uppercase tracking-widest">{businessTypeLabel(row.business_type)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">{row.tx_count}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(row.collected_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#94a3b8] tracking-widest">{toMoney(row.commission_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-emerald-400 tracking-widest">{toMoney(row.merchant_net_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">{row.service_coupon_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-8">Secili filtrede isletme verisi bulunamadi.</p>
+            )}
+          </HardwarePanel>
+
+          <HardwarePanel className="p-5 space-y-5">
+            <div className="border-b border-[#1e232b] pb-3">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Komisyon Ayari (Admin)</h2>
+              <p className="mt-1.5 text-[10px] font-mono uppercase tracking-widest text-[#38bdf8]">{commissionInfo}</p>
+            </div>
+            {!selectedBusinessId ? (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Komisyon tanimlamak icin filtreden bir isletme secin.</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                    Oran (%)
+                    <input
+                      type="text"
+                      value={commissionRate}
+                      onChange={(event) => setCommissionRate(event.target.value)}
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50"
+                    />
+                  </label>
+                  <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                    Sabit (₺)
+                    <input
+                      type="text"
+                      value={commissionFixed}
+                      onChange={(event) => setCommissionFixed(event.target.value)}
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50"
+                    />
+                  </label>
+                  <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                    Not
+                    <input
+                      type="text"
+                      value={commissionNote}
+                      onChange={(event) => setCommissionNote(event.target.value)}
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50"
+                    />
+                  </label>
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => void saveCommission()}
+                    disabled={savingCommission}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
+                  >
+                    {savingCommission ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    KOMISYONU KAYDET
+                  </button>
+                </div>
+              </>
+            )}
+          </HardwarePanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <article className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800">Kategori Dagilimi</h2>
-          {overview && overview.byCategory.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {overview.byCategory.slice(0, 8).map((row) => {
-                const ratio = Math.max((row.collected_amount / maxCategoryAmount) * 100, row.collected_amount > 0 ? 3 : 0)
-                return (
-                  <div key={row.category_key || row.category_label} className="grid grid-cols-[130px_minmax(0,1fr)_110px] items-center gap-2">
-                    <span className="truncate text-xs font-semibold text-slate-700">{businessTypeLabel(row.category_label)}</span>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-indigo-500" style={{ width: `${ratio}%` }} />
-                    </div>
-                    <span className="text-right text-xs font-semibold text-slate-700">{toMoney(row.collected_amount)}</span>
-                  </div>
-                )
-              })}
+          <HardwarePanel className="p-0 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-[#2d313a] bg-[#0f1115] flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Son Islemler</h2>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">TOPLAM {txTotal} KAYIT</span>
+                {refreshing ? <Loader2 className="h-4 w-4 animate-spin text-[#38bdf8]" /> : null}
+              </div>
             </div>
-          ) : (
-            <p className="mt-2 text-sm text-slate-500">Secili filtrede kategori verisi bulunamadi.</p>
-          )}
-        </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800">Isletme Dagilimi</h2>
-          {overview && overview.byBusiness.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {overview.byBusiness.slice(0, 8).map((row) => {
-                const ratio = Math.max((row.collected_amount / maxBusinessAmount) * 100, row.collected_amount > 0 ? 3 : 0)
-                return (
-                  <div key={row.business_id} className="grid grid-cols-[160px_minmax(0,1fr)_110px] items-center gap-2">
-                    <span className="truncate text-xs font-semibold text-slate-700">{row.business_name}</span>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${ratio}%` }} />
-                    </div>
-                    <span className="text-right text-xs font-semibold text-slate-700">{toMoney(row.collected_amount)}</span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-slate-500">Secili filtrede isletme verisi bulunamadi.</p>
-          )}
-        </article>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800">Kategori Bazli Ozet</h2>
-        {overview && overview.byCategory.length > 0 ? (
-          <div className="mt-3 overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
-                  <th className="py-2 pr-2">Kategori</th>
-                  <th className="py-2 pr-2">Islem</th>
-                  <th className="py-2 pr-2">Tahsilat</th>
-                  <th className="py-2 pr-2">Komisyon</th>
-                  <th className="py-2 pr-2">Net</th>
-                  <th className="py-2">Hizmet Kuponu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.byCategory.map((row) => (
-                  <tr key={row.category_key || row.category_label} className="border-b border-slate-100 text-slate-700">
-                    <td className="py-2 pr-2">{businessTypeLabel(row.category_label)}</td>
-                    <td className="py-2 pr-2">{row.tx_count}</td>
-                    <td className="py-2 pr-2">{toMoney(row.collected_amount)}</td>
-                    <td className="py-2 pr-2">{toMoney(row.commission_amount)}</td>
-                    <td className="py-2 pr-2">{toMoney(row.merchant_net_amount)}</td>
-                    <td className="py-2">{row.service_coupon_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-slate-500">Secili filtrede kategori verisi bulunamadi.</p>
-        )}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800">Isletme Bazli Ozet</h2>
-        <p className="mt-1 text-xs text-slate-500">Toplam {overview?.businessTotal || 0} isletme</p>
-        {overview && overview.byBusiness.length > 0 ? (
-          <div className="mt-3 overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
-                  <th className="py-2 pr-2">Isletme</th>
-                  <th className="py-2 pr-2">Kategori</th>
-                  <th className="py-2 pr-2">Islem</th>
-                  <th className="py-2 pr-2">Tahsilat</th>
-                  <th className="py-2 pr-2">Komisyon</th>
-                  <th className="py-2 pr-2">Net</th>
-                  <th className="py-2">Hizmet</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.byBusiness.map((row) => (
-                  <tr key={row.business_id} className="border-b border-slate-100 text-slate-700">
-                    <td className="py-2 pr-2 font-semibold">{row.business_name}</td>
-                    <td className="py-2 pr-2">{businessTypeLabel(row.business_type)}</td>
-                    <td className="py-2 pr-2">{row.tx_count}</td>
-                    <td className="py-2 pr-2">{toMoney(row.collected_amount)}</td>
-                    <td className="py-2 pr-2">{toMoney(row.commission_amount)}</td>
-                    <td className="py-2 pr-2">{toMoney(row.merchant_net_amount)}</td>
-                    <td className="py-2">{row.service_coupon_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-slate-500">Secili filtrede isletme verisi bulunamadi.</p>
-        )}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800">Komisyon Ayari (Admin)</h2>
-        <p className="mt-1 text-xs text-slate-500">{commissionInfo}</p>
-        {!selectedBusinessId ? (
-          <p className="mt-3 text-sm text-slate-600">Komisyon tanimlamak icin filtreden bir isletme secin.</p>
-        ) : (
-          <>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <label className="text-sm font-semibold text-slate-700">
-                Oran (%)
-                <input
-                  type="text"
-                  value={commissionRate}
-                  onChange={(event) => setCommissionRate(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="text-sm font-semibold text-slate-700">
-                Sabit (₺)
-                <input
-                  type="text"
-                  value={commissionFixed}
-                  onChange={(event) => setCommissionFixed(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="text-sm font-semibold text-slate-700">
-                Not
-                <input
-                  type="text"
-                  value={commissionNote}
-                  onChange={(event) => setCommissionNote(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-              </label>
-            </div>
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={saveCommission}
-                disabled={savingCommission}
-                className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {savingCommission ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Komisyonu Kaydet
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-800">Son Islemler</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500">Toplam {txTotal}</span>
-            {refreshing ? <Loader2 className="h-4 w-4 animate-spin text-slate-500" /> : null}
-          </div>
-        </div>
-
-        {transactions.length === 0 ? (
-          <p className="text-sm text-slate-500">Secili filtrede islem bulunamadi.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
-                  <th className="py-2 pr-2">Tarih</th>
-                  <th className="py-2 pr-2">Isletme</th>
-                  <th className="py-2 pr-2">Akis</th>
-                  <th className="py-2 pr-2">Kupon</th>
-                  <th className="py-2 pr-2">Tahsilat</th>
-                  <th className="py-2 pr-2">Komisyon</th>
-                  <th className="py-2 pr-2">Net</th>
-                  <th className="py-2">Ref</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b border-slate-100 text-slate-700">
-                    <td className="py-2 pr-2">{tx.used_at ? new Date(tx.used_at).toLocaleString('tr-TR') : '-'}</td>
-                    <td className="py-2 pr-2">
-                      <div className="font-semibold">{tx.business_name}</div>
-                      <div className="text-xs text-slate-500">{businessTypeLabel(tx.business_type)}</div>
-                    </td>
-                    <td className="py-2 pr-2">{flowLabel(tx.flow_type)}</td>
-                    <td className="py-2 pr-2">{tx.coupon_code || '-'}</td>
-                    <td className="py-2 pr-2 font-semibold">{toMoney(tx.final_amount)}</td>
-                    <td className="py-2 pr-2">{toMoney(tx.commission_amount)}</td>
-                    <td className="py-2 pr-2 font-semibold">{toMoney(tx.merchant_net_amount)}</td>
-                    <td className="py-2">{tx.payment_reference || tx.payment_status || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+            {transactions.length === 0 ? (
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-8">Secili filtrede islem bulunamadi.</p>
+            ) : (
+              <div className="overflow-x-auto bg-[#16181d] max-h-[600px] custom-scrollbar">
+                <table className="min-w-full text-left border-collapse">
+                  <thead className="sticky top-0 bg-[#101419] border-b border-[#2d313a] shadow-sm">
+                    <tr className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                      <th className="px-5 py-3">Tarih</th>
+                      <th className="px-5 py-3">Isletme</th>
+                      <th className="px-5 py-3">Akis</th>
+                      <th className="px-5 py-3">Kupon</th>
+                      <th className="px-5 py-3">Tahsilat</th>
+                      <th className="px-5 py-3">Komisyon</th>
+                      <th className="px-5 py-3">Net</th>
+                      <th className="px-5 py-3">Ref</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e232b]">
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-[#1a1d24] transition-colors">
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">{tx.used_at ? new Date(tx.used_at).toLocaleString('tr-TR') : '-'}</td>
+                        <td className="px-5 py-3 align-top">
+                          <p className="text-[12px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{tx.business_name}</p>
+                          <p className="mt-1 text-[9px] font-mono text-[#64748b] uppercase tracking-widest">{businessTypeLabel(tx.business_type)}</p>
+                        </td>
+                        <td className="px-5 py-3 text-[10px] font-mono text-[#94a3b8] uppercase tracking-widest">{flowLabel(tx.flow_type)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#38bdf8] tracking-widest">{tx.coupon_code || '-'}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(tx.final_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-[#94a3b8] tracking-widest">{toMoney(tx.commission_amount)}</td>
+                        <td className="px-5 py-3 text-[11px] font-mono text-emerald-400 tracking-widest">{toMoney(tx.merchant_net_amount)}</td>
+                        <td className="px-5 py-3 text-[10px] font-mono text-[#64748b] tracking-widest">{tx.payment_reference || tx.payment_status || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </HardwarePanel>
+        </>
+      )}
     </div>
   )
 }
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white/85 p-3 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-bold text-slate-800">{value}</p>
-    </article>
+    <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group hover:border-[#475569] transition-colors">
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">{label}</p>
+      <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{value}</p>
+    </div>
   )
 }

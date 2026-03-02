@@ -5,7 +5,7 @@ import { BadgePercent, Check, Copy, Gift, Loader2, Ticket, Trash2 } from 'lucide
 import { getBrowserSupabase } from '@/lib/browser-client'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 import type { MerchantBusiness } from '../_lib/helpers'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 
 type CouponCampaign = {
   id: string
@@ -144,6 +144,17 @@ function generateSystemCouponCode(): string {
 
   return `MLY-${createPart(4)}-${createPart(4)}`
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantCouponsPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -422,7 +433,7 @@ export default function MerchantCouponsPage() {
   const toggleCouponDetailVisibility = async (coupon: CouponCampaign) => {
     if (!selectedBusinessId) return
     if (!detailFlagSupported) {
-      window.alert('Detayda yayınlama alanı eksik. SQL patch çalıştırılmalı.')
+      window.alert("Detayda yayınlama alanı eksik. DB'de 'show_in_detail' alanı olmalı.")
       return
     }
     if (!coupon.show_in_detail && !coupon.is_active) {
@@ -490,16 +501,18 @@ export default function MerchantCouponsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)]">
-        <ModuleTitle title="Kupon Yönetimi" />
-        <p className="text-sm text-slate-500 mt-1">Kupon oluştur, aktif/pasif yönet ve kodları hızlıca kopyala.</p>
+      <div className="border-b border-[#2d313a] pb-4">
+        <PanelTitle title="Kupon Yönetimi" />
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-2">
+          Kupon oluştur, aktif/pasif yönet ve kodları hızlıca kopyala.
+        </p>
       </div>
 
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] space-y-5">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+      <div className="space-y-5">
+        <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
           İşletme Seç
           <select
-            className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm border border-slate-200"
+            className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase tracking-wide"
             value={selectedBusinessId}
             onChange={(event) => setSelectedBusinessId(event.target.value)}
           >
@@ -513,46 +526,49 @@ export default function MerchantCouponsPage() {
 
         {bootLoading ? (
           <div className="h-20 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : !selectedBusiness ? (
-          <div className="text-sm text-slate-500">İşletme bulunamadı.</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#0a0c10] border border-dashed border-[#2d313a] p-5 text-center rounded">İşletme bulunamadı.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Aktif Kupon</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{activeCouponCount}</p>
-              </div>
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Toplam Kupon</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{coupons.length}</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Aktif Kupon</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{activeCouponCount}</p>
+              </HardwarePanel>
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Toplam Kupon</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{coupons.length}</p>
+              </HardwarePanel>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-4">
-              <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)] space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                  <Ticket className="w-4 h-4 text-emerald-600" />
-                  <span className="text-sm font-semibold">Yeni Kupon Oluştur</span>
+            <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-5">
+              
+              <HardwarePanel className="p-5 space-y-5">
+                <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+                  <Ticket className="w-4 h-4 text-[#38bdf8]" />
+                  <span>Yeni Kupon Oluştur</span>
                 </div>
 
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Kupon Başlığı
                   <input
                     value={couponTitle}
                     onChange={(event) => setCouponTitle(event.target.value)}
-                    className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                    className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder={couponTitlePlaceholderByType(couponType)}
                   />
                 </label>
 
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Kupon Kodu
-                  <div className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 border border-dashed border-slate-300 text-sm font-semibold text-slate-600">
-                    Sistem otomatik üretir
+                  <div className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-dashed border-[#2d313a] text-sm font-mono text-[#64748b]">
+                    SİSTEM OTOMATİK ÜRETİR
                   </div>
-                  <p className="mt-1 text-[11px] font-medium text-slate-500">
+                  <p className="mt-1.5 text-[9px] font-mono tracking-widest text-[#475569]">
                     Kupon kaydedildiğinde benzersiz kod sistem tarafından atanır.
                   </p>
                 </label>
@@ -570,8 +586,8 @@ export default function MerchantCouponsPage() {
                         key={option.key}
                         type="button"
                         onClick={() => setCouponType(option.key)}
-                        className={`rounded-xl border px-2 py-2 text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
-                          isActive ? 'border-blue-300 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white text-slate-600'
+                        className={`rounded border px-2 py-2.5 text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-1.5 transition-colors ${
+                          isActive ? 'border-[#226785] bg-[#153445] text-[#38bdf8]' : 'border-[#2d313a] bg-[#0a0c10] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -582,63 +598,63 @@ export default function MerchantCouponsPage() {
                 </div>
 
                 {couponType === 'percentage' ? (
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     İndirim Yüzdesi
                     <input
                       value={couponDiscountValue}
                       onChange={(event) => setCouponDiscountValue(event.target.value)}
                       inputMode="numeric"
-                      className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                       placeholder="10"
                     />
                   </label>
                 ) : null}
 
                 {couponType === 'free' ? (
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Hediye Değeri (₺)
                     <input
                       value={couponGiftValue}
                       onChange={(event) => setCouponGiftValue(event.target.value)}
                       inputMode="decimal"
-                      className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                       placeholder="100"
                     />
-                    <p className="mt-1 text-[11px] font-medium text-slate-500">
+                    <p className="mt-1.5 text-[9px] font-mono tracking-widest text-[#475569]">
                       Bu tutar sadece kasada hesaplama içindir, kupon üzerinde gösterilmez.
                     </p>
                   </label>
                 ) : null}
 
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                   Kullanım Limiti
                   <input
                     value={couponMaxUsage}
                     onChange={(event) => setCouponMaxUsage(event.target.value)}
                     inputMode="numeric"
-                    className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                    className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                     placeholder="100"
                   />
                 </label>
 
-                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <label className="flex items-center gap-3 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={couponIndefinite}
                     onChange={(event) => setCouponIndefinite(event.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300"
+                    className="w-4 h-4 rounded border-[#2d313a] bg-[#0a0c10] accent-[#38bdf8]"
                   />
                   Süresiz kupon
                 </label>
 
                 {!couponIndefinite ? (
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Son Geçerlilik Tarihi
                     <input
                       type="date"
                       value={couponValidUntil}
                       onChange={(event) => setCouponValidUntil(event.target.value)}
-                      className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] [color-scheme:dark]"
                     />
                   </label>
                 ) : null}
@@ -647,85 +663,93 @@ export default function MerchantCouponsPage() {
                   type="button"
                   onClick={createCoupon}
                   disabled={savingCoupon}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
                 >
                   {savingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Kuponu Oluştur
+                  {savingCoupon ? 'İŞLENİYOR...' : 'KUPONU OLUŞTUR'}
                 </button>
-              </section>
+              </HardwarePanel>
 
-              <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)]">
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <h3 className="text-sm font-bold text-slate-800">Kupon Listesi</h3>
-                  <span className="text-xs font-semibold text-slate-500">Aktif {activeCouponCount} / Toplam {coupons.length}</span>
+              <HardwarePanel className="p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-3">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                    <Ticket className="w-4 h-4 text-[#38bdf8]" />
+                    <span>Kupon Listesi</span>
+                  </div>
+                  <span className="px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+                    AKTİF {activeCouponCount} / TOPLAM {coupons.length}
+                  </span>
                 </div>
+
                 {!detailFlagSupported ? (
-                  <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                    Detayda Yayınla özelliği için DB patch gerekli (`show_in_detail` alanı).
+                  <div className="rounded border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-[10px] font-mono tracking-widest uppercase text-amber-400">
+                    [SİSTEM] DETAYDA YAYINLAMA ALANI EKSİK. DB GÜNCELLEMESİ GEREKLİ.
                   </div>
                 ) : null}
 
                 {recordsLoading ? (
                   <div className="h-24 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[#38bdf8]" />
                   </div>
                 ) : coupons.length === 0 ? (
-                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
-                    Henüz kupon yok.
+                  <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                    HENÜZ KUPON YOK.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
                     {coupons.map((coupon) => (
-                      <article key={coupon.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-800 truncate">{coupon.title || 'Kupon'}</p>
-                            <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-200 text-xs font-extrabold text-slate-700">
-                              {coupon.code || 'KOD YOK'}
+                      <article key={coupon.id} className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{coupon.title || 'KUPON'}</p>
+                            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border ${
+                                  coupon.is_active ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-400' : 'border-[#2d313a] bg-[#16181d] text-[#64748b]'
+                                }`}
+                              >
+                                {coupon.is_active ? 'AKTİF' : 'PASİF'}
+                              </span>
+                              {coupon.show_in_detail ? (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border border-[#226785] bg-[#153445] text-[#38bdf8]">
+                                  DETAYDA
+                                </span>
+                              ) : null}
                             </div>
-                            <p className="mt-1 text-xs font-semibold text-slate-500">{couponBenefitText(coupon)}</p>
-                            <p className="text-xs text-slate-500">Limit: {coupon.max_usage_limit || 0} | Kullanım: {coupon.usage_count || 0}</p>
-                            <p className="text-xs text-slate-500">Geçerlilik: {formatDate(coupon.valid_until)}</p>
-                            <p className="text-xs text-slate-500">
-                              Detay: {coupon.show_in_detail ? 'Yayında' : 'Kapalı'}
-                            </p>
+                          </div>
+                          
+                          <div className="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#101419] border border-[#1e232b] text-[11px] font-mono text-[#38bdf8] tracking-widest">
+                            {coupon.code || 'KOD YOK'}
                           </div>
 
-                          <div className="flex flex-col items-end gap-1.5">
-                            <span
-                              className={`px-2 py-1 rounded-full text-[11px] font-semibold ${
-                                coupon.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                              }`}
-                            >
-                              {coupon.is_active ? 'AKTİF' : 'PASİF'}
-                            </span>
-                            {coupon.show_in_detail ? (
-                              <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">
-                                DETAYDA
-                              </span>
-                            ) : null}
+                          <div className="mt-3 space-y-1">
+                            <p className="text-[10px] font-mono text-[#94a3b8] uppercase tracking-widest">{couponBenefitText(coupon)}</p>
+                            <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">LİMİT: {coupon.max_usage_limit || 0} | KULLANIM: {coupon.usage_count || 0}</p>
+                            <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">GEÇERLİLİK: {formatDate(coupon.valid_until)}</p>
                           </div>
                         </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <div className="mt-4 pt-3 border-t border-[#1e232b] flex flex-wrap items-center gap-2">
                           <button
                             type="button"
                             onClick={() => copyCouponCode(coupon)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border border-[#2d313a] bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
                           >
-                            {copyingCouponId === coupon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
-                            Kodu Kopyala
+                            {copyingCouponId === coupon.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Copy className="w-3 h-3" />}
+                            KOPYALA
                           </button>
+
                           <button
                             type="button"
                             onClick={() => toggleCouponActive(coupon)}
                             disabled={togglingCouponId === coupon.id}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold ${
-                              coupon.is_active ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                            className={`px-2.5 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                              coupon.is_active ? 'border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40' : 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/40'
                             }`}
                           >
-                            {togglingCouponId === coupon.id ? '...' : coupon.is_active ? 'Pasife Al' : 'Aktif Et'}
+                            {togglingCouponId === coupon.id ? '...' : coupon.is_active ? 'PASİFE AL' : 'AKTİF ET'}
                           </button>
+
                           <button
                             type="button"
                             onClick={() => toggleCouponDetailVisibility(coupon)}
@@ -734,21 +758,22 @@ export default function MerchantCouponsPage() {
                               (!coupon.is_active && !coupon.show_in_detail) ||
                               !detailFlagSupported
                             }
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold ${
-                              coupon.show_in_detail ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'
-                            } disabled:opacity-55`}
+                            className={`px-2.5 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors disabled:opacity-50 ${
+                              coupon.show_in_detail ? 'border-[#226785] bg-[#153445] text-[#38bdf8]' : 'border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0]'
+                            }`}
                           >
                             {detailTogglingCouponId === coupon.id
                               ? '...'
                               : coupon.show_in_detail
-                                ? 'Detaydan Kaldır'
-                                : 'Detayda Yayınla'}
+                                ? 'DETAYDAN KALDIR'
+                                : 'DETAYDA YAYINLA'}
                           </button>
+
                           <button
                             type="button"
                             onClick={() => deleteCoupon(coupon.id)}
                             disabled={deletingCouponId === coupon.id}
-                            className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center"
+                            className="w-7 h-7 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center hover:bg-rose-900/40 transition-colors ml-auto"
                           >
                             {deletingCouponId === coupon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                           </button>
@@ -757,81 +782,91 @@ export default function MerchantCouponsPage() {
                     ))}
                   </div>
                 )}
-              </section>
+              </HardwarePanel>
             </div>
 
-            <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)]">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <h3 className="text-sm font-bold text-slate-800">Kupon Kullanım Geçmişi</h3>
-                <span className="text-xs font-semibold text-slate-500">Kim kullandı, ne zaman kullandı, değeri ve TL etkisi</span>
+            <HardwarePanel className="p-5 md:p-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-3">
+                <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                  <Ticket className="w-4 h-4 text-[#38bdf8]" />
+                  <span>Kupon Kullanım Geçmişi</span>
+                </div>
+                <span className="text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+                  Kim kullandı, ne zaman kullandı, değeri ve TL etkisi
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Toplam Kullanım</p>
-                  <p className="text-xl font-bold text-slate-800 mt-1">{usageSummary.totalUsage}</p>
+              <div className="grid grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Toplam Kullanım</p>
+                  <p className="text-xl font-mono text-[#e2e8f0] mt-2">{usageSummary.totalUsage}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Yüzde İndirim (TL)</p>
-                  <p className="text-xl font-bold text-slate-800 mt-1">{money(usageSummary.totalDiscountTl)}</p>
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Yüzde İndirim (TL)</p>
+                  <p className="text-xl font-mono text-[#e2e8f0] mt-2">{money(usageSummary.totalDiscountTl)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Hediye (TL)</p>
-                  <p className="text-xl font-bold text-slate-800 mt-1">{money(usageSummary.totalGiftTl)}</p>
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Hediye (TL)</p>
+                  <p className="text-xl font-mono text-[#e2e8f0] mt-2">{money(usageSummary.totalGiftTl)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Ürün Kuponu</p>
-                  <p className="text-xl font-bold text-slate-800 mt-1">{usageSummary.itemUsage}</p>
+                <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Ürün Kuponu</p>
+                  <p className="text-xl font-mono text-[#e2e8f0] mt-2">{usageSummary.itemUsage}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Toplam TL Etkisi</p>
-                  <p className="text-xl font-bold text-emerald-700 mt-1">{money(usageSummary.totalBenefitTl)}</p>
+                <div className="rounded border border-[#166534] bg-[#14532d]/20 p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-emerald-500/0 group-hover:bg-emerald-500/50 transition-colors" />
+                  <p className="text-[9px] uppercase tracking-widest font-mono text-emerald-500/70">Toplam TL Etkisi</p>
+                  <p className="text-xl font-mono text-emerald-400 mt-2">{money(usageSummary.totalBenefitTl)}</p>
                 </div>
               </div>
 
               {usageLoading ? (
                 <div className="h-24 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#38bdf8]" />
                 </div>
               ) : usageRows.length === 0 ? (
-                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
-                  Henüz kullanım geçmişi yok.
+                <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                  HENÜZ KULLANIM GEÇMİŞİ YOK.
                 </div>
               ) : (
-                <div className="rounded-2xl border border-slate-200 overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-slate-100/80 text-slate-600">
+                <div className="rounded border border-[#2d313a] bg-[#16181d] overflow-x-auto">
+                  <table className="min-w-full text-left border-collapse">
+                    <thead className="bg-[#101419] border-b border-[#2d313a]">
                       <tr>
-                        <th className="px-3 py-2 text-left font-semibold">Kullanan</th>
-                        <th className="px-3 py-2 text-left font-semibold">Kupon</th>
-                        <th className="px-3 py-2 text-left font-semibold">Değer</th>
-                        <th className="px-3 py-2 text-left font-semibold">TL Etkisi</th>
-                        <th className="px-3 py-2 text-left font-semibold">Kullanım Zamanı</th>
+                        <th className="px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Kullanan</th>
+                        <th className="px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Kupon</th>
+                        <th className="px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Değer</th>
+                        <th className="px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">TL Etkisi</th>
+                        <th className="px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Kullanım Zamanı</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[#1e232b]">
                       {usageRows.map((row) => (
-                        <tr key={row.id} className="border-t border-slate-200">
-                          <td className="px-3 py-2">
-                            <p className="font-semibold text-slate-800">{row.userName}</p>
-                            <p className="text-xs text-slate-500">{row.userShort}</p>
+                        <tr key={row.id} className="hover:bg-[#1a1d24] transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="text-[12px] font-medium text-[#e2e8f0] uppercase tracking-wide">{row.userName}</p>
+                            <p className="text-[10px] font-mono text-[#64748b] mt-0.5 tracking-widest">{row.userShort}</p>
                           </td>
-                          <td className="px-3 py-2">
-                            <p className="font-semibold text-slate-800">{row.couponTitle}</p>
-                            <p className="text-xs text-slate-500">{row.couponCode}</p>
+                          <td className="px-4 py-3">
+                            <p className="text-[12px] font-medium text-[#e2e8f0] uppercase tracking-wide">{row.couponTitle}</p>
+                            <p className="text-[10px] font-mono text-[#38bdf8] mt-0.5 tracking-widest">{row.couponCode}</p>
                           </td>
-                          <td className="px-3 py-2 text-slate-700 font-semibold">{row.couponValueLabel}</td>
-                          <td className="px-3 py-2 font-semibold text-slate-800">
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#94a3b8] uppercase tracking-widest">{row.couponValueLabel}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#e2e8f0] tracking-widest">
                             {row.tlImpact > 0 ? money(row.tlImpact) : '-'}
                           </td>
-                          <td className="px-3 py-2 text-slate-600">{formatDateTime(row.usedAt)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#64748b] tracking-widest">{formatDateTime(row.usedAt)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-            </section>
+            </HardwarePanel>
           </>
         )}
       </div>

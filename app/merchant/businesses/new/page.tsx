@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { PanelTitle } from '../../_components/panel-title'
 import { useRouter } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { 
@@ -21,16 +22,6 @@ import {
   BUSINESS_KVKK_TERMS_TEXT,
 } from '@/lib/legal-documents'
 
-// --- FIRE ORANGE NEUMORPHIC THEME ---
-const BG_MAIN = "bg-[#eef0f4]"
-const TXT_DARK = "text-slate-700"
-const ACCENT_COLOR = "text-orange-500"
-
-// Gölgeler
-const SHADOW_OUT = "shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff]"
-const SHADOW_IN = "shadow-[inset_6px_6px_12px_#d1d5db,inset_-6px_-6px_12px_#ffffff]"
-const SHADOW_BTN = "shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]"
-
 // --- UI COMPONENTS ---
 
 type Category = { id: string; name: string; [key: string]: unknown }
@@ -40,7 +31,7 @@ type RuleKey = 'r1' | 'r2' | 'r3'
 type RuleState = Record<RuleKey, boolean>
 type LegalModalState = { title: string; version: string; body: string } | null
 
-type NeuCardProps = {
+type HardwarePanelProps = {
   children: ReactNode
   className?: string
 }
@@ -79,34 +70,55 @@ type LegalModalProps = {
   onClose: () => void
 }
 
-const NeuCard = ({ children, className = "" }: NeuCardProps) => (
-  <div className={`${BG_MAIN} rounded-[40px] ${SHADOW_OUT} border border-white/60 p-8 ${className}`}>
-    {children}
+type SectionHeaderProps = {
+  icon: LucideIcon
+  title: string
+}
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: HardwarePanelProps) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="p-6 md:p-8 relative z-10">
+      {children}
+    </div>
+  </div>
+)
+
+const SectionHeader = ({ icon: Icon, title }: SectionHeaderProps) => (
+  <div className="flex items-center gap-3 mb-6 border-b border-[#2d313a] pb-4">
+    <div className="w-8 h-8 rounded border border-[#2d313a] bg-[#0a0c10] flex items-center justify-center text-[#38bdf8] shrink-0">
+      <Icon strokeWidth={1.5} className="w-4 h-4" />
+    </div>
+    <h2 className="text-[14px] font-medium text-[#e2e8f0] uppercase tracking-wide">{title}</h2>
   </div>
 )
 
 const NeuInput = ({ icon: Icon, label, rightElement, ...props }: NeuInputProps) => (
-  <div className="mb-6 group">
-    {label && <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-4">{label}</label>}
+  <div className="mb-5 group">
+    {label && <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest mb-2">{label}</label>}
     <div className="relative flex items-center">
-      {Icon && <Icon className="absolute left-5 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors pointer-events-none"/>}
+      {Icon && <Icon strokeWidth={1.5} className="absolute left-3 w-4 h-4 text-[#475569] group-focus-within:text-[#38bdf8] transition-colors pointer-events-none"/>}
       <input 
         {...props}
-        className={`w-full ${BG_MAIN} ${Icon ? 'pl-14' : 'pl-6'} ${rightElement ? 'pr-16' : 'pr-6'} py-5 rounded-2xl text-slate-700 font-bold text-sm outline-none transition-all
-        ${SHADOW_IN} border border-transparent focus:ring-2 focus:ring-orange-400/20 placeholder:text-slate-400/60`}
+        className={`w-full bg-[#0a0c10] ${Icon ? 'pl-10' : 'pl-4'} ${rightElement ? 'pr-14' : 'pr-4'} py-3 rounded text-[#e2e8f0] font-mono text-sm outline-none transition-all
+        border border-[#2d313a] focus:border-[#38bdf8]/50 placeholder:text-[#475569]`}
       />
-      {rightElement && <div className="absolute right-2">{rightElement}</div>}
+      {rightElement && <div className="absolute right-1.5">{rightElement}</div>}
     </div>
   </div>
 )
 
 const NeuTextArea = ({ label, ...props }: NeuTextAreaProps) => (
-  <div className="mb-6 group">
-    {label && <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-4">{label}</label>}
+  <div className="mb-5 group">
+    {label && <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest mb-2">{label}</label>}
     <textarea 
       {...props}
-      className={`w-full ${BG_MAIN} px-6 py-5 rounded-2xl text-slate-700 font-bold text-sm outline-none transition-all resize-none
-      ${SHADOW_IN} border border-transparent focus:ring-2 focus:ring-orange-400/20 placeholder:text-slate-400/60 min-h-[120px]`}
+      className={`w-full bg-[#0a0c10] px-4 py-3 rounded text-[#e2e8f0] font-mono text-sm outline-none transition-all resize-none custom-scrollbar
+      border border-[#2d313a] focus:border-[#38bdf8]/50 placeholder:text-[#475569] min-h-[100px]`}
     />
   </div>
 )
@@ -114,16 +126,16 @@ const NeuTextArea = ({ label, ...props }: NeuTextAreaProps) => (
 const NeuSwitch = ({ checked, onChange }: NeuSwitchProps) => (
   <div 
     onClick={(e) => { e.stopPropagation(); onChange(!checked); }} 
-    className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300 ease-in-out ${checked ? 'bg-orange-500 shadow-inner' : `${BG_MAIN} ${SHADOW_IN}`}`}
+    className={`relative w-10 h-5 rounded-full cursor-pointer transition-colors duration-300 border ${checked ? 'bg-[#153445] border-[#226785]' : 'bg-[#0a0c10] border-[#2d313a]'}`}
   >
-    <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
+    <div className={`absolute top-[1px] left-[1px] w-[16px] h-[16px] rounded-full transition-transform duration-300 ${checked ? 'translate-x-[18px] bg-[#38bdf8]' : 'translate-x-0 bg-[#64748b]'}`} />
   </div>
 )
 
 const NeuButton = ({ onClick, children, variant = "primary", className = "", disabled=false, type = 'button' }: NeuButtonProps) => {
-  const base = "relative overflow-hidden transition-all duration-200 rounded-2xl font-black flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] uppercase tracking-wide text-sm select-none"
-  const primary = `${BG_MAIN} text-slate-600 ${SHADOW_BTN} border border-white/60 hover:text-orange-600 hover:-translate-y-0.5 active:${SHADOW_IN}`
-  const solid = `bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-[6px_6px_20px_rgba(249,115,22,0.4),-6px_-6px_20px_rgba(255,255,255,0.8)] border border-orange-400/20 hover:brightness-110 hover:-translate-y-0.5`
+  const base = "relative overflow-hidden transition-all duration-150 rounded font-mono uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed select-none"
+  const primary = "bg-transparent text-[#94a3b8] border border-[#2d313a] hover:text-[#e2e8f0] hover:bg-[#1a1d24]"
+  const solid = "bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110"
 
   let style = primary
   if (variant === 'solid') style = solid
@@ -135,17 +147,17 @@ const NeuButton = ({ onClick, children, variant = "primary", className = "", dis
 const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
   if (!isOpen) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-[#eef0f4] rounded-[40px] p-10 max-w-md w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-300 border border-white relative overflow-hidden">
-        <div className="w-24 h-24 bg-[#eef0f4] rounded-full flex items-center justify-center mx-auto mb-6 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] text-green-500">
-          <CheckCircle className="w-12 h-12" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/90 backdrop-blur-sm animate-in fade-in duration-300">
+      <HardwarePanel className="max-w-md w-full text-center p-8">
+        <div className="w-16 h-16 bg-[#0a0c10] rounded-full flex items-center justify-center mx-auto mb-5 text-emerald-400 border border-[#2d313a]">
+          <CheckCircle className="w-8 h-8" strokeWidth={1.5} />
         </div>
-        <h2 className="text-3xl font-black text-slate-800 mb-2">İşletme Kaydedildi</h2>
-        <p className="text-slate-500 font-medium mb-8 leading-relaxed text-sm">
+        <h2 className="text-[18px] font-medium text-[#e2e8f0] uppercase tracking-wide mb-2">İşletme Kaydedildi</h2>
+        <p className="text-[11px] font-mono text-[#94a3b8] mb-8 leading-relaxed uppercase tracking-widest">
           Yeni işletme kaydınız tamamlandı. Panel ana sayfasına otomatik yönlendiriliyorsunuz.
         </p>
-        <NeuButton onClick={onClose} variant="solid" className="w-full py-5">Harika, Anladım</NeuButton>
-      </div>
+        <NeuButton onClick={onClose} variant="solid" className="w-full py-3.5">Harika, Anladım</NeuButton>
+      </HardwarePanel>
     </div>
   )
 }
@@ -153,21 +165,21 @@ const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 const LegalModal = ({ state, onClose }: LegalModalProps) => {
   if (!state) return null
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="w-full max-w-2xl max-h-[85vh] bg-[#eef0f4] rounded-[32px] border border-white shadow-2xl p-6 md:p-8 flex flex-col">
-        <div className="mb-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-orange-500">{state.version}</p>
-          <h3 className="text-xl font-black text-slate-800 mt-1">{state.title}</h3>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#050608]/90 backdrop-blur-sm">
+      <HardwarePanel className="w-full max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <div className="px-6 py-5 border-b border-[#2d313a] bg-[#0f1115]">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#64748b]">{state.version}</p>
+          <h3 className="text-[14px] font-medium tracking-wide text-[#e2e8f0] mt-1 uppercase">{state.title}</h3>
         </div>
-        <div className="flex-1 overflow-y-auto rounded-2xl bg-white/70 border border-white p-4 md:p-5 text-sm text-slate-700 leading-6 whitespace-pre-wrap">
+        <div className="flex-1 overflow-y-auto bg-[#0c0e12] p-5 text-[12px] font-sans text-[#cbd5e1] leading-relaxed whitespace-pre-wrap custom-scrollbar">
           {state.body}
         </div>
-        <div className="pt-5 flex justify-end">
-          <NeuButton onClick={onClose} variant="solid" className="px-6 py-3">
+        <div className="px-6 py-4 border-t border-[#2d313a] bg-[#0f1115] flex justify-end">
+          <NeuButton onClick={onClose} variant="solid" className="px-6 py-2.5">
             Kapat
           </NeuButton>
         </div>
-      </div>
+      </HardwarePanel>
     </div>
   )
 }
@@ -183,6 +195,7 @@ export default function BusinessWizard() {
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
+  const [wizardError, setWizardError] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserDisplayName, setCurrentUserDisplayName] = useState('')
   const [accountTermsAccepted, setAccountTermsAccepted] = useState(false)
@@ -412,9 +425,106 @@ export default function BusinessWizard() {
     const list = [...(brands[catId] || [])]; list[idx] = val; setBrands({ ...brands, [catId]: list })
   }
 
+
+  const parseCoordsFromForm = () => {
+    const latRaw = bizForm.lat.trim()
+    const lngRaw = bizForm.lng.trim()
+
+    if (latRaw && lngRaw) {
+      const lat = Number(latRaw)
+      const lng = Number(lngRaw)
+      if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng }
+    }
+
+    const parts = bizForm.coordsInput.split(',')
+    if (parts.length !== 2) return null
+
+    const lat = Number(parts[0].trim())
+    const lng = Number(parts[1].trim())
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+
+    return { lat, lng }
+  }
+
+  const validateStep2 = () => {
+    if (!bizForm.name.trim()) return 'İşletme adı zorunludur.'
+    if (!bizForm.phone.trim()) return 'İşletme telefonu zorunludur.'
+    if (!bizForm.address.trim()) return 'Açık adres zorunludur.'
+
+    const coords = parseCoordsFromForm()
+    if (!coords) return 'Geçerli bir enlem-boylam girin. Örn: 41.015, 28.979'
+    if (coords.lat < -90 || coords.lat > 90 || coords.lng < -180 || coords.lng > 180) {
+      return 'Konum değerleri geçerli aralıkta olmalıdır.'
+    }
+
+    return null
+  }
+
+  const validateStep3 = () => {
+    if (selectedCats.size === 0) return 'En az 1 kategori seçmelisiniz.'
+    return null
+  }
+
+  const validateStep4 = () => {
+    if (photos.length < 3) return 'En az 3 fotoğraf yüklemelisiniz.'
+    return null
+  }
+
+  const handleStep2Continue = () => {
+    const error = validateStep2()
+    if (error) {
+      setWizardError(error)
+      return
+    }
+    setWizardError(null)
+    setStep(3)
+  }
+
+  const handleStep3Continue = () => {
+    const error = validateStep3()
+    if (error) {
+      setWizardError(error)
+      return
+    }
+    setWizardError(null)
+    setStep(4)
+  }
+
+  const handleStep4Continue = () => {
+    const error = validateStep4()
+    if (error) {
+      setWizardError(error)
+      return
+    }
+    setWizardError(null)
+    setStep(5)
+  }
+
   const handleFinalSubmit = async () => {
+    const step2Error = validateStep2()
+    if (step2Error) {
+      setWizardError(step2Error)
+      setStep(2)
+      return
+    }
+
+    const step3Error = validateStep3()
+    if (step3Error) {
+      setWizardError(step3Error)
+      setStep(3)
+      return
+    }
+
+    const step4Error = validateStep4()
+    if (step4Error) {
+      setWizardError(step4Error)
+      setStep(4)
+      return
+    }
+
     if (!rules.r1 || !rules.r2 || !rules.r3) return alert('Lütfen kuralları onaylayın.')
-    if (photos.length < 3) return alert('En az 3 fotoğraf yüklemelisiniz.')
+
+    setWizardError(null)
     setLoading(true)
 
     try {
@@ -475,7 +585,6 @@ export default function BusinessWizard() {
       }
 
       // 4. Profil Güncelleme (GÜVENLİ)
-      // Önce mevcut profili çek, Admin veya İşletmeci ise dokunma
       const { data: currentProfile } = await supabase
         .from('profiles')
         .select('role,membership_terms_accepted_at,kvkk_accepted_at')
@@ -526,304 +635,394 @@ export default function BusinessWizard() {
       },
     },
   ]
-  const activeStepIndex = Math.max(0, steps.findIndex((item) => item.n === step))
-  const progressWidth = steps.length > 1 ? (activeStepIndex / (steps.length - 1)) * 100 : 0
 
   return (
-    <div className={`min-h-screen flex flex-col items-center py-12 px-4 ${BG_MAIN} text-slate-600 font-sans`}>
+    <div className="relative min-h-screen bg-[#06080b] flex flex-col items-center py-8 px-4 font-sans selection:bg-[#38bdf8]/30 overflow-hidden">
+      
+      {/* Background Tech Grid */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+
       <SuccessModal isOpen={showSuccess} onClose={() => router.push('/merchant/dashboard')} />
       <LegalModal state={legalModal} onClose={() => setLegalModal(null)} />
 
-      <div className="w-full max-w-3xl">
+      <div className="relative z-10 w-full max-w-4xl border border-[#2d313a] rounded-md bg-[#0c0e12] shadow-2xl overflow-hidden">
         
-        {/* HEADER */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange-500 text-white shadow-xl shadow-orange-200 mb-4">
-            <Store className="w-8 h-8" />
+        {/* TELEMETRY HEADER BAR */}
+        <header className="px-6 py-4 flex items-center justify-between border-b border-[#2d313a] bg-[#0f1115]">
+          <div className="flex items-center gap-4">
+             <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)] animate-pulse" />
+             <div className="flex flex-col">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-[#64748b]">Platform</span>
+                <span className="text-xs font-mono tracking-widest text-[#e2e8f0]">MOLAYERI CONTROL</span>
+             </div>
           </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Yeni İşletme Kaydı</h1>
-          <p className="text-slate-500 font-medium mt-2">Kayıt akışına panel içinde devam edin.</p>
-        </div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-[#38bdf8] border border-[#38bdf8]/30 px-2 py-1 rounded bg-[#38bdf8]/10 hidden md:block">BUSINESS_ONBOARDING</div>
+        </header>
 
-        {/* STEPPER */}
-        <div className="mb-12 relative px-4">
-          <div className="absolute top-1/2 left-0 w-full h-2 bg-slate-200 rounded-full -translate-y-1/2 -z-10 shadow-inner"></div>
-          <div className="absolute top-1/2 left-0 h-2 bg-orange-500 rounded-full -translate-y-1/2 -z-10 transition-all duration-500 ease-out" style={{ width: `${progressWidth}%` }}></div>
-          <div className="flex justify-between">
-            {steps.map((s, index) => (
-              <div key={s.n} className="flex flex-col items-center gap-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-4 border-[#eef0f4] ${step >= s.n ? 'bg-orange-500 text-white shadow-lg shadow-orange-300 scale-110' : 'bg-slate-300 text-slate-500'}`}>
-                  {step > s.n ? <Check className="w-5 h-5"/> : index + 1}
-                </div>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${step >= s.n ? 'text-orange-600' : 'text-slate-400'}`}>{s.t}</span>
-              </div>
-            ))}
+        <div className="p-6 md:p-10">
+        
+          {/* TITLE */}
+          <div className="mb-10 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded border border-[#2d313a] bg-[#0a0c10] flex items-center justify-center text-[#38bdf8] mb-4">
+              <Store strokeWidth={1.5} className="w-5 h-5" />
+            </div>
+            <PanelTitle title="Yeni İşletme Kaydı" className="justify-center" />
           </div>
-        </div>
 
-        <NeuCard className="animate-in fade-in slide-in-from-bottom-8 duration-500">
-
-          {/* STEP 1: ACCOUNT COMPLIANCE */}
-          {step === 1 && (
-            <div className="space-y-6">
-              <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}>
-                <Store className={ACCENT_COLOR}/> HESAP UYUM ONAYI
-              </h2>
-              <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-slate-600 bg-white/70 border border-white">
-                {currentUserDisplayName
-                  ? `${currentUserDisplayName} hesabı ile devam ediliyor.`
-                  : 'Aktif kullanıcı hesabı ile devam ediliyor.'}{' '}
-                İşletme kaydına geçmeden önce üyelik sözleşmesi ve KVKK onayı zorunludur.
-              </div>
-              <div className="space-y-3">
-                <label className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${accountTermsAccepted ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
-                  <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${accountTermsAccepted ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{accountTermsAccepted && <Check className="w-4 h-4 text-white"/>}</div>
-                  <input type="checkbox" className="hidden" checked={accountTermsAccepted} onChange={(e)=>setAccountTermsAccepted(e.target.checked)} />
-                  <span className="text-sm font-bold text-slate-600 flex-1">Kullanıcı üyelik sözleşmesini okudum ve kabul ediyorum.</span>
-                  <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'Kullanıcı Üyelik Sözleşmesi', version: USER_MEMBERSHIP_TERMS_VERSION, body: USER_MEMBERSHIP_TERMS_TEXT }) }} className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600">
-                    Metni Oku
-                  </button>
-                </label>
-                <label className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${accountKvkkAccepted ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
-                  <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${accountKvkkAccepted ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{accountKvkkAccepted && <Check className="w-4 h-4 text-white"/>}</div>
-                  <input type="checkbox" className="hidden" checked={accountKvkkAccepted} onChange={(e)=>setAccountKvkkAccepted(e.target.checked)} />
-                  <span className="text-sm font-bold text-slate-600 flex-1">KVKK aydınlatma metnini okudum ve onaylıyorum.</span>
-                  <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'KVKK Aydınlatma Metni', version: KVKK_TERMS_VERSION, body: KVKK_TERMS_TEXT }) }} className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600">
-                    Metni Oku
-                  </button>
-                </label>
-              </div>
-              {accountError ? (
-                <div className="rounded-2xl px-4 py-3 text-sm font-semibold text-red-700 bg-red-100 border border-red-200">
-                  {accountError}
-                </div>
-              ) : null}
-              <div className="pt-2 flex gap-4">
-                <NeuButton onClick={() => router.push('/merchant/dashboard')} className="flex-1 py-5">
-                  PANELE DÖN
-                </NeuButton>
-                <NeuButton onClick={handleAccountComplianceContinue} variant="solid" className="flex-1 py-5" disabled={loading}>
-                  {loading ? 'KAYDEDİLİYOR...' : 'ONAYLA VE DEVAM ET'}
-                </NeuButton>
-              </div>
-            </div>
-          )}
-          
-          {/* STEP 2: LOCATION */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><MapPin className={ACCENT_COLOR}/> KONUM VE DETAYLAR</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <NeuInput icon={Store} label="İşletme Adı" placeholder="Tabela Adı" value={bizForm.name} onChange={(e)=>setBizForm({...bizForm, name:e.target.value})} />
-                 <NeuInput icon={Phone} label="İşletme Telefonu" placeholder="İletişim Numarası" value={bizForm.phone} onChange={(e)=>setBizForm({...bizForm, phone:e.target.value})} />
-              </div>
-
-              {/* SEARCH */}
-              <div className="relative z-20">
-                 <NeuInput icon={Search} label="Konum Ara" placeholder="Google Maps&apos;te Ara..." value={placeQuery} onChange={(e)=>searchPlaces(e.target.value)} />
-                 {predictions.length > 0 && (
-                   <div className="absolute top-[85px] left-0 w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
-                     {predictions.map((p) => (
-                       <div key={p.place_id} onClick={()=>selectPlace(p.place_id, p.description)} className="p-4 hover:bg-orange-50 cursor-pointer text-sm font-bold text-slate-600 border-b border-slate-50 flex items-center gap-3">
-                         <MapPin className="w-4 h-4 text-orange-400"/> {p.description}
-                       </div>
-                     ))}
-                   </div>
-                 )}
-              </div>
-
-              <NeuInput icon={MapPin} label="Açık Adres" placeholder="Mahalle, Cadde, No..." value={bizForm.address} onChange={(e)=>setBizForm({...bizForm, address:e.target.value})} />
-
-              {/* COORDS + MAP */}
-              <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100/50">
-                 <div className="flex items-end gap-3 mb-3">
-                    <div className="flex-1">
-                      <NeuInput 
-                        icon={Navigation} 
-                        label="Hassas Konum (Lat, Lng)" 
-                        placeholder="Örn: 40.1234, 30.5678" 
-                        value={bizForm.coordsInput}
-                        onChange={(e)=>handleCoordsChange(e.target.value)}
-                        rightElement={
-                          <NeuButton onClick={openMap} className="w-10 h-10 !rounded-xl !p-0 !min-w-0 shadow-none border-0 bg-white text-orange-500">
-                             <Map className="w-5 h-5"/>
-                          </NeuButton>
-                        }
-                      />
+          {/* STEPPER */}
+          <div className="mb-12">
+            <div className="grid grid-cols-5 gap-2 md:gap-4">
+              {steps.map((s, index) => {
+                const isDone = step > s.n
+                const isActive = step === s.n
+                const isReach = step >= s.n
+                return (
+                  <div
+                    key={s.n}
+                    className={`rounded p-3 transition-all duration-300 border ${
+                      isActive ? 'bg-[#153445]/30 border-[#226785]' :
+                      isReach ? 'bg-[#0a0c10] border-[#2d313a]' :
+                      'bg-transparent border-[#1e232b]'
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1 md:gap-0">
+                      <span className={`text-[9px] md:text-[10px] font-mono tracking-[0.1em] ${isReach ? 'text-[#38bdf8]' : 'text-[#475569]'}`}>
+                        S0{index + 1}
+                      </span>
+                      {isDone ? (
+                        <Check strokeWidth={3} className="w-3.5 h-3.5 text-[#38bdf8]" />
+                      ) : (
+                        <span className={`text-[10px] font-mono ${isActive ? 'text-[#e2e8f0]' : 'text-[#475569]'}`}>{index + 1}</span>
+                      )}
                     </div>
-                 </div>
-                 <div className="flex gap-3 text-xs text-slate-500 leading-relaxed bg-white/60 p-4 rounded-xl border border-white">
-                    <div className="shrink-0 pt-0.5"><Star className="w-4 h-4 text-orange-400 fill-orange-400"/></div>
-                    <div>
-                       <strong>Mükemmel Konum İçin:</strong> Yandaki harita ikonuna tıklayın, Google Maps&apos;te işletmenizin tam giriş kapısının üzerine <u>sağ tıklayın</u>. En üstte çıkan koordinata (Örn: 41.23, 29.55) tıklayınca kopyalanır. Gelip buraya yapıştırın.
+                    <div className={`mt-2 text-[9px] md:text-[10px] font-mono uppercase tracking-[0.15em] ${isReach ? 'text-[#cbd5e1]' : 'text-[#475569]'}`}>
+                      {s.t}
                     </div>
-                 </div>
-              </div>
-
-              {/* ROAD ALERT */}
-              <div className="p-5 rounded-2xl bg-orange-100/50 border border-orange-200">
-                 <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="w-5 h-5 text-orange-600"/>
-                    <h4 className="text-xs font-black text-orange-600 uppercase tracking-widest">Görünebilirlik Uyarısı</h4>
-                 </div>
-                 <p className="text-xs text-orange-800 font-bold mb-4">
-                    Eğer işletmeniz Ana yol veya güzergah üzerinde ise aşağıdaki bilgileri girmeniz görünebilirliğiniz açısından hayati önem taşır.
-                 </p>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="group">
-                       <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block pl-2">Otoyol İsmi</label>
-                       <input className="w-full bg-white px-4 py-3 rounded-xl font-bold text-slate-700 shadow-sm border-transparent outline-none focus:ring-2 focus:ring-orange-300" placeholder="Örn: O-4, E80, D100" value={bizForm.roadName} onChange={(e)=>setBizForm({...bizForm, roadName:e.target.value})} />
-                    </div>
-                    <div className="group">
-                       <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block pl-2">Yol Tarifi / İstikamet</label>
-                       <input className="w-full bg-white px-4 py-3 rounded-xl font-bold text-slate-700 shadow-sm border-transparent outline-none focus:ring-2 focus:ring-orange-300" placeholder="ANKARA YÖNÜ, CADDE, MEYDAN" value={bizForm.roadDesc} onChange={(e)=>setBizForm({...bizForm, roadDesc:e.target.value})} />
-                    </div>
-                 </div>
-              </div>
-
-              <NeuTextArea label="Tanıtım Yazısı" placeholder="İşletmenizi anlatan kısa bir yazı..." value={bizForm.desc} onChange={(e)=>setBizForm({...bizForm, desc:e.target.value})} />
-              <div className="pt-4 flex gap-4"><NeuButton onClick={()=>setStep(1)} className="flex-1 py-5">GERİ</NeuButton><NeuButton onClick={()=>setStep(3)} variant="solid" className="flex-1 py-5">DEVAM ET</NeuButton></div>
-            </div>
-          )}
-
-          {/* STEP 3: CATS */}
-          {step === 3 && (
-            <div className="space-y-8">
-               <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><Store className={ACCENT_COLOR}/> KATEGORİ VE İMKANLAR</h2>
-               
-               <div className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Star className="w-4 h-4 text-orange-400"/> Genel Tesis İmkanları</h4>
-                  <div className="flex flex-wrap gap-3">
-                     {features.filter(f => f.is_global).map(f => (
-                       <button
-                         key={f.id}
-                         onClick={() => {
-                           const s = new Set(selectedFeats)
-                           if (s.has(f.id)) s.delete(f.id)
-                           else s.add(f.id)
-                           setSelectedFeats(s)
-                         }}
-                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 ${selectedFeats.has(f.id) ? 'bg-orange-50 border-orange-200 text-orange-600 shadow-sm' : 'bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100'}`}
-                       >
-                         {f.name}
-                       </button>
-                     ))}
                   </div>
-               </div>
-
-               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {categories.map((cat) => {
-                    const isSel = selectedCats.has(cat.id)
-                    const catFeats = features.filter((f) => f.category_id === cat.id)
-                    const brandList = brands[cat.id]
-
-                    return (
-                      <div key={cat.id} className={`p-6 rounded-3xl transition-all duration-300 border-2 ${isSel ? 'bg-white border-orange-100 shadow-md' : 'bg-[#eef0f4] border-transparent'}`}>
-                         <div className="flex items-center justify-between" onClick={()=>toggleCat(cat.id, cat.name)}>
-                            <span className={`font-black text-lg ${isSel ? 'text-slate-800' : 'text-slate-500'}`}>{cat.name}</span>
-                            <NeuSwitch checked={isSel} onChange={()=>toggleCat(cat.id, cat.name)} />
-                         </div>
-                         {isSel && (
-                           <div className="mt-6 pl-2 space-y-6 animate-in slide-in-from-top-4">
-                              {brandList && (
-                                <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Store className="w-3 h-3"/> {cat.name} Markaları</label>
-                                   {brandList.map((brandName, idx) => (
-                                      <div key={idx} className="flex gap-2">
-                                         <input className="flex-1 bg-white px-4 py-3 rounded-xl text-sm font-bold text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-orange-200 placeholder:font-normal" placeholder={`Örn: ${cat.name} markası...`} value={brandName} onChange={(e)=>updateBrand(cat.id, idx, e.target.value)} />
-                                         {brandList.length > 1 && <button onClick={()=>setBrands({...brands,[cat.id]:brands[cat.id].filter((_,i)=>i!==idx)})} className="w-10 h-10 flex items-center justify-center bg-red-100 text-red-500 rounded-xl hover:bg-red-200"><Trash2 className="w-5 h-5"/></button>}
-                                         {idx === brandList.length - 1 && <button onClick={()=>setBrands({...brands,[cat.id]:[...brands[cat.id], '']})} className="w-10 h-10 flex items-center justify-center bg-green-100 text-green-500 rounded-xl hover:bg-green-200"><Plus className="w-5 h-5"/></button>}
-                                      </div>
-                                   ))}
-                                </div>
-                              )}
-                              {catFeats.length > 0 && (
-                                 <div className="flex flex-wrap gap-2">
-                                    {catFeats.map(f => (
-                                      <button
-                                        key={f.id}
-                                        onClick={() => {
-                                          const s = new Set(selectedFeats)
-                                          if (s.has(f.id)) s.delete(f.id)
-                                          else s.add(f.id)
-                                          setSelectedFeats(s)
-                                        }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedFeats.has(f.id) ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
-                                      >
-                                        {f.name}
-                                      </button>
-                                    ))}
-                                 </div>
-                              )}
-                           </div>
-                         )}
-                      </div>
-                    )
-                  })}
-               </div>
-               <div className="pt-6 flex gap-4"><NeuButton onClick={()=>setStep(2)} className="flex-1 py-5">GERİ</NeuButton><NeuButton onClick={()=>setStep(4)} variant="solid" className="flex-1 py-5">DEVAM ET</NeuButton></div>
+                )
+              })}
             </div>
-          )}
+          </div>
 
-          {/* STEP 4: PHOTOS */}
-          {step === 4 && (
-             <div className="space-y-8">
-                <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><Upload className={ACCENT_COLOR}/> FOTOĞRAF GALERİSİ</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                   {photos.map((f, i) => (
-                      <div key={i} className="relative group aspect-video rounded-2xl overflow-hidden shadow-lg border-2 border-white">
-                         <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" alt="Yüklenen işletme görseli" />
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button onClick={()=>setPhotos(photos.filter((_,x)=>x!==i))} className="p-2 bg-red-500 text-white rounded-full"><Trash2 className="w-4 h-4"/></button>
-                            <button onClick={()=>setCoverIndex(i)} className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase ${coverIndex===i ? 'bg-green-500 text-white' : 'bg-white text-slate-800'}`}>{coverIndex===i ? 'Kapak' : 'Kapak Yap'}</button>
-                         </div>
-                         {coverIndex===i && <div className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-sm">VİTRİN</div>}
+          <HardwarePanel className="animate-in fade-in zoom-in-95 duration-300 p-0 overflow-hidden">
+            <div className="p-6 md:p-8">
+              
+              {/* STEP 1: ACCOUNT COMPLIANCE */}
+              {step === 1 && (
+                <div className="space-y-6">
+                  <SectionHeader icon={Store} title="Hesap Uyum Onayı" />
+                  <div className="rounded p-4 text-[11px] font-mono text-[#94a3b8] leading-relaxed uppercase tracking-widest bg-[#0a0c10] border border-[#2d313a]">
+                    {currentUserDisplayName
+                      ? `${currentUserDisplayName} hesabı ile devam ediliyor.`
+                      : 'Aktif kullanıcı hesabı ile devam ediliyor.'}{' '}
+                    İşletme kaydına geçmeden önce üyelik sözleşmesi ve KVKK onayı zorunludur.
+                  </div>
+                  <div className="space-y-3">
+                    <label className={`flex items-start gap-4 p-4 rounded border cursor-pointer transition-all ${accountTermsAccepted ? 'bg-[#153445]/20 border-[#226785]' : 'bg-[#0a0c10] border-[#2d313a] hover:border-[#475569]'}`}>
+                       <div className={`mt-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${accountTermsAccepted ? 'bg-[#38bdf8] border-[#38bdf8]' : 'border-[#475569]'}`}>
+                         {accountTermsAccepted && <Check strokeWidth={3} className="w-3 h-3 text-[#0a0c10]"/>}
+                       </div>
+                       <input type="checkbox" className="hidden" checked={accountTermsAccepted} onChange={(e)=>setAccountTermsAccepted(e.target.checked)} />
+                       <span className="text-[11px] font-mono text-[#cbd5e1] flex-1 uppercase tracking-wider leading-relaxed">Kullanıcı üyelik sözleşmesini okudum ve kabul ediyorum.</span>
+                       <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'Kullanıcı Üyelik Sözleşmesi', version: USER_MEMBERSHIP_TERMS_VERSION, body: USER_MEMBERSHIP_TERMS_TEXT }) }} className="px-3 py-1.5 rounded bg-[#16181d] border border-[#2d313a] text-[9px] font-mono text-[#94a3b8] hover:text-[#e2e8f0] uppercase tracking-widest shrink-0">
+                         Metni Oku
+                       </button>
+                    </label>
+                    <label className={`flex items-start gap-4 p-4 rounded border cursor-pointer transition-all ${accountKvkkAccepted ? 'bg-[#153445]/20 border-[#226785]' : 'bg-[#0a0c10] border-[#2d313a] hover:border-[#475569]'}`}>
+                       <div className={`mt-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${accountKvkkAccepted ? 'bg-[#38bdf8] border-[#38bdf8]' : 'border-[#475569]'}`}>
+                         {accountKvkkAccepted && <Check strokeWidth={3} className="w-3 h-3 text-[#0a0c10]"/>}
+                       </div>
+                       <input type="checkbox" className="hidden" checked={accountKvkkAccepted} onChange={(e)=>setAccountKvkkAccepted(e.target.checked)} />
+                       <span className="text-[11px] font-mono text-[#cbd5e1] flex-1 uppercase tracking-wider leading-relaxed">KVKK aydınlatma metnini okudum ve onaylıyorum.</span>
+                       <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: 'KVKK Aydınlatma Metni', version: KVKK_TERMS_VERSION, body: KVKK_TERMS_TEXT }) }} className="px-3 py-1.5 rounded bg-[#16181d] border border-[#2d313a] text-[9px] font-mono text-[#94a3b8] hover:text-[#e2e8f0] uppercase tracking-widest shrink-0">
+                         Metni Oku
+                       </button>
+                    </label>
+                  </div>
+                  {accountError ? (
+                    <div className="rounded px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-widest bg-rose-950/20 border border-rose-900/50">
+                      [HATA] {accountError}
+                    </div>
+                  ) : null}
+                  <div className="pt-4 flex gap-4 border-t border-[#1e232b]">
+                    <NeuButton onClick={() => router.push('/merchant/dashboard')} className="flex-1 py-3.5">
+                      PANELE DÖN
+                    </NeuButton>
+                    <NeuButton onClick={handleAccountComplianceContinue} variant="solid" className="flex-1 py-3.5" disabled={loading}>
+                      {loading ? 'KAYDEDİLİYOR...' : 'ONAYLA VE DEVAM ET'}
+                    </NeuButton>
+                  </div>
+                </div>
+              )}
+              
+              {/* STEP 2: LOCATION */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  <SectionHeader icon={MapPin} title="Konum ve Detaylar" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <NeuInput icon={Store} label="İşletme Adı" placeholder="Tabela Adı" value={bizForm.name} onChange={(e)=>setBizForm({...bizForm, name:e.target.value})} />
+                     <NeuInput icon={Phone} label="İşletme Telefonu" placeholder="İletişim Numarası" value={bizForm.phone} onChange={(e)=>setBizForm({...bizForm, phone:e.target.value})} />
+                  </div>
+
+                  {/* SEARCH */}
+                  <div className="relative z-20">
+                     <NeuInput icon={Search} label="Konum Ara" placeholder="Google Maps&#39;te Ara..." value={placeQuery} onChange={(e)=>searchPlaces(e.target.value)} />
+                     {predictions.length > 0 && (
+                       <div className="absolute top-[80px] left-0 w-full bg-[#16181d] rounded shadow-[0_20px_40px_rgba(0,0,0,0.8)] border border-[#2d313a] max-h-60 overflow-y-auto custom-scrollbar">
+                         {predictions.map((p) => (
+                           <div key={p.place_id} onClick={()=>selectPlace(p.place_id, p.description)} className="p-4 hover:bg-[#1d2128] cursor-pointer text-[12px] font-mono text-[#cbd5e1] border-b border-[#2d313a]/50 flex items-center gap-3 transition-colors">
+                             <MapPin strokeWidth={1.5} className="w-4 h-4 text-[#38bdf8]"/> {p.description}
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                  </div>
+
+                  <NeuInput icon={MapPin} label="Açık Adres" placeholder="Mahalle, Cadde, No..." value={bizForm.address} onChange={(e)=>setBizForm({...bizForm, address:e.target.value})} />
+
+                  {/* COORDS + MAP */}
+                  <div className="bg-[#0a0c10] p-5 rounded border border-[#2d313a]">
+                     <div className="flex items-end gap-3 mb-2">
+                        <div className="flex-1">
+                          <NeuInput 
+                            icon={Navigation} 
+                            label="Hassas Konum (Lat, Lng)" 
+                            placeholder="Örn: 40.1234, 30.5678" 
+                            value={bizForm.coordsInput}
+                            onChange={(e)=>handleCoordsChange(e.target.value)}
+                            rightElement={
+                              <button type="button" onClick={openMap} className="w-8 h-8 flex items-center justify-center rounded bg-[#16181d] border border-[#2d313a] text-[#38bdf8] hover:bg-[#1a1d24] transition-colors">
+                                 <Map strokeWidth={1.5} className="w-4 h-4"/>
+                              </button>
+                            }
+                          />
+                        </div>
+                     </div>
+                     <div className="flex gap-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b] leading-relaxed">
+                        <div className="shrink-0 pt-0.5"><Star strokeWidth={1.5} className="w-3.5 h-3.5 text-[#38bdf8]"/></div>
+                        <div>
+                           [İpucu] Yandaki harita ikonuna tıklayıp, Maps&#39;te işletmenizin girişine sağ tıklayın. İlk çıkan koordinatı kopyalayıp yapıştırın.
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* ROAD ALERT */}
+                  <div className="p-5 rounded bg-amber-950/10 border border-amber-900/30">
+                     <div className="flex items-center gap-2 mb-4">
+                        <AlertTriangle strokeWidth={1.5} className="w-4 h-4 text-amber-500"/>
+                        <h4 className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-widest">Görünebilirlik Uyarısı</h4>
+                     </div>
+                     <p className="text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] mb-5 leading-relaxed">
+                        İşletmeniz ana yol veya güzergah üzerinde ise aşağıdaki bilgileri girmeniz sistem görünürlüğü için kritik önem taşır.
+                     </p>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="group">
+                           <label className="text-[9px] font-mono font-bold text-[#64748b] uppercase tracking-[0.1em] mb-1.5 block">Otoyol İsmi</label>
+                           <input className="w-full bg-[#0a0c10] px-4 py-3 rounded text-[12px] font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]" placeholder="Örn: O-4, E80, D100" value={bizForm.roadName} onChange={(e)=>setBizForm({...bizForm, roadName:e.target.value})} />
+                        </div>
+                        <div className="group">
+                           <label className="text-[9px] font-mono font-bold text-[#64748b] uppercase tracking-[0.1em] mb-1.5 block">Yol Tarifi / İstikamet</label>
+                           <input className="w-full bg-[#0a0c10] px-4 py-3 rounded text-[12px] font-mono text-[#e2e8f0] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]" placeholder="ANKARA YÖNÜ, CADDE" value={bizForm.roadDesc} onChange={(e)=>setBizForm({...bizForm, roadDesc:e.target.value})} />
+                        </div>
+                     </div>
+                  </div>
+
+                  <NeuTextArea label="Tanıtım Yazısı" placeholder="İşletmenizi anlatan kısa bir yazı..." value={bizForm.desc} onChange={(e)=>setBizForm({...bizForm, desc:e.target.value})} />
+                  
+                  {wizardError ? (
+                    <div className="rounded px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-widest bg-rose-950/20 border border-rose-900/50">
+                      [HATA] {wizardError}
+                    </div>
+                  ) : null}
+                  
+                  <div className="pt-4 flex gap-4 border-t border-[#1e232b]">
+                    <NeuButton onClick={() => { setWizardError(null); setStep(1) }} className="flex-1 py-3.5">GERİ</NeuButton>
+                    <NeuButton onClick={handleStep2Continue} variant="solid" className="flex-1 py-3.5">DEVAM ET</NeuButton>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: CATS */}
+              {step === 3 && (
+                <div className="space-y-6">
+                   <SectionHeader icon={Store} title="Kategori ve İmkanlar" />
+                   
+                   <div className="p-5 rounded bg-[#0a0c10] border border-[#2d313a]">
+                      <h4 className="text-[10px] font-mono font-semibold text-[#94a3b8] uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Star strokeWidth={1.5} className="w-3.5 h-3.5 text-[#64748b]"/> Genel Tesis İmkanları
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                         {features.filter(f => f.is_global).map(f => (
+                           <button
+                             key={f.id}
+                             onClick={() => {
+                               const s = new Set(selectedFeats)
+                               if (s.has(f.id)) s.delete(f.id)
+                               else s.add(f.id)
+                               setSelectedFeats(s)
+                             }}
+                             className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest transition-colors border ${selectedFeats.has(f.id) ? 'bg-[#153445] border-[#226785] text-[#38bdf8]' : 'bg-[#16181d] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#94a3b8]'}`}
+                           >
+                             {f.name}
+                           </button>
+                         ))}
                       </div>
-                   ))}
-                   {photos.length < 6 && (
-                      <label className="border-3 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50/50 cursor-pointer aspect-video transition-all group">
-                         <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><Upload className="w-6 h-6"/></div>
-                         <span className="text-xs font-black uppercase tracking-wide">FOTOĞRAF YÜKLE</span>
-                         <input type="file" multiple accept="image/*" className="hidden" onChange={(e)=>{if(e.target.files) setPhotos([...photos, ...Array.from(e.target.files)])}}/>
-                      </label>
-                   )}
-                </div>
-                <div className="pt-6 flex gap-4"><NeuButton onClick={()=>setStep(3)} className="flex-1 py-5">GERİ</NeuButton><NeuButton onClick={()=>setStep(5)} variant="solid" className="flex-1 py-5">SON KONTROL</NeuButton></div>
-             </div>
-          )}
+                   </div>
 
-          {/* STEP 5: APPROVAL */}
-          {step === 5 && (
-             <div className="space-y-8">
-                <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${TXT_DARK}`}><CheckCircle className={ACCENT_COLOR}/> ONAY VE GÖNDERİM</h2>
-                <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100 shadow-inner space-y-3">
-                   <div className="flex justify-between border-b border-orange-100 pb-2"><span className="text-sm font-bold text-slate-400">İŞLETME</span><span className="text-sm font-black text-slate-700">{bizForm.name}</span></div>
-                   <div className="flex justify-between border-b border-orange-100 pb-2"><span className="text-sm font-bold text-slate-400">KATEGORİLER</span><span className="text-sm font-black text-slate-700 text-right">{Array.from(selectedCats).map(id => categories.find(c=>c.id===id)?.name).join(', ')}</span></div>
-                   <div className="flex justify-between pt-1"><span className="text-sm font-bold text-slate-400">LOKASYON</span><span className="text-sm font-black text-slate-700 max-w-[200px] text-right truncate">{bizForm.address}</span></div>
-                </div>
-                <div className="space-y-3">
-                   {finalRules.map((r) => (
-                     <label key={r.k} className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${rules[r.k] ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-slate-50'}`}>
-                        <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${rules[r.k] ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>{rules[r.k] && <Check className="w-4 h-4 text-white"/>}</div>
-                        <input type="checkbox" className="hidden" checked={rules[r.k]} onChange={(e)=>setRules({...rules, [r.k]: e.target.checked})}/>
-                        <span className="text-sm font-bold text-slate-600 flex-1">{r.t}</span>
-                        {r.legal ? (
-                          <button
-                            type="button"
-                            onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: r.legal!.title, version: r.legal!.version, body: r.legal!.body }) }}
-                            className="text-xs font-black uppercase tracking-wide px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-orange-600"
-                          >
-                            Metni Oku
-                          </button>
-                        ) : null}
-                     </label>
-                   ))}
-                </div>
-                <div className="pt-6 flex gap-4"><NeuButton onClick={()=>setStep(4)} className="flex-1 py-5">DÜZENLE</NeuButton><NeuButton onClick={handleFinalSubmit} variant="solid" className="flex-1 py-5 shadow-xl shadow-green-200" disabled={loading}>{loading ? "GÖNDERİLİYOR..." : "BAŞVURUYU TAMAMLA"}</NeuButton></div>
-             </div>
-          )}
+                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                      {categories.map((cat) => {
+                        const isSel = selectedCats.has(cat.id)
+                        const catFeats = features.filter((f) => f.category_id === cat.id)
+                        const brandList = brands[cat.id]
 
-        </NeuCard>
+                        return (
+                          <div key={cat.id} className={`p-5 rounded transition-all duration-300 border ${isSel ? 'bg-[#101419] border-[#22576b]' : 'bg-[#0a0c10] border-[#2d313a]'}`}>
+                             <div className="flex items-center justify-between cursor-pointer" onClick={()=>toggleCat(cat.id, cat.name)}>
+                                <span className={`font-mono text-[13px] uppercase tracking-wide ${isSel ? 'text-[#e2e8f0]' : 'text-[#64748b]'}`}>{cat.name}</span>
+                                <NeuSwitch checked={isSel} onChange={()=>toggleCat(cat.id, cat.name)} />
+                             </div>
+                             {isSel && (
+                               <div className="mt-5 pt-5 border-t border-[#1e232b] space-y-5 animate-in slide-in-from-top-2">
+                                  {brandList && (
+                                    <div className="space-y-3 p-4 bg-[#07090c] rounded border border-[#1e232b]">
+                                       <label className="text-[9px] font-mono text-[#475569] uppercase tracking-[0.2em] flex items-center gap-2">
+                                         <Store strokeWidth={1.5} className="w-3 h-3 text-[#38bdf8]/50"/> {cat.name} Markaları
+                                       </label>
+                                       {brandList.map((brandName, idx) => (
+                                          <div key={idx} className="flex gap-2">
+                                             <input className="flex-1 bg-[#16181d] px-3 py-2 rounded text-[12px] font-mono text-[#cbd5e1] border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]" placeholder={`Örn: ${cat.name} markası...`} value={brandName} onChange={(e)=>updateBrand(cat.id, idx, e.target.value)} />
+                                             {brandList.length > 1 && <button onClick={()=>setBrands({...brands,[cat.id]:brands[cat.id].filter((_,i)=>i!==idx)})} className="w-9 h-9 flex items-center justify-center bg-[#1a0f14] text-rose-400 rounded border border-rose-900/50 hover:bg-[#2a131a] transition-colors"><Trash2 strokeWidth={1.5} className="w-4 h-4"/></button>}
+                                             {idx === brandList.length - 1 && <button onClick={()=>setBrands({...brands,[cat.id]:[...brands[cat.id], '']})} className="w-9 h-9 flex items-center justify-center bg-[#0b1b24] text-[#38bdf8] rounded border border-[#18384b] hover:bg-[#102a38] transition-colors"><Plus strokeWidth={1.5} className="w-4 h-4"/></button>}
+                                          </div>
+                                       ))}
+                                    </div>
+                                  )}
+                                  {catFeats.length > 0 && (
+                                     <div className="flex flex-wrap gap-2">
+                                        {catFeats.map(f => (
+                                          <button
+                                            key={f.id}
+                                            onClick={() => {
+                                              const s = new Set(selectedFeats)
+                                              if (s.has(f.id)) s.delete(f.id)
+                                              else s.add(f.id)
+                                              setSelectedFeats(s)
+                                            }}
+                                            className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-wide transition-colors border ${selectedFeats.has(f.id) ? 'bg-[#38bdf8]/10 border-[#38bdf8]/40 text-[#38bdf8]' : 'bg-[#16181d] border-[#2d313a] text-[#64748b] hover:border-[#475569]'}`}
+                                          >
+                                            {f.name}
+                                          </button>
+                                        ))}
+                                     </div>
+                                  )}
+                               </div>
+                             )}
+                          </div>
+                        )
+                      })}
+                   </div>
+                   {wizardError ? (
+                     <div className="rounded px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-widest bg-rose-950/20 border border-rose-900/50">
+                       [HATA] {wizardError}
+                     </div>
+                   ) : null}
+                   <div className="pt-4 flex gap-4 border-t border-[#1e232b]">
+                     <NeuButton onClick={() => { setWizardError(null); setStep(2) }} className="flex-1 py-3.5">GERİ</NeuButton>
+                     <NeuButton onClick={handleStep3Continue} variant="solid" className="flex-1 py-3.5">DEVAM ET</NeuButton>
+                   </div>
+                </div>
+              )}
+
+              {/* STEP 4: PHOTOS */}
+              {step === 4 && (
+                 <div className="space-y-6">
+                    <SectionHeader icon={Upload} title="Fotoğraf Galerisi" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                       {photos.map((f, i) => (
+                          <div key={i} className="relative group aspect-video rounded overflow-hidden border border-[#2d313a] bg-[#0a0c10]">
+                             <img src={URL.createObjectURL(f)} className="w-full h-full object-cover opacity-80 mix-blend-lighten" alt="Yüklenen işletme görseli" />
+                             <div className="absolute inset-0 bg-[#0a0c10]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
+                                <button onClick={()=>setPhotos(photos.filter((_,x)=>x!==i))} className="p-2 bg-rose-950/80 text-rose-400 rounded border border-rose-900/50 hover:bg-rose-900 transition-colors"><Trash2 strokeWidth={1.5} className="w-4 h-4"/></button>
+                                <button onClick={()=>setCoverIndex(i)} className={`px-3 py-1.5 rounded font-mono text-[9px] uppercase tracking-widest border transition-colors ${coverIndex===i ? 'bg-[#38bdf8]/20 text-[#38bdf8] border-[#38bdf8]/50' : 'bg-[#16181d] border-[#2d313a] text-[#94a3b8] hover:text-[#e2e8f0]'}`}>{coverIndex===i ? 'Kapak' : 'Kapak Yap'}</button>
+                             </div>
+                             {coverIndex===i && <div className="absolute top-2 left-2 bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 text-[9px] font-mono tracking-widest px-2 py-0.5 rounded shadow-sm">VİTRİN</div>}
+                          </div>
+                       ))}
+                       {photos.length < 6 && (
+                          <label className="border border-dashed border-[#333842] rounded flex flex-col items-center justify-center bg-[#0a0c10] text-[#64748b] hover:border-[#38bdf8]/50 hover:text-[#38bdf8] hover:bg-[#101920] cursor-pointer aspect-video transition-all group">
+                             <Upload strokeWidth={1.5} className="w-5 h-5 mb-2 group-hover:-translate-y-1 transition-transform"/>
+                             <span className="text-[9px] font-mono uppercase tracking-[0.2em]">FOTO YÜKLE</span>
+                             <input type="file" multiple accept="image/*" className="hidden" onChange={(e)=>{if(e.target.files) setPhotos([...photos, ...Array.from(e.target.files)])}}/>
+                          </label>
+                       )}
+                    </div>
+                    {wizardError ? (
+                      <div className="rounded px-4 py-3 text-[11px] font-mono text-rose-400 uppercase tracking-widest bg-rose-950/20 border border-rose-900/50">
+                        [HATA] {wizardError}
+                      </div>
+                    ) : null}
+                    <div className="pt-4 flex gap-4 border-t border-[#1e232b]">
+                      <NeuButton onClick={() => { setWizardError(null); setStep(3) }} className="flex-1 py-3.5">GERİ</NeuButton>
+                      <NeuButton onClick={handleStep4Continue} variant="solid" className="flex-1 py-3.5">SON KONTROL</NeuButton>
+                    </div>
+                 </div>
+              )}
+
+              {/* STEP 5: APPROVAL */}
+              {step === 5 && (
+                 <div className="space-y-6">
+                    <SectionHeader icon={CheckCircle} title="Onay ve Gönderim" />
+                    
+                    <div className="bg-[#0a0c10] p-5 rounded border border-[#2d313a] space-y-2 font-mono text-[11px] tracking-wide">
+                       <div className="flex justify-between border-b border-[#1e232b] pb-2">
+                         <span className="text-[#64748b]">[İŞLETME]</span>
+                         <span className="text-[#38bdf8]">{bizForm.name.toUpperCase()}</span>
+                       </div>
+                       <div className="flex justify-between border-b border-[#1e232b] py-2">
+                         <span className="text-[#64748b]">[KATEGORİLER]</span>
+                         <span className="text-[#cbd5e1] text-right max-w-[60%]">{Array.from(selectedCats).map(id => categories.find(c=>c.id===id)?.name).join(', ').toUpperCase()}</span>
+                       </div>
+                       <div className="flex justify-between pt-2">
+                         <span className="text-[#64748b]">[LOKASYON]</span>
+                         <span className="text-[#cbd5e1] text-right truncate max-w-[60%]">{bizForm.address.toUpperCase()}</span>
+                       </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                       {finalRules.map((r) => (
+                         <label key={r.k} className={`flex items-start gap-4 p-4 rounded border cursor-pointer transition-all ${rules[r.k] ? 'bg-[#153445]/20 border-[#226785]' : 'bg-[#0a0c10] border-[#2d313a] hover:border-[#475569]'}`}>
+                            <div className={`mt-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${rules[r.k] ? 'bg-[#38bdf8] border-[#38bdf8]' : 'border-[#475569]'}`}>
+                              {rules[r.k] && <Check strokeWidth={3} className="w-3 h-3 text-[#0a0c10]"/>}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={rules[r.k]} onChange={(e)=>setRules({...rules, [r.k]: e.target.checked})}/>
+                            <span className="text-[11px] font-mono text-[#cbd5e1] flex-1 uppercase tracking-wider leading-relaxed">{r.t}</span>
+                            {r.legal ? (
+                              <button
+                                type="button"
+                                onClick={(event) => { event.preventDefault(); event.stopPropagation(); setLegalModal({ title: r.legal!.title, version: r.legal!.version, body: r.legal!.body }) }}
+                                className="px-3 py-1.5 rounded bg-[#16181d] border border-[#2d313a] text-[9px] font-mono text-[#94a3b8] hover:text-[#e2e8f0] uppercase tracking-widest shrink-0"
+                              >
+                                Metni Oku
+                              </button>
+                            ) : null}
+                         </label>
+                       ))}
+                    </div>
+                    
+                    <div className="pt-4 flex gap-4 border-t border-[#1e232b]">
+                      <NeuButton onClick={() => { setWizardError(null); setStep(4) }} className="flex-1 py-3.5">
+                        DÜZENLE
+                      </NeuButton>
+                      <NeuButton onClick={handleFinalSubmit} variant="solid" className="flex-1 py-3.5" disabled={loading}>
+                        {loading ? "GÖNDERİLİYOR..." : "BAŞVURUYU TAMAMLA"}
+                      </NeuButton>
+                    </div>
+                 </div>
+              )}
+
+            </div>
+          </HardwarePanel>
+        </div>
       </div>
     </div>
   )

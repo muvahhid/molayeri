@@ -1,11 +1,13 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/static-components */
+
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Mic2, Radio, Users, MapPin, 
-  Volume2, MessageCircle, Truck, Wrench, 
-  Fuel, Coffee, Tag, CheckCircle2, Navigation
+  Mic2, Radio, Users, 
+  Volume2, Truck, Wrench, 
+  Fuel, Coffee, Tag, Navigation
 } from 'lucide-react'
 
 // DÜZELTME BURADA: "export const" yerine "export default function" kullanıldı.

@@ -20,6 +20,7 @@ import {
   UserCircle2,
   XCircle,
 } from 'lucide-react'
+import { ModuleTitle } from '../../merchant/_components/module-title'
 
 type GenericRow = Record<string, unknown>
 
@@ -100,9 +101,6 @@ type LooseFeatureRow = {
   feature_name?: string | null
   value?: string | null
 }
-
-const cardClass =
-  'rounded-2xl border border-white/80 bg-white/95 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] backdrop-blur'
 
 function normalizeText(value: string): string {
   return value
@@ -229,6 +227,17 @@ function normalizeCellValue(value: unknown): string {
   return String(value)
 }
 
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
+
 function RawFieldTable({ title, record }: { title: string; record: GenericRow | null }) {
   const entries = useMemo(() => {
     if (!record) return [] as Array<{ key: string; value: string }>
@@ -239,29 +248,29 @@ function RawFieldTable({ title, record }: { title: string; record: GenericRow | 
 
   if (entries.length === 0) {
     return (
-      <div className={`${cardClass} p-4`}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</p>
-        <p className="mt-2 text-sm text-slate-500">Alan bulunamadı.</p>
-      </div>
+      <HardwarePanel className="p-5">
+        <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">{title}</p>
+        <p className="mt-4 text-[10px] font-mono text-[#64748b] uppercase tracking-widest">Alan bulunamadı.</p>
+      </HardwarePanel>
     )
   }
 
   return (
-    <div className={`${cardClass} p-4`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</p>
-      <div className="mt-3 max-h-[260px] overflow-y-auto rounded-xl border border-slate-200/70">
+    <HardwarePanel className="p-5">
+      <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">{title}</p>
+      <div className="mt-4 max-h-[320px] overflow-y-auto rounded border border-[#2d313a] bg-[#101419] custom-scrollbar">
         <table className="w-full text-left">
-          <tbody className="divide-y divide-slate-200/70">
+          <tbody className="divide-y divide-[#1e232b]">
             {entries.map((entry) => (
-              <tr key={entry.key} className="align-top">
-                <td className="w-[36%] px-3 py-2 text-[11px] font-bold text-slate-500">{entry.key}</td>
-                <td className="px-3 py-2 text-[12px] text-slate-700 break-all">{entry.value}</td>
+              <tr key={entry.key} className="align-top hover:bg-[#16181d] transition-colors">
+                <td className="w-[36%] px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b] border-r border-[#1e232b]">{entry.key}</td>
+                <td className="px-4 py-3 text-[11px] font-mono text-[#cbd5e1] break-all">{entry.value}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </HardwarePanel>
   )
 }
 
@@ -275,10 +284,10 @@ function InfoCell({
   icon?: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
-      <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-        {icon}
+    <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">{label}</p>
+      <p className="mt-1.5 text-[11px] font-mono text-[#e2e8f0] flex items-center gap-2">
+        {icon ? <span className="text-[#38bdf8]">{icon}</span> : null}
         <span className="break-all">{value || '-'}</span>
       </p>
     </div>
@@ -749,79 +758,89 @@ export default function ApprovalsPage() {
   const hasPending = filteredItems.length > 0
 
   return (
-    <div className="h-full flex flex-col gap-4 text-slate-700">
-      <section className={`${cardClass} p-4 md:p-5`}>
-        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+    <div className="space-y-6 flex flex-col h-full">
+      <HardwarePanel className="p-5 md:p-6 border-b border-[#2d313a]">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Onay Merkezi</h1>
+            <ModuleTitle title="Onay Merkezi" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-2">
+              Bekleyen işletme başvurularını incele ve aksiyon al.
+            </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">Bekleyen</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">{queueMetrics.pendingCount}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Bekleyen</p>
+              <p className="mt-1 text-lg font-mono text-[#e2e8f0]">{queueMetrics.pendingCount}</p>
             </div>
-            <div className="rounded-xl border border-slate-200/80 bg-amber-50 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-amber-700">48+ Saat</p>
-              <p className="mt-1 text-lg font-bold text-amber-800">{queueMetrics.waitingLongCount}</p>
+            <div className="rounded border border-amber-900/30 bg-amber-950/10 px-4 py-3 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-amber-500/0 group-hover:bg-amber-500/50 transition-colors" />
+              <p className="text-[9px] uppercase tracking-widest font-mono text-amber-500/70">48+ Saat</p>
+              <p className="mt-1 text-lg font-mono text-amber-400">{queueMetrics.waitingLongCount}</p>
             </div>
-            <div className="rounded-xl border border-slate-200/80 bg-blue-50 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-blue-700">Bugün</p>
-              <p className="mt-1 text-lg font-bold text-blue-800">{queueMetrics.todayCount}</p>
+            <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Bugün</p>
+              <p className="mt-1 text-lg font-mono text-[#e2e8f0]">{queueMetrics.todayCount}</p>
             </div>
-            <div className="rounded-xl border border-slate-200/80 bg-emerald-50 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-emerald-700">En Eski Bekleme</p>
-              <p className="mt-1 text-sm font-bold text-emerald-800">{queueMetrics.oldestWait}</p>
+            <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+              <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">En Eski Bekleme</p>
+              <p className="mt-1 text-sm font-mono text-[#e2e8f0] truncate">{queueMetrics.oldestWait}</p>
             </div>
           </div>
         </div>
-        <div className="mt-3 flex flex-col md:flex-row gap-2.5">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#475569]" />
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="İşletme, kategori, sahip, e-posta veya telefon ara..."
-              className="w-full h-11 rounded-xl border border-slate-200/80 bg-white pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-300"
+              className="w-full pl-11 pr-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
             />
           </div>
           <button
             type="button"
             onClick={() => setSortOrder((current) => (current === 'oldest' ? 'newest' : 'oldest'))}
-            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center justify-center gap-2"
+            className="px-4 py-3 rounded text-[10px] font-mono uppercase tracking-widest bg-[#0a0c10] border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors inline-flex items-center justify-center gap-2"
           >
-            {sortOrder === 'oldest' ? <ArrowDownAZ size={15} /> : <ArrowUpAZ size={15} />}
+            {sortOrder === 'oldest' ? <ArrowDownAZ size={14} /> : <ArrowUpAZ size={14} />}
             {sortOrder === 'oldest' ? 'Eski → Yeni' : 'Yeni → Eski'}
           </button>
           <button
             type="button"
             onClick={() => void fetchPending(true)}
             disabled={refreshing}
-            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center justify-center gap-2 disabled:opacity-60"
+            className="px-4 py-3 rounded text-[10px] font-mono uppercase tracking-widest bg-[#16181d] border border-[#2d313a] text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             Yenile
           </button>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <aside className={`${cardClass} p-3 h-[calc(100vh-292px)] min-h-[520px] flex flex-col`}>
-          <div className="px-2 pb-2 flex items-center justify-between">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-slate-500">Başvuru Kuyruğu</p>
-            <span className="text-xs font-semibold text-slate-500">{filteredItems.length}</span>
+      <section className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] flex-1 min-h-0">
+        
+        {/* LEYFT SIDEBAR (QUEUE) */}
+        <HardwarePanel className="p-0 overflow-hidden flex flex-col h-[calc(100vh-320px)] min-h-[500px]">
+          <div className="px-5 py-4 border-b border-[#2d313a] bg-[#0f1115] flex items-center justify-between">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-widest text-[#e2e8f0]">Başvuru Kuyruğu</p>
+            <span className="px-2.5 py-1 rounded bg-[#101419] border border-[#1e232b] text-[9px] font-mono text-[#64748b]">{filteredItems.length} ADET</span>
           </div>
 
           {queueLoading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
             </div>
           ) : !hasPending ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-500 px-6">
-              <CheckCircle2 className="w-10 h-10 text-emerald-600" />
-              <p className="mt-3 text-sm font-semibold">Bekleyen başvuru bulunmuyor.</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+              <CheckCircle2 className="w-8 h-8 text-[#166534] mb-3" />
+              BEKLEYEN BAŞVURU BULUNMUYOR.
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-[#0a0c10]">
               {filteredItems.map((item) => {
                 const active = selectedBusinessId === item.business.id
                 return (
@@ -829,32 +848,36 @@ export default function ApprovalsPage() {
                     key={item.business.id}
                     type="button"
                     onClick={() => setSelectedBusinessId(item.business.id)}
-                    className={`w-full text-left p-3 rounded-xl border transition-all ${
+                    className={`w-full text-left p-4 rounded border transition-all ${
                       active
-                        ? 'border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-[0_14px_20px_-18px_rgba(245,158,11,0.85)]'
-                        : 'border-slate-200/80 bg-white hover:border-slate-300'
+                        ? 'border-[#226785] bg-[#153445]'
+                        : 'border-[#2d313a] bg-[#16181d] hover:border-[#475569]'
                     }`}
                   >
-                    <p className="text-sm font-bold text-slate-800 truncate">{item.business.name || 'İsimsiz işletme'}</p>
-                    <p className="text-xs text-slate-500 mt-1 truncate">
-                      {item.owner?.full_name || item.owner?.email || 'Başvuran bulunamadı'}
+                    <p className={`text-[12px] font-medium uppercase tracking-wide truncate ${active ? 'text-[#38bdf8]' : 'text-[#e2e8f0]'}`}>
+                      {item.business.name || 'İSİMSİZ İŞLETME'}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {(item.categories.length > 0 ? item.categories : [item.business.type || 'Kategori yok']).map(
+                    <p className="text-[10px] font-mono text-[#64748b] mt-1.5 truncate uppercase tracking-widest">
+                      {item.owner?.full_name || item.owner?.email || 'SAHİP BİLİNMİYOR'}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {(item.categories.length > 0 ? item.categories : [item.business.type || 'KATEGORİ YOK']).map(
                         (category) => (
                           <span
                             key={`${item.business.id}-${category}`}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700"
+                            className={`px-2 py-1 rounded text-[8px] font-mono uppercase tracking-widest border ${
+                              active ? 'bg-[#101920] border-[#1e232b] text-[#38bdf8]' : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b]'
+                            }`}
                           >
                             {category}
                           </span>
                         )
                       )}
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                    <div className="mt-3 pt-2 flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-[#64748b] border-t border-[#1e232b]">
                       <span>{formatDate(item.business.created_at)}</span>
-                      <span className="inline-flex items-center gap-1">
-                        <Clock3 size={12} />
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock3 size={10} />
                         {formatWait(item.business.created_at)}
                       </span>
                     </div>
@@ -863,82 +886,83 @@ export default function ApprovalsPage() {
               })}
             </div>
           )}
-        </aside>
+        </HardwarePanel>
 
-        <article className={`${cardClass} p-4 md:p-5 h-[calc(100vh-292px)] min-h-[520px] overflow-y-auto`}>
+        {/* RIGHT AREA (DETAIL) */}
+        <div className="h-[calc(100vh-320px)] min-h-[500px] overflow-y-auto custom-scrollbar">
           {detailLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
-            </div>
+            <HardwarePanel className="h-full flex items-center justify-center p-0">
+              <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
+            </HardwarePanel>
           ) : !detail || !businessCard ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-6">
-              <ShieldAlert className="w-10 h-10 text-slate-400" />
-              <p className="mt-3 text-sm font-semibold text-slate-500">İncelemek için soldan bir başvuru seçin.</p>
-            </div>
+            <HardwarePanel className="h-full flex flex-col items-center justify-center text-center p-6 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+              <ShieldAlert className="w-8 h-8 mb-3 opacity-50" />
+              İNCELEMEK İÇİN SOLDAN BİR BAŞVURU SEÇİN.
+            </HardwarePanel>
           ) : (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50 to-slate-100/90 p-4">
-                <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
+            <div className="space-y-5">
+              
+              <HardwarePanel className="p-5 md:p-6 bg-[#0f1115]">
+                <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500">
-                      İşletme Başvurusu
-                    </p>
-                    <h2 className="mt-1 text-2xl font-bold text-slate-900">{businessCard.name || 'İsimsiz işletme'}</h2>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {(detail.categories.length > 0 ? detail.categories : [businessCard.type || 'Kategori yok']).map(
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">İşletme Başvurusu</p>
+                    <h2 className="mt-1 text-[20px] font-medium text-[#e2e8f0] uppercase tracking-wide">{businessCard.name || 'İSİMSİZ İŞLETME'}</h2>
+                    <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-mono uppercase tracking-widest">
+                      {(detail.categories.length > 0 ? detail.categories : [businessCard.type || 'KATEGORİ YOK']).map(
                         (category) => (
                           <span
                             key={category}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-200"
+                            className="px-2.5 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#cbd5e1]"
                           >
                             {category}
                           </span>
                         )
                       )}
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-slate-600 border border-slate-200">
-                        Başvuru: {formatDateTime(businessCard.created_at)}
+                      <span className="px-2.5 py-1 rounded bg-[#16181d] border border-[#2d313a] text-[#64748b]">
+                        BAŞVURU: {formatDateTime(businessCard.created_at)}
                       </span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 min-w-[260px]">
+                  <div className="grid grid-cols-2 gap-3 xl:w-[320px]">
                     <button
                       type="button"
                       onClick={() => void handleDecision('active')}
                       disabled={Boolean(decisionLoading)}
-                      className="h-11 rounded-xl bg-emerald-600 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-emerald-700 disabled:opacity-60"
+                      className="h-12 rounded bg-[linear-gradient(180deg,#065f46_0%,#14532d_100%)] border border-emerald-700/50 text-emerald-400 text-[11px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                     >
                       {decisionLoading === 'active' ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
-                        <CheckCircle2 size={16} />
+                        <CheckCircle2 size={14} />
                       )}
-                      Onayla
+                      ONAYLA
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleDecision('rejected')}
                       disabled={Boolean(decisionLoading)}
-                      className="h-11 rounded-xl bg-rose-600 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-rose-700 disabled:opacity-60"
+                      className="h-12 rounded bg-[linear-gradient(180deg,#9f1239_0%,#881337_100%)] border border-rose-800/50 text-rose-300 text-[11px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
                     >
                       {decisionLoading === 'rejected' ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
-                        <XCircle size={16} />
+                        <XCircle size={14} />
                       )}
-                      Reddet
+                      REDDET
                     </button>
                   </div>
                 </div>
-              </div>
+              </HardwarePanel>
 
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="space-y-4">
-                  <div className={`${cardClass} p-4`}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+                
+                <div className="space-y-5">
+                  <HardwarePanel className="p-5">
+                    <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">
                       İşletme Bilgileri
                     </p>
-                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <InfoCell label="İşletme Adı" value={businessCard.name || '-'} icon={<Store size={14} />} />
                       <InfoCell label="Telefon" value={businessCard.phone || '-'} icon={<Phone size={14} />} />
                       <InfoCell label="Durum" value={businessCard.status || '-'} />
@@ -947,15 +971,15 @@ export default function ApprovalsPage() {
                       <InfoCell label="Yol Tipi" value={businessCard.road_type || '-'} />
                     </div>
 
-                    <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">Adres</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{businessCard.address_text || '-'}</p>
+                    <div className="mt-3 rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Adres</p>
+                      <p className="mt-1.5 text-[11px] font-mono text-[#e2e8f0] leading-relaxed">{businessCard.address_text || '-'}</p>
                     </div>
 
-                    <div className="mt-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5 flex items-center justify-between gap-3">
+                    <div className="mt-3 rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">Koordinat</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-800">
+                        <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Koordinat</p>
+                        <p className="mt-1.5 text-[11px] font-mono text-[#e2e8f0]">
                           {businessCard.lat ?? '-'}, {businessCard.lng ?? '-'}
                         </p>
                       </div>
@@ -964,68 +988,84 @@ export default function ApprovalsPage() {
                           href={`https://maps.google.com/?q=${businessCard.lat},${businessCard.lng}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
+                          className="px-3 py-2 rounded border border-[#2d313a] bg-[#16181d] text-[9px] font-mono uppercase tracking-widest text-[#38bdf8] inline-flex items-center gap-2 hover:bg-[#1a1d24] transition-colors"
                         >
-                          <MapPin size={13} />
-                          Haritada Aç
-                          <ExternalLink size={12} />
+                          <MapPin size={12} />
+                          HARİTA
+                          <ExternalLink size={10} />
                         </a>
                       ) : null}
                     </div>
 
-                    <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">Açıklama</p>
-                      <p className="mt-1 text-sm text-slate-700">{businessCard.description || '-'}</p>
+                    <div className="mt-3 rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3">
+                      <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Açıklama</p>
+                      <p className="mt-1.5 text-[11px] font-mono text-[#cbd5e1] leading-relaxed">{businessCard.description || '-'}</p>
                     </div>
-                  </div>
+                  </HardwarePanel>
 
-                  <div className={`${cardClass} p-4`}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Operasyon Özeti
+                  <HardwarePanel className="p-5">
+                    <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">
+                      Özellik ve İmkanlar
                     </p>
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
-                      <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Kampanya</p>
-                        <p className="mt-1 text-base font-bold text-slate-900">{detail.stats.campaignCount}</p>
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] mb-2.5">Genel Özellikler</p>
+                        <div className="flex flex-wrap gap-2">
+                          {detail.features.length > 0 ? (
+                            detail.features.map((feature) => (
+                              <span
+                                key={feature.name}
+                                className="px-2.5 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[9px] font-mono uppercase tracking-widest text-[#cbd5e1]"
+                              >
+                                {feature.name}
+                                {feature.value ? `: ${feature.value}` : ''}
+                              </span>
+                            ))
+                          ) : (
+                            <p className="text-[10px] font-mono text-[#475569] uppercase tracking-widest">ÖZELLİK KAYDI YOK.</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Aktif Kamp.</p>
-                        <p className="mt-1 text-base font-bold text-emerald-700">{detail.stats.activeCampaignCount}</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Menü Ürünü</p>
-                        <p className="mt-1 text-base font-bold text-slate-900">{detail.stats.menuItemCount}</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Yorum</p>
-                        <p className="mt-1 text-base font-bold text-slate-900">{detail.stats.reviewCount}</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Puan Ort.</p>
-                        <p className="mt-1 text-base font-bold text-amber-700">
-                          {detail.stats.reviewAverage !== null ? detail.stats.reviewAverage.toFixed(1) : '-'}
-                        </p>
+                      <div>
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] mb-2.5">Mağaza / Bölüm</p>
+                        <div className="space-y-2">
+                          {detail.stores.length > 0 ? (
+                            detail.stores.map((store) => (
+                              <div
+                                key={store.id}
+                                className="rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2 flex justify-between items-center gap-2"
+                              >
+                                <p className="text-[10px] font-mono text-[#e2e8f0] uppercase tracking-widest truncate">{store.name || '-'}</p>
+                                <p className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest shrink-0">{store.floor_info || '-'}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-[10px] font-mono text-[#475569] uppercase tracking-widest">BÖLÜM KAYDI YOK.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </HardwarePanel>
 
-                  <div className={`${cardClass} p-4`}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Medya</p>
+                  <HardwarePanel className="p-5">
+                    <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">
+                      Medya Varlıkları
+                    </p>
                     {detail.photos.length === 0 ? (
-                      <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/70 py-10 text-center text-slate-500">
-                        <ImageIcon className="w-7 h-7 mx-auto" />
-                        <p className="mt-2 text-sm font-semibold">Fotoğraf bulunamadı.</p>
+                      <div className="mt-4 rounded border border-dashed border-[#2d313a] bg-[#0a0c10] py-12 flex flex-col items-center justify-center text-[10px] font-mono text-[#475569] uppercase tracking-widest">
+                        <ImageIcon className="w-6 h-6 mb-3 opacity-50" />
+                        GÖRSEL BULUNAMADI.
                       </div>
                     ) : (
                       <>
-                        <div className="mt-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <div className="mt-4 rounded border border-[#2d313a] bg-[#0a0c10] overflow-hidden aspect-video">
                           <img
                             src={activePhoto || detail.photos[0].url}
                             alt="İşletme görseli"
-                            className="w-full h-[260px] object-cover"
+                            className="w-full h-full object-cover mix-blend-lighten opacity-80"
                           />
                         </div>
-                        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                        <div className="mt-3 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                           {detail.photos.map((photo) => {
                             const selected = (activePhoto || detail.photos[0].url) === photo.url
                             return (
@@ -1033,14 +1073,14 @@ export default function ApprovalsPage() {
                                 key={photo.id}
                                 type="button"
                                 onClick={() => setActivePhoto(photo.url)}
-                                className={`relative shrink-0 rounded-lg overflow-hidden border-2 ${
-                                  selected ? 'border-blue-500' : 'border-transparent'
+                                className={`relative shrink-0 rounded border-2 transition-all overflow-hidden ${
+                                  selected ? 'border-[#38bdf8] opacity-100' : 'border-[#2d313a] opacity-60 hover:opacity-100'
                                 }`}
                               >
-                                <img src={photo.url} alt="" className="w-[86px] h-[66px] object-cover" />
+                                <img src={photo.url} alt="" className="w-20 h-14 object-cover mix-blend-lighten" />
                                 {photo.is_cover ? (
-                                  <span className="absolute left-1 top-1 px-1.5 py-0.5 rounded bg-slate-900/70 text-white text-[9px] font-semibold">
-                                    Kapak
+                                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-[#16181d]/80 border border-[#2d313a] text-[#38bdf8] text-[8px] font-mono uppercase tracking-widest backdrop-blur-sm">
+                                    VİTRİN
                                   </span>
                                 ) : null}
                               </button>
@@ -1049,90 +1089,81 @@ export default function ApprovalsPage() {
                         </div>
                       </>
                     )}
-                  </div>
-
-                  <div className={`${cardClass} p-4`}>
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Özellikler</p>
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {detail.features.length > 0 ? (
-                            detail.features.map((feature) => (
-                              <span
-                                key={feature.name}
-                                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700"
-                              >
-                                {feature.name}
-                                {feature.value ? `: ${feature.value}` : ''}
-                              </span>
-                            ))
-                          ) : (
-                            <p className="text-sm text-slate-500">Özellik kaydı yok.</p>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Mağaza/Bölüm</p>
-                        <div className="mt-3 space-y-1.5">
-                          {detail.stores.length > 0 ? (
-                            detail.stores.map((store) => (
-                              <div
-                                key={store.id}
-                                className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-2 text-xs"
-                              >
-                                <p className="font-semibold text-slate-800">{store.name || '-'}</p>
-                                <p className="text-slate-500">{store.floor_info || '-'}</p>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-sm text-slate-500">Bölüm kaydı yok.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  </HardwarePanel>
                 </div>
 
-                <div className="space-y-4">
-                  <div className={`${cardClass} p-4`}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Başvuran Kullanıcı</p>
+                <div className="space-y-5">
+                  <HardwarePanel className="p-5">
+                    <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">
+                      Başvuran Kullanıcı
+                    </p>
                     {ownerCard ? (
-                      <div className="mt-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-14 h-14 rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center">
+                      <div className="mt-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded border border-[#2d313a] bg-[#16181d] overflow-hidden flex items-center justify-center shrink-0">
                             {ownerCard.avatar_url ? (
-                              <img src={ownerCard.avatar_url} alt={ownerCard.full_name || 'Profil'} className="w-full h-full object-cover" />
+                              <img src={ownerCard.avatar_url} alt={ownerCard.full_name || 'Profil'} className="w-full h-full object-cover mix-blend-lighten opacity-80" />
                             ) : (
-                              <UserCircle2 className="w-8 h-8 text-slate-400" />
+                              <UserCircle2 className="w-6 h-6 text-[#475569]" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-base font-bold text-slate-900 truncate">{ownerCard.full_name || 'İsimsiz kullanıcı'}</p>
-                            <p className="text-xs text-slate-500 break-all">{ownerCard.email || '-'}</p>
+                            <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{ownerCard.full_name || 'İSİMSİZ KULLANICI'}</p>
+                            <p className="text-[10px] font-mono text-[#64748b] mt-1 truncate">{ownerCard.email || '-'}</p>
                           </div>
                         </div>
-                        <div className="mt-3 grid gap-2">
+                        <div className="mt-5 grid gap-3">
                           <InfoCell label="Kullanıcı ID" value={ownerCard.id} />
-                          <InfoCell label="Rol" value={ownerCard.role || '-'} />
-                          <InfoCell label="Durum" value={ownerCard.status || '-'} />
+                          <InfoCell label="Rol" value={(ownerCard.role || '-').toUpperCase()} />
+                          <InfoCell label="Durum" value={(ownerCard.status || '-').toUpperCase()} />
                           <InfoCell label="Kayıt Tarihi" value={formatDateTime(ownerCard.created_at)} />
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-700 flex items-center gap-2">
-                        <AlertTriangle size={16} />
-                        Başvuru sahibinin profil kaydı okunamadı.
+                      <div className="mt-4 rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-rose-400 flex items-center gap-2">
+                        <AlertTriangle size={14} className="shrink-0" />
+                        BAŞVURU SAHİBİNİN PROFİL KAYDI OKUNAMADI.
                       </div>
                     )}
-                  </div>
+                  </HardwarePanel>
 
-                  <RawFieldTable title="İşletme Tüm Alanlar" record={businessCard} />
-                  <RawFieldTable title="Kullanıcı Tüm Alanlar" record={ownerCard} />
+                  <HardwarePanel className="p-5">
+                    <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#1e232b] pb-3">
+                      Operasyon Özeti
+                    </p>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2.5">
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Kampanya</p>
+                        <p className="mt-1.5 text-base font-mono text-[#e2e8f0]">{detail.stats.campaignCount}</p>
+                      </div>
+                      <div className="rounded border border-[#226785] bg-[#153445]/20 px-3 py-2.5">
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#38bdf8]">Aktif Kamp.</p>
+                        <p className="mt-1.5 text-base font-mono text-[#38bdf8]">{detail.stats.activeCampaignCount}</p>
+                      </div>
+                      <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2.5">
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Menü Ürünü</p>
+                        <p className="mt-1.5 text-base font-mono text-[#e2e8f0]">{detail.stats.menuItemCount}</p>
+                      </div>
+                      <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2.5">
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Yorum</p>
+                        <p className="mt-1.5 text-base font-mono text-[#e2e8f0]">{detail.stats.reviewCount}</p>
+                      </div>
+                      <div className="col-span-2 rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2.5 flex items-center justify-between">
+                        <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Puan Ortalaması</p>
+                        <p className="text-base font-mono text-amber-400">
+                          {detail.stats.reviewAverage !== null ? detail.stats.reviewAverage.toFixed(1) : '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </HardwarePanel>
+
+                  <RawFieldTable title="İşletme Veri Dökümü" record={businessCard} />
+                  <RawFieldTable title="Kullanıcı Veri Dökümü" record={ownerCard} />
                 </div>
               </div>
             </div>
           )}
-        </article>
+        </div>
       </section>
     </div>
   )

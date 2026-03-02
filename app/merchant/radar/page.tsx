@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import { categorySlugFromName, type MerchantBusiness } from '../_lib/helpers'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 
@@ -162,6 +162,17 @@ function normalizeMolaTargetSummaryRows(rows: unknown[]): MolaTargetSummaryRow[]
     }))
     .filter((row) => row.user_id.length > 0 && row.stop_key.length > 0)
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantRadarPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -581,71 +592,79 @@ export default function MerchantRadarPage() {
   }, [selectedBusiness])
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[28px] p-4 md:p-5 bg-[linear-gradient(145deg,#ffffff_0%,#f2f7ff_100%)] border border-white/70 shadow-[0_22px_30px_-24px_rgba(15,23,42,0.65)]">
+    <div className="space-y-6">
+      <div className="border-b border-[#2d313a] pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <ModuleTitle title="Müşteri Radarı" />
-            <p className="mt-1 text-xs text-slate-500">📡 Konuma dayalı radar gönderimi ve kampanya hedefleme</p>
+            <PanelTitle title="Müşteri Radarı" />
+            <p className="mt-2 text-[10px] font-mono tracking-widest uppercase text-[#64748b]">
+              Konuma dayalı radar gönderimi ve kampanya hedefleme
+            </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
+          <div className={`inline-flex items-center gap-2 rounded px-3 py-1.5 border text-[10px] font-mono tracking-widest uppercase ${
+            isBusinessLocationReady ? 'bg-[#14532d]/40 border-[#166534] text-emerald-400' : 'bg-amber-950/20 border-amber-900/50 text-amber-400'
+          }`}>
             {isBusinessLocationReady ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-3.5 h-3.5" />
             )}
-            <span className="text-xs font-semibold">
+            <span>
               {isBusinessLocationReady ? 'Konum hedefleme hazır' : 'İşletme konumu kontrol edilmeli'}
             </span>
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 xl:grid-cols-4 gap-2">
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">İşletme</p>
-            <p className="mt-0.5 text-base font-bold text-slate-800">{selectedBusiness ? selectedBusiness.name : '-'}</p>
-          </div>
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Hedef Mesafe</p>
-            <p className="mt-0.5 text-base font-bold text-slate-800">{rangeKm} km</p>
-          </div>
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Kategori</p>
-            <p className="mt-0.5 text-base font-bold text-slate-800">{targetCategories.length} seçili</p>
-          </div>
-          <div className="rounded-xl p-2.5 bg-white border border-slate-100 shadow-[0_10px_14px_-16px_rgba(15,23,42,0.7)]">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Kupon</p>
-            <p className="mt-0.5 text-base font-bold text-slate-800">{selectedCoupon ? couponSummary(selectedCoupon) : 'Yok'}</p>
-          </div>
+        <div className="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">İşletme</p>
+            <p className="mt-2 text-sm font-mono text-[#e2e8f0] truncate max-w-full uppercase tracking-wide">{selectedBusiness ? selectedBusiness.name : '-'}</p>
+          </HardwarePanel>
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Hedef Mesafe</p>
+            <p className="mt-2 text-xl font-mono text-[#38bdf8]">{rangeKm} KM</p>
+          </HardwarePanel>
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Kategori</p>
+            <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{targetCategories.length} SEÇİLİ</p>
+          </HardwarePanel>
+          <HardwarePanel className="p-4 flex flex-col items-start group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Kupon</p>
+            <p className="mt-2 text-[11px] font-mono text-[#e2e8f0] truncate max-w-full uppercase tracking-wide">{selectedCoupon ? couponSummary(selectedCoupon) : 'YOK'}</p>
+          </HardwarePanel>
         </div>
-      </section>
+      </div>
 
-      <section className="rounded-[28px] p-4 md:p-5 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] border border-white/70 shadow-[0_22px_30px_-24px_rgba(15,23,42,0.65)]">
-        {loading ? (
-          <div className="h-56 flex items-center justify-center">
-            <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
-          </div>
-        ) : !selectedBusiness ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-600">
-            Radar gönderimi için en az bir işletme gerekli.
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.22fr)_minmax(360px,0.78fr)] gap-3">
-            <section className="rounded-[24px] p-4 md:p-5 bg-white border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] space-y-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                  <Radio className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs font-semibold">Radar Kompozitörü</span>
+      {loading ? (
+        <div className="h-56 flex items-center justify-center">
+          <Loader2 className="w-7 h-7 animate-spin text-[#38bdf8]" />
+        </div>
+      ) : !selectedBusiness ? (
+        <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+          RADAR GÖNDERİMİ İÇİN EN AZ BİR İŞLETME GEREKLİ.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(380px,0.8fr)] gap-5">
+            
+            <HardwarePanel className="p-5 space-y-5">
+              <div className="flex items-center justify-between gap-2 border-b border-[#2d313a] pb-3">
+                <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                  <Radio className="w-4 h-4 text-[#38bdf8]" />
+                  <span>Radar Kompozitörü</span>
                 </div>
-                {composerLoading ? <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> : null}
+                {composerLoading ? <Loader2 className="w-4 h-4 animate-spin text-[#38bdf8]" /> : null}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                   İşletme
                   <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
+                    className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
                     value={selectedBusinessId}
                     onChange={(event) => setSelectedBusinessId(event.target.value)}
                   >
@@ -657,27 +676,27 @@ export default function MerchantRadarPage() {
                   </select>
                 </label>
 
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                   Kupon
                   <select
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700"
+                    className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-mono outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
                     value={selectedCouponId}
                     onChange={(event) => setSelectedCouponId(event.target.value)}
                   >
-                    <option value="">Kupon gönderme</option>
+                    <option value="">KUPON GÖNDERME</option>
                     {coupons.map((coupon) => (
                       <option key={coupon.id} value={coupon.id}>
-                        {(coupon.title || 'Kupon')} • {couponSummary(coupon)}
+                        {(coupon.title || 'KUPON')} • {couponSummary(coupon)}
                       </option>
                     ))}
                   </select>
                 </label>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/85 p-3">
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Hedef Mesafe</p>
-                  <span className="text-xs font-bold text-blue-700">{rangeKm} km</span>
+                  <p className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">Hedef Mesafe</p>
+                  <span className="text-[10px] font-mono font-bold text-[#38bdf8] border border-[#38bdf8]/30 px-2 py-0.5 rounded bg-[#38bdf8]/10">{rangeKm} KM</span>
                 </div>
                 <input
                   type="range"
@@ -685,32 +704,32 @@ export default function MerchantRadarPage() {
                   max={50}
                   value={rangeKm}
                   onChange={(event) => setRangeKm(Number(event.target.value))}
-                  className="mt-2 w-full accent-blue-600"
+                  className="mt-4 w-full accent-[#38bdf8]"
                 />
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {QUICK_RANGES.map((km) => (
                     <button
                       key={km}
                       type="button"
                       onClick={() => setRangeKm(km)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                         km === rangeKm
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-[0_10px_16px_-14px_rgba(37,99,235,0.9)]'
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                          ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                          : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:border-[#475569] hover:text-[#e2e8f0]'
                       }`}
                     >
-                      {km} km
+                      {km} KM
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Hedef Kategoriler</p>
-                  <span className="text-[11px] font-semibold text-slate-500">En az 1 kategori</span>
+                <div className="flex items-center justify-between gap-2 mb-2 border-b border-[#1e232b] pb-2">
+                  <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">Hedef Kategoriler</p>
+                  <span className="text-[9px] font-mono text-[#475569] uppercase tracking-widest">En az 1 kategori</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {businessCategories.map((slug) => {
                     const selected = targetCategories.includes(slug)
                     const category = CATEGORY_META[slug] || CATEGORY_META.other
@@ -728,10 +747,10 @@ export default function MerchantRadarPage() {
                             return businessCategories.filter((item) => item === slug || current.includes(item))
                           })
                         }}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold border transition-colors ${
+                        className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                           selected
-                            ? 'bg-blue-100 text-blue-700 border-blue-200'
-                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                            ? 'bg-[#153445] text-[#38bdf8] border-[#226785]'
+                            : 'bg-[#0a0c10] text-[#64748b] border-[#2d313a] hover:border-[#475569] hover:text-[#e2e8f0]'
                         }`}
                       >
                         <span>{category.emoji}</span>
@@ -742,10 +761,10 @@ export default function MerchantRadarPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Kampanya Mesajı</p>
-                  <span className={`text-xs font-bold ${message.trim().length > MESSAGE_LIMIT - 20 ? 'text-rose-600' : 'text-slate-500'}`}>
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-4 space-y-4">
+                <div className="flex items-center justify-between gap-2 border-b border-[#1e232b] pb-2">
+                  <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">Kampanya Mesajı</p>
+                  <span className={`text-[10px] font-mono tracking-widest ${message.trim().length > MESSAGE_LIMIT - 20 ? 'text-rose-400' : 'text-[#475569]'}`}>
                     {message.trim().length}/{MESSAGE_LIMIT}
                   </span>
                 </div>
@@ -753,93 +772,93 @@ export default function MerchantRadarPage() {
                   value={message}
                   maxLength={MESSAGE_LIMIT}
                   onChange={(event) => setMessage(event.target.value.slice(0, MESSAGE_LIMIT))}
-                  className="mt-1.5 min-h-24 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-sm font-semibold text-slate-700"
+                  className="min-h-[100px] w-full rounded bg-[#0a0c10] border border-[#2d313a] px-4 py-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] resize-none custom-scrollbar"
                   placeholder="Örn: Bugüne özel fırsatlar aktif, sizi bekliyoruz."
                 />
 
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {QUICK_EMOJIS.map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => setMessage((current) => `${current}${emoji}`.slice(0, MESSAGE_LIMIT))}
-                      className="px-2 py-1 rounded-lg border border-slate-200 bg-white text-base hover:border-blue-300"
+                      className="px-2.5 py-1 rounded bg-[#0a0c10] border border-[#2d313a] text-sm text-[#e2e8f0] hover:border-[#475569] transition-colors"
                     >
                       {emoji}
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-1 gap-2">
                   {QUICK_TEMPLATES.map((template, index) => (
                     <button
                       key={template}
                       type="button"
                       onClick={() => setMessage(template)}
-                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left text-[11px] font-semibold text-slate-600 hover:border-blue-300"
+                      className="rounded border border-[#2d313a] bg-[#0a0c10] px-3 py-2.5 text-left text-[10px] font-mono text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
                     >
-                      <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-400">Şablon {index + 1}</span>
-                      <span className="line-clamp-2">{template}</span>
+                      <span className="block text-[9px] uppercase tracking-[0.2em] text-[#475569] mb-1">Şablon {index + 1}</span>
+                      <span className="line-clamp-2 uppercase tracking-wide">{template}</span>
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-2 flex justify-end">
+                <div className="flex justify-end pt-2">
                   <button
                     type="button"
                     onClick={() => setMessage('')}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-300"
+                    className="rounded border border-[#2d313a] bg-transparent px-4 py-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors"
                   >
-                    Metni Temizle
+                    METNİ TEMİZLE
                   </button>
                 </div>
               </div>
-            </section>
+            </HardwarePanel>
 
-            <section className="rounded-[24px] p-4 md:p-5 bg-[linear-gradient(155deg,#ffffff_0%,#f6f9ff_100%)] border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span className="text-xs font-semibold">Canlı Önizleme</span>
+            <HardwarePanel className="p-5 space-y-5">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+                <Sparkles className="w-4 h-4 text-[#38bdf8]" />
+                <span>Canlı Önizleme</span>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_24px_-22px_rgba(15,23,42,0.72)]">
-                <div className="flex items-start justify-between gap-3">
+              <div className="rounded border border-[#2d313a] bg-[#101419] p-4">
+                <div className="flex items-start justify-between gap-3 border-b border-[#1e232b] pb-3">
                   <div>
-                    <p className="text-sm font-extrabold text-slate-900">{selectedBusiness?.name || 'İşletme'}</p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {rangeKm} km
+                    <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide">{selectedBusiness?.name || 'İŞLETME'}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[9px] font-mono uppercase tracking-widest">
+                      <span className="inline-flex items-center gap-1 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-[#38bdf8]">
+                        <MapPin className="w-3 h-3" />
+                        {rangeKm} KM
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-1 text-[11px] font-bold text-violet-700">
-                        📡 {targetCategories.length} kategori
+                      <span className="inline-flex items-center gap-1 rounded bg-[#16181d] border border-[#2d313a] px-2 py-1 text-[#94a3b8]">
+                        📡 {targetCategories.length} KATEGORİ
                       </span>
                     </div>
                   </div>
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(145deg,#6ea8fe_0%,#2f6adf_100%)] text-white shadow-[0_12px_18px_-12px_rgba(37,99,235,0.85)]">
-                    <Radio className="w-5 h-5" />
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#2d313a] bg-[#0a0c10] text-[#38bdf8]">
+                    <Radio className="w-4 h-4" />
                   </span>
                 </div>
 
-                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mesaj İçeriği</p>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">{message.trim() || 'Mesaj metni burada görünecek.'}</p>
+                <div className="mt-4 rounded border border-[#1e232b] bg-[#0a0c10] p-4">
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b]">Mesaj İçeriği</p>
+                  <p className="mt-2 text-[11px] font-mono text-[#cbd5e1] leading-relaxed uppercase tracking-wider">{message.trim() || 'MESAJ METNİ BURADA GÖRÜNECEK.'}</p>
                 </div>
 
                 {selectedCoupon ? (
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                  <div className="mt-3 inline-flex items-center gap-1.5 rounded border border-emerald-900/50 bg-emerald-950/20 px-2.5 py-1.5 text-[9px] font-mono uppercase tracking-widest text-emerald-400">
                     <Tag className="w-3.5 h-3.5" />
-                    Kupon: {(selectedCoupon.title || 'Kupon').slice(0, 26)} • {couponSummary(selectedCoupon)}
+                    KUPON: {(selectedCoupon.title || 'Kupon').slice(0, 26)} • {couponSummary(selectedCoupon)}
                   </div>
                 ) : null}
 
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {targetCategories.map((slug) => {
                     const category = CATEGORY_META[slug] || CATEGORY_META.other
                     return (
                       <span
                         key={slug}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600"
+                        className="inline-flex items-center gap-1.5 rounded border border-[#2d313a] bg-[#0a0c10] px-2 py-1 text-[9px] font-mono uppercase tracking-widest text-[#64748b]"
                       >
                         <span>{category.emoji}</span>
                         <span>{category.label}</span>
@@ -849,20 +868,20 @@ export default function MerchantRadarPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Konum ve Gönderim Mantığı</p>
-                <p className="mt-1 text-xs font-medium text-slate-600">
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[#64748b] border-b border-[#1e232b] pb-2">Konum ve Gönderim Mantığı</p>
+                <p className="mt-3 text-[10px] font-mono text-[#94a3b8] leading-relaxed uppercase tracking-wider">
                   Hedefleme işletmenin kayıtlı konumuna göre yapılır. Gönderimde v2 fonksiyonu kullanılır; sistemde yoksa legacy fallback otomatik devreye girer.
                 </p>
                 {isBusinessLocationReady ? (
-                  <p className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-emerald-400">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     İşletme konumu hazır
                   </p>
                 ) : (
-                  <p className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-700">
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-amber-400">
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    Konum eksik görünse de gönderim akışı çalışır; eşleşme azalabilir
+                    Konum eksik görünse de gönderim akışı çalışır; eşleşme azalabilir.
                   </p>
                 )}
               </div>
@@ -871,44 +890,42 @@ export default function MerchantRadarPage() {
                 type="button"
                 onClick={handleSend}
                 disabled={sending || composerLoading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-55 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center gap-2 rounded px-4 py-4 bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 transition-all"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Müşteri Radarını Başlat
+                {sending ? 'GÖNDERİLİYOR...' : 'MÜŞTERİ RADARINI BAŞLAT'}
               </button>
 
               {resultText ? (
                 <div
-                  className={`rounded-xl border p-3 text-sm font-semibold ${
+                  className={`rounded border px-4 py-3 text-[11px] font-mono uppercase tracking-wide flex items-start gap-2 ${
                     resultTone === 'success'
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-400'
                       : resultTone === 'warn'
-                        ? 'bg-amber-50 border-amber-200 text-amber-700'
-                        : 'bg-rose-50 border-rose-200 text-rose-700'
+                        ? 'bg-amber-950/20 border-amber-900/50 text-amber-400'
+                        : 'bg-rose-950/20 border-rose-900/50 text-rose-400'
                   }`}
                 >
-                  <span className="inline-flex items-start gap-2">
-                    {resultTone === 'error' ? <ShieldAlert className="mt-0.5 w-4 h-4" /> : <Radio className="mt-0.5 w-4 h-4" />}
-                    {resultText}
-                  </span>
+                  {resultTone === 'error' ? <ShieldAlert className="mt-0.5 w-4 h-4 shrink-0" /> : <Radio className="mt-0.5 w-4 h-4 shrink-0" />}
+                  <span>{resultText}</span>
                 </div>
               ) : null}
-            </section>
+            </HardwarePanel>
           </div>
 
-            <div className="mt-3 rounded-[24px] p-4 md:p-5 bg-[linear-gradient(155deg,#ffffff_0%,#f6f9ff_100%)] border border-white/80 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)]">
-            <div className="flex flex-wrap items-start justify-between gap-2.5">
+          <HardwarePanel className="p-5 md:p-6 mt-5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[#2d313a] pb-4">
               <div>
-                <p className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                  <Compass className="h-4 w-4 text-violet-600" />
-                  <span className="text-xs font-semibold">Modül 2 • Mola Hedefleri</span>
-                </p>
-                <p className="mt-2 text-xs text-slate-600">
+                <div className="inline-flex items-center gap-2 rounded px-3 py-1.5 border border-[#2d313a] bg-[#101419] text-[#94a3b8] text-[10px] font-mono uppercase tracking-widest">
+                  <Compass className="h-3.5 w-3.5 text-[#38bdf8]" />
+                  <span>Modül 2 • Mola Hedefleri</span>
+                </div>
+                <p className="mt-3 text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
                   App akışıyla uyumlu Mola hedef yönetimi: kullanıcı listesi, kupon bağlı teklif gönderimi, aktif teklifi iptal.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -916,7 +933,7 @@ export default function MerchantRadarPage() {
                     void loadMolaSummary(selectedBusinessId)
                   }}
                   disabled={molaSummaryLoading || !selectedBusinessId}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-slate-300 disabled:opacity-55"
+                  className="inline-flex items-center justify-center gap-2 rounded px-4 py-2 border border-[#2d313a] bg-[#0a0c10] text-[#94a3b8] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] hover:text-[#e2e8f0] disabled:opacity-50 transition-colors"
                 >
                   {molaSummaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
                   Yenile
@@ -924,35 +941,37 @@ export default function MerchantRadarPage() {
 
                 <Link
                   href="/merchant/mola-targets"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-700"
+                  className="inline-flex items-center justify-center gap-2 rounded px-4 py-2 border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] transition-colors"
                 >
                   Mola Hedefleri Sayfası
-                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-[#38bdf8]" />
                 </Link>
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Mola Hedef</p>
-                <p className="mt-1 text-lg font-extrabold text-slate-800">{molaTargetCount}</p>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Mola Hedef</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{molaTargetCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Aktif Mola Teklifi</p>
-                <p className="mt-1 text-lg font-extrabold text-slate-800">{molaActiveOfferCount}</p>
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Aktif Mola Teklifi</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{molaActiveOfferCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">Durum</p>
-                <p className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-slate-800">
-                  <Users className="h-3.5 w-3.5 text-slate-500" />
-                  {molaSummaryLoading ? 'Yükleniyor' : 'Hazır'}
+              <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Durum</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-sm font-mono uppercase tracking-wide text-[#e2e8f0]">
+                  <Users className="h-4 w-4 text-[#64748b]" />
+                  {molaSummaryLoading ? 'YÜKLENİYOR...' : 'HAZIR'}
                 </p>
               </div>
             </div>
-            </div>
-          </>
-        )}
-      </section>
+          </HardwarePanel>
+        </>
+      )}
     </div>
   )
 }

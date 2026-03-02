@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { BadgePercent, Loader2, Plus, Trash2 } from 'lucide-react'
+import { BadgePercent, Loader2, Plus, Trash2, Terminal } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 import type { MerchantBusiness } from '../_lib/helpers'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import { CampaignSubNav } from './_components/campaign-subnav'
 
 type Campaign = {
@@ -65,16 +65,28 @@ function toRgba(hex: string, alpha: number): string {
 }
 
 function getPostitStyle(color: string, active: boolean) {
+  // Karanlık temaya uygun, hafif cam (glass) etkili post-it stili
   return {
     shell: {
-      borderColor: toRgba(color, active ? 0.56 : 0.38),
-      background: `linear-gradient(180deg, ${toRgba(color, active ? 0.14 : 0.09)} 0%, rgba(248,250,252,0.95) 100%)`,
+      borderColor: toRgba(color, active ? 0.6 : 0.3),
+      background: `linear-gradient(180deg, ${toRgba(color, active ? 0.15 : 0.05)} 0%, rgba(10,12,16,0.95) 100%)`,
       boxShadow: active
-        ? `0 10px 18px -16px ${toRgba(color, 0.75)}, inset 0 1px 0 rgba(255,255,255,0.95)`
-        : `0 8px 16px -16px rgba(15,23,42,0.5), inset 0 1px 0 rgba(255,255,255,0.94)`,
+        ? `0 4px 12px ${toRgba(color, 0.2)}, inset 0 1px 0 rgba(255,255,255,0.05)`
+        : `0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02)`,
     },
   }
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantCampaignsPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -229,21 +241,21 @@ export default function MerchantCampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)]">
-        <ModuleTitle title="Kampanya Yönetimi" />
+      <div className="border-b border-[#2d313a] pb-4">
+        <PanelTitle title="Kampanya Yönetimi" />
         <div className="mt-4">
           <CampaignSubNav active="tags" />
         </div>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-3">
           İşletme kartında görünen etiket mesajlarını yönetin. Kupon yönetimi artık ayrı menüde.
         </p>
       </div>
 
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] space-y-5">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+      <div className="space-y-5">
+        <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
           İşletme Seç
           <select
-            className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm border border-slate-200"
+            className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase tracking-wide"
             value={selectedBusinessId}
             onChange={(event) => setSelectedBusinessId(event.target.value)}
           >
@@ -257,35 +269,38 @@ export default function MerchantCampaignsPage() {
 
         {bootLoading ? (
           <div className="h-20 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : !selectedBusiness ? (
-          <div className="text-sm text-slate-500">İşletme bulunamadı.</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#0a0c10] border border-dashed border-[#2d313a] p-5 text-center rounded">İşletme bulunamadı.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Aktif Etiket</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{activeCampaignCount}</p>
-              </div>
-              <div className="rounded-2xl p-4 bg-white border border-slate-100 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.7)]">
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">Kayıtlı Etiket</p>
-                <p className="mt-1 text-2xl font-bold text-slate-800">{campaigns.length}</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Aktif Etiket</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{activeCampaignCount}</p>
+              </HardwarePanel>
+              <HardwarePanel className="p-4 flex flex-col items-start group">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b]">Kayıtlı Etiket</p>
+                <p className="mt-2 text-xl font-mono text-[#e2e8f0]">{campaigns.length}</p>
+              </HardwarePanel>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-[430px_1fr] gap-4">
               <div className="space-y-4">
-                <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)] space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#edf3fb] text-slate-700 shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.95)]">
-                    <BadgePercent className="w-4 h-4 text-rose-600" />
-                    <span className="text-sm font-semibold">Etiket Kampanyası Oluştur</span>
+                
+                <HardwarePanel className="p-5 space-y-5">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] border-b border-[#2d313a] pb-3 w-full">
+                    <BadgePercent className="w-4 h-4 text-[#38bdf8]" />
+                    <span>Etiket Kampanyası Oluştur</span>
                   </div>
 
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Etiket Metni
                     <textarea
-                      className="mt-2 w-full min-h-20 px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-bold border border-slate-200"
+                      className="mt-2 w-full min-h-[80px] px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 custom-scrollbar resize-none placeholder:text-[#475569]"
                       maxLength={TAG_TEXT_MAX}
                       value={tagText}
                       onChange={(event) => setTagText(limitTagText(event.target.value))}
@@ -293,8 +308,8 @@ export default function MerchantCampaignsPage() {
                     />
                     <div className="mt-1.5 flex justify-end">
                       <span
-                        className={`text-[11px] font-semibold ${
-                          TAG_TEXT_MAX - tagText.length <= 5 ? 'text-rose-600' : 'text-slate-400'
+                        className={`text-[10px] font-mono tracking-widest ${
+                          TAG_TEXT_MAX - tagText.length <= 5 ? 'text-rose-400' : 'text-[#475569]'
                         }`}
                       >
                         {TAG_TEXT_MAX - tagText.length}/{TAG_TEXT_MAX}
@@ -302,159 +317,170 @@ export default function MerchantCampaignsPage() {
                     </div>
                   </label>
 
-                  <div className="flex flex-wrap gap-2">
-                    {TAG_COLORS.map((color, index) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setTagColorIndex(index)}
-                        className={`h-8 w-8 rounded-full border-2 transition-transform ${
-                          tagColorIndex === index ? 'border-slate-700 scale-110' : 'border-white'
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
+                  <div className="space-y-3">
+                     <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Renk Belirle</div>
+                     <div className="flex flex-wrap gap-2">
+                       {TAG_COLORS.map((color, index) => (
+                         <button
+                           key={color}
+                           type="button"
+                           onClick={() => setTagColorIndex(index)}
+                           className={`h-7 w-7 rounded border-2 transition-transform ${
+                             tagColorIndex === index ? 'border-[#38bdf8] scale-110' : 'border-[#2d313a]'
+                           }`}
+                           style={{ backgroundColor: color }}
+                         />
+                       ))}
+                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500 mb-2">Seçili Renk Önizleme</p>
+                  <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] mb-3">Seçili Renk Önizleme</p>
                     <div
-                      className="relative inline-flex max-w-full items-center gap-2 rounded-[8px] border px-2.5 py-1.5"
+                      className="relative inline-flex max-w-full items-center gap-2 rounded border px-3 py-1.5 transition-colors"
                       style={previewPostitStyle.shell}
                     >
-                      <span className="h-3.5 w-1 rounded-full" style={{ backgroundColor: selectedTagColor }} />
-                      <span className="truncate text-sm font-bold" style={{ color: selectedTagColor }}>
-                        {limitTagText(tagText.trim()) || 'Etiket metni önizlemesi'}
+                      <span className="h-3.5 w-1 rounded-sm" style={{ backgroundColor: selectedTagColor }} />
+                      <span className="truncate text-[13px] font-mono uppercase tracking-wide" style={{ color: selectedTagColor }}>
+                        {limitTagText(tagText.trim()) || 'ETİKET METNİ ÖNİZLEMESİ'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {QUICK_EMOJIS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setTagText((current) => limitTagText(`${current} ${emoji}`.trim()))}
-                        className="px-2 py-1 rounded-lg text-base bg-slate-100 border border-slate-200"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                    {QUICK_TEMPLATE_PRESETS.map((preset) => (
-                      <button
-                        key={`${preset.category}-${preset.text}`}
-                        type="button"
-                        onClick={() => setTagText(limitTagText(preset.text))}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200"
-                      >
-                        {preset.category}: {preset.text}
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                     <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-1.5">Hızlı Şablonlar</div>
+                     <div className="flex flex-wrap gap-2">
+                       {QUICK_EMOJIS.map((emoji) => (
+                         <button
+                           key={emoji}
+                           type="button"
+                           onClick={() => setTagText((current) => limitTagText(`${current} ${emoji}`.trim()))}
+                           className="px-2.5 py-1.5 rounded bg-[#0a0c10] border border-[#2d313a] text-sm text-[#e2e8f0] hover:border-[#475569] transition-colors"
+                         >
+                           {emoji}
+                         </button>
+                       ))}
+                       {QUICK_TEMPLATE_PRESETS.map((preset) => (
+                         <button
+                           key={`${preset.category}-${preset.text}`}
+                           type="button"
+                           onClick={() => setTagText(limitTagText(preset.text))}
+                           className="px-2.5 py-1.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[10px] font-mono text-[#94a3b8] uppercase tracking-widest hover:text-[#e2e8f0] hover:border-[#475569] transition-colors"
+                         >
+                           {preset.category}: {preset.text}
+                         </button>
+                       ))}
+                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={addTagCampaign}
                     disabled={savingTag}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50"
                   >
                     {savingTag ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                    Etiketi Kaydet
+                    {savingTag ? 'KAYDEDİLİYOR...' : 'ETİKETİ KAYDET'}
                   </button>
-                </section>
+                </HardwarePanel>
 
-                <section className="rounded-[24px] p-4 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)]">
-                  <div className="text-[11px] uppercase tracking-widest font-semibold text-slate-500 mb-2">Etiket Nerede Görünür?</div>
-                  <div className="rounded-[26px] border border-slate-200 bg-[linear-gradient(150deg,#f7faff_0%,#eff4fb_100%)] p-3 shadow-[0_16px_26px_-22px_rgba(15,23,42,0.6),inset_0_1px_0_rgba(255,255,255,0.95)]">
+                <HardwarePanel className="p-5">
+                  <div className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] mb-3 border-b border-[#2d313a] pb-2">Etiket Nerede Görünür?</div>
+                  <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 flex justify-center">
                     <img
                       src="/campaign-help/IMG_3872.jpg"
                       alt="Kampanya etiketlerinin kartta görünümü"
-                      className="w-[80%] mx-auto rounded-[20px] border border-slate-300 shadow-[0_12px_20px_-16px_rgba(15,23,42,0.55)]"
+                      className="w-[85%] rounded border border-[#1e232b] mix-blend-lighten opacity-80"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Bu örnekteki kırmızı çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir. Dilediğiniz rengi seçip yayınlayabilirsiniz
+                  <p className="mt-3 text-[10px] font-mono text-[#64748b] leading-relaxed tracking-wider uppercase">
+                    Bu örnekteki kırmızı çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir. Dilediğiniz rengi seçip yayınlayabilirsiniz.
                   </p>
-                </section>
+                </HardwarePanel>
               </div>
 
-              <section className="rounded-[24px] p-5 bg-white border border-slate-100 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.65)]">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <h2 className="text-base font-bold text-slate-800">Etiket Arşivi</h2>
-                <span className="text-xs font-semibold text-slate-500">
-                  Yayında {activeCampaignCount}/{MAX_ACTIVE_CAMPAIGNS} | Kayıtlı {campaigns.length}/{MAX_SAVED_CAMPAIGNS}
-                </span>
-              </div>
-
-              {recordsLoading ? (
-                <div className="h-24 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+              <HardwarePanel className="p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d313a] pb-3">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                     <Terminal className="w-4 h-4 text-[#38bdf8]" />
+                     <span>Etiket Arşivi</span>
+                  </div>
+                  <span className="px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+                    YAYINDA {activeCampaignCount}/{MAX_ACTIVE_CAMPAIGNS} | KAYITLI {campaigns.length}/{MAX_SAVED_CAMPAIGNS}
+                  </span>
                 </div>
-              ) : campaigns.length === 0 ? (
-                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
-                  Henüz etiket kampanyası yok.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {campaigns.map((campaign) => {
-                    const parsedColorIndex = Number(campaign.color_index ?? 0)
-                    const colorSafeIndex =
-                      Number.isFinite(parsedColorIndex) && parsedColorIndex >= 0
-                        ? Math.min(parsedColorIndex, TAG_COLORS.length - 1)
-                        : 0
-                    const tagColor = TAG_COLORS[colorSafeIndex] || TAG_COLORS[0]
-                    const isBusy = togglingTagId === campaign.id || deletingTagId === campaign.id
-                    const postitStyle = getPostitStyle(tagColor, Boolean(campaign.is_active))
 
-                    return (
-                      <article key={campaign.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="relative inline-flex max-w-full items-center gap-2 rounded-[8px] border px-2.5 py-1.5" style={postitStyle.shell}>
-                              <span className="h-3.5 w-1 rounded-full" style={{ backgroundColor: tagColor }} />
-                              <span className="text-sm font-bold truncate max-w-[240px]" style={{ color: tagColor }}>
-                                {campaign.text || 'Etiket metni yok'}
-                              </span>
+                {recordsLoading ? (
+                  <div className="h-32 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
+                  </div>
+                ) : campaigns.length === 0 ? (
+                  <div className="rounded border border-dashed border-[#2d313a] bg-[#0a0c10] p-5 text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center">
+                    HENÜZ ETİKET KAMPANYASI YOK.
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
+                    {campaigns.map((campaign) => {
+                      const parsedColorIndex = Number(campaign.color_index ?? 0)
+                      const colorSafeIndex =
+                        Number.isFinite(parsedColorIndex) && parsedColorIndex >= 0
+                          ? Math.min(parsedColorIndex, TAG_COLORS.length - 1)
+                          : 0
+                      const tagColor = TAG_COLORS[colorSafeIndex] || TAG_COLORS[0]
+                      const isBusy = togglingTagId === campaign.id || deletingTagId === campaign.id
+                      const postitStyle = getPostitStyle(tagColor, Boolean(campaign.is_active))
+
+                      return (
+                        <article key={campaign.id} className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 hover:border-[#475569] transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="relative inline-flex max-w-full items-center gap-2 rounded border px-2.5 py-1.5 transition-colors" style={postitStyle.shell}>
+                                <span className="h-3.5 w-1 rounded-sm" style={{ backgroundColor: tagColor }} />
+                                <span className="text-[12px] font-mono uppercase tracking-wide truncate max-w-[240px]" style={{ color: tagColor }}>
+                                  {campaign.text || 'ETİKET METNİ YOK'}
+                                </span>
+                              </div>
+                              <div className="mt-3 h-1 w-full rounded-sm bg-[#16181d] border border-[#2d313a] overflow-hidden">
+                                <div className="h-full rounded-sm" style={{ width: '42%', backgroundColor: tagColor }} />
+                              </div>
+                              <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">
+                                {campaign.is_active ? 'YAYINDA' : 'TASLAK'} • {formatDate(campaign.created_at)}
+                              </p>
                             </div>
-                            <div className="mt-2 h-1.5 w-full rounded-full" style={{ backgroundColor: `${tagColor}33` }}>
-                              <div className="h-full rounded-full" style={{ width: '42%', backgroundColor: tagColor }} />
-                            </div>
-                            <p className="mt-2 text-[11px] font-semibold text-slate-500">
-                              {campaign.is_active ? 'YAYINDA' : 'TASLAK'} • {formatDate(campaign.created_at)}
-                            </p>
-                          </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              disabled={isBusy}
-                              onClick={() => toggleTagActive(campaign)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                                campaign.is_active ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
-                              }`}
-                            >
-                              {togglingTagId === campaign.id ? '...' : campaign.is_active ? 'Yayından Al' : 'Yayınla'}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isBusy}
-                              onClick={() => deleteTag(campaign.id)}
-                              className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center"
-                            >
-                              {deletingTagId === campaign.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5" />
-                              )}
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0 border-t border-[#1e232b] sm:border-t-0 pt-3 sm:pt-0">
+                              <button
+                                type="button"
+                                disabled={isBusy}
+                                onClick={() => toggleTagActive(campaign)}
+                                className={`px-3 py-2 rounded text-[9px] font-mono uppercase tracking-widest border transition-colors ${
+                                  campaign.is_active 
+                                    ? 'bg-rose-950/20 text-rose-400 border-rose-900/50 hover:bg-rose-900/40' 
+                                    : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/50 hover:bg-emerald-900/40'
+                                }`}
+                              >
+                                {togglingTagId === campaign.id ? 'İŞLENİYOR' : campaign.is_active ? 'YAYINDAN AL' : 'YAYINLA'}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isBusy}
+                                onClick={() => deleteTag(campaign.id)}
+                                className="w-8 h-8 rounded border border-rose-900/50 bg-rose-950/20 text-rose-400 flex items-center justify-center hover:bg-rose-900/40 transition-colors"
+                              >
+                                {deletingTagId === campaign.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              )}
-              </section>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </HardwarePanel>
             </div>
           </>
         )}

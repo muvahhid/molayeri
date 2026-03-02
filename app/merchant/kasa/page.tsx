@@ -13,7 +13,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../_components/module-title'
+import { PanelTitle } from '../_components/panel-title'
 import { fetchOwnedBusinesses, requireCurrentUserId } from '../_lib/queries'
 import type { MerchantBusiness } from '../_lib/helpers'
 import { IyzicoSetupModule } from './_components/iyzico-setup-module'
@@ -50,19 +50,6 @@ type DailySeries = {
 }
 
 type MetricTone = 'blue' | 'sky' | 'emerald' | 'violet' | 'amber' | 'slate'
-
-const toneMap: Record<MetricTone, string> = {
-  blue: 'from-blue-600 to-indigo-600 shadow-[0_14px_22px_-16px_rgba(37,99,235,0.75)]',
-  sky: 'from-sky-500 to-cyan-500 shadow-[0_14px_22px_-16px_rgba(14,165,233,0.75)]',
-  emerald:
-    'from-emerald-500 to-green-500 shadow-[0_14px_22px_-16px_rgba(16,185,129,0.75)]',
-  violet:
-    'from-violet-500 to-purple-600 shadow-[0_14px_22px_-16px_rgba(139,92,246,0.75)]',
-  amber:
-    'from-amber-500 to-orange-500 shadow-[0_14px_22px_-16px_rgba(245,158,11,0.75)]',
-  slate:
-    'from-slate-500 to-slate-600 shadow-[0_14px_22px_-16px_rgba(71,85,105,0.75)]',
-}
 
 function toMoney(value: number): string {
   return new Intl.NumberFormat('tr-TR', {
@@ -136,6 +123,17 @@ function ratio(numerator: number, denominator: number): number {
   if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) return 0
   return Math.max(0, Math.min(100, (numerator / denominator) * 100))
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantKasaPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -298,40 +296,43 @@ export default function MerchantKasaPage() {
   }, [summary])
 
   return (
-    <div className="space-y-4">
-      <ModuleTitle title="Kasa Programı" />
+    <div className="space-y-6">
+      <div className="border-b border-[#2d313a] pb-4">
+        <PanelTitle title="Kasa Programı" />
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#64748b] mt-2">
+          Finansal işlemlerinizi, komisyon oranlarını ve nakit akışını takip edin.
+        </p>
+      </div>
 
-      <section className="rounded-[26px] border border-sky-100 bg-[linear-gradient(135deg,#f8fbff_0%,#e7f0ff_55%,#e0f7ff_100%)] p-5 text-slate-800 shadow-[0_16px_30px_-24px_rgba(14,116,144,0.35)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <HardwarePanel className="p-5 md:p-6 space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between border-b border-[#2d313a] pb-5">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/85 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700">
-              <Sparkles size={12} />
-              Premium Kasa
-            </p>
-            <h2 className="mt-3 text-2xl font-black leading-tight text-slate-700">Kupon + Ödeme akışınız tek panelde</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <div className="inline-flex items-center gap-2 rounded px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest bg-[#153445] border border-[#226785] text-[#38bdf8]">
+              <Sparkles className="w-3.5 h-3.5" />
+              Premium Kasa Aktif
+            </div>
+            <h2 className="mt-3 text-[14px] font-medium tracking-wide text-[#e2e8f0] uppercase">Kupon + Ödeme Akışınız Tek Panelde</h2>
+            <p className="mt-1.5 text-[11px] font-mono text-[#94a3b8] leading-relaxed">
               Tarih, tahsilat, net gelir ve komisyon trendini anlık takip edin.
             </p>
           </div>
-          <div className="rounded-2xl border border-sky-100 bg-white/85 px-4 py-3 backdrop-blur">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-sky-700">Seçili Aralık</p>
-            <p className="mt-1 text-sm font-bold text-slate-700">
+          <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 shrink-0">
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Seçili Aralık</p>
+            <p className="mt-1 text-[12px] font-mono text-[#e2e8f0]">
               {new Date(`${fromDate}T00:00:00`).toLocaleDateString('tr-TR')} -{' '}
               {new Date(`${toDate}T00:00:00`).toLocaleDateString('tr-TR')}
             </p>
           </div>
         </div>
-      </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="inline-flex rounded border border-[#2d313a] p-1 bg-[#0a0c10]">
           <button
             type="button"
             onClick={() => setActiveModule('kasa')}
-            className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+            className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest transition-colors ${
               activeModule === 'kasa'
-                ? 'bg-[linear-gradient(90deg,#2563eb_0%,#0ea5e9_100%)] text-white shadow-[0_12px_22px_-16px_rgba(37,99,235,0.85)]'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]'
+                : 'text-[#64748b] hover:text-[#94a3b8]'
             }`}
           >
             Kasa Analitiği
@@ -339,23 +340,21 @@ export default function MerchantKasaPage() {
           <button
             type="button"
             onClick={() => setActiveModule('iyzico')}
-            className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+            className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest transition-colors ${
               activeModule === 'iyzico'
-                ? 'bg-[linear-gradient(90deg,#2563eb_0%,#0ea5e9_100%)] text-white shadow-[0_12px_22px_-16px_rgba(37,99,235,0.85)]'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]'
+                : 'text-[#64748b] hover:text-[#94a3b8]'
             }`}
           >
             iyzico Kurulum
           </button>
         </div>
-      </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
         <div className={`grid grid-cols-1 gap-3 ${activeModule === 'kasa' ? 'md:grid-cols-4' : 'md:grid-cols-2'}`}>
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
             İşletme
             <select
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
               value={selectedBusinessId}
               onChange={(event) => setSelectedBusinessId(event.target.value)}
             >
@@ -366,172 +365,166 @@ export default function MerchantKasaPage() {
               ))}
             </select>
           </label>
+
           {activeModule === 'kasa' ? (
             <>
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Başlangıç
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(event) => setFromDate(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
                 />
               </label>
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Bitiş
                 <input
                   type="date"
                   value={toDate}
                   onChange={(event) => setToDate(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 [color-scheme:dark]"
                 />
               </label>
               <div className="flex items-end">
                 <button
                   type="button"
                   onClick={() => setToDate(defaultDate(0))}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] transition-colors"
                 >
-                  <CalendarRange size={14} />
+                  <CalendarRange className="w-3.5 h-3.5 text-[#64748b]" />
                   Bugün
                 </button>
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs font-semibold text-blue-700">
-              Seçtiğiniz işletme için iyzico ödeme bilgilerini tamamlayın.
+            <div className="flex items-end">
+              <div className="w-full rounded border border-[#226785] bg-[#153445]/50 px-4 py-3 text-[10px] font-mono tracking-widest uppercase text-[#38bdf8]">
+                Seçtiğiniz işletme için iyzico ödeme bilgilerini tamamlayın.
+              </div>
             </div>
           )}
         </div>
-      </section>
+      </HardwarePanel>
 
       {activeModule === 'kasa' ? (
         <>
           {loading ? (
-            <section className="rounded-2xl border border-slate-200 bg-white/85 p-10 text-center">
-              <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-500" />
-            </section>
+            <div className="h-24 flex items-center justify-center border border-[#2d313a] rounded-md bg-[#0a0c10]">
+              <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
+            </div>
           ) : null}
 
           {error ? (
-            <section className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</section>
+            <div className="rounded border border-rose-900/50 bg-rose-950/20 p-4 text-[11px] font-mono text-rose-400 uppercase tracking-wide">
+              [HATA] {error}
+            </div>
           ) : null}
 
           {summary ? (
-            <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <section className="grid grid-cols-2 gap-4 lg:grid-cols-5">
               <MetricCard label="İşlem" value={String(summary.tx_count)} icon={ReceiptText} tone="slate" />
-              <MetricCard
-                label="Tahsilat"
-                value={toMoney(summary.collected_amount)}
-                icon={Wallet}
-                tone="blue"
-              />
-              <MetricCard
-                label="Komisyon"
-                value={toMoney(summary.commission_amount)}
-                icon={CircleDollarSign}
-                tone="violet"
-              />
+              <MetricCard label="Tahsilat" value={toMoney(summary.collected_amount)} icon={Wallet} tone="blue" />
+              <MetricCard label="Komisyon" value={toMoney(summary.commission_amount)} icon={CircleDollarSign} tone="violet" />
               <MetricCard label="Net" value={toMoney(summary.merchant_net_amount)} icon={TrendingUp} tone="emerald" />
-              <MetricCard
-                label="İndirim"
-                value={toMoney(summary.discount_amount)}
-                icon={ArrowUpRight}
-                tone="amber"
-              />
+              <MetricCard label="İndirim" value={toMoney(summary.discount_amount)} icon={ArrowUpRight} tone="amber" />
             </section>
           ) : null}
 
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <article className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-800">Günlük Tahsilat Trendi</h2>
-                {refreshing ? <Loader2 className="h-4 w-4 animate-spin text-slate-500" /> : <RefreshCcw className="h-4 w-4 text-slate-400" />}
+            <HardwarePanel className="p-5">
+              <div className="mb-4 flex items-center justify-between border-b border-[#1e232b] pb-3">
+                <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Günlük Tahsilat Trendi</h2>
+                {refreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin text-[#38bdf8]" /> : <RefreshCcw className="h-3.5 w-3.5 text-[#64748b]" />}
               </div>
 
               {dailySeries.length === 0 ? (
-                <p className="text-sm text-slate-500">Seçili aralıkta trend verisi bulunamadı.</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-6">
+                  SEÇİLİ ARALIKTA TREND VERİSİ BULUNAMADI.
+                </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {dailySeries.map((item) => {
                     const width = Math.max(ratio(item.collected, maxDailyCollected), item.collected > 0 ? 3 : 0)
                     return (
-                      <div key={item.key} className="grid grid-cols-[68px_minmax(0,1fr)_110px] items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-600">{item.label}</span>
-                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div key={item.key} className="grid grid-cols-[68px_minmax(0,1fr)_110px] items-center gap-3">
+                        <span className="text-[10px] font-mono tracking-widest text-[#94a3b8] uppercase">{item.label}</span>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-[#16181d] border border-[#2d313a]">
                           <div
-                            className="h-2 rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)]"
-                            style={{ width: `${width}%` }}
+                            className="h-full bg-[#38bdf8] transition-all"
+                            style={{ width: `${width}%`, boxShadow: '0 0 8px rgba(56,189,248,0.5)' }}
                           />
                         </div>
-                        <span className="text-right text-xs font-bold text-slate-700">{toMoney(item.collected)}</span>
+                        <span className="text-right text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(item.collected)}</span>
                       </div>
                     )
                   })}
                 </div>
               )}
-            </article>
+            </HardwarePanel>
 
-            <article className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-800">Kasa Nabzı</h2>
-              <div className="mt-3 space-y-3">
+            <HardwarePanel className="p-5">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] mb-4 border-b border-[#1e232b] pb-3">
+                Kasa Nabzı
+              </h2>
+              <div className="space-y-4">
                 <PulseRow label="Ortalama fiş" value={toMoney(averageTicket)} progress={Math.min(100, averageTicket / 2)} />
                 <PulseRow label="İndirim oranı" value={`${discountRate.toFixed(1)}%`} progress={discountRate} />
-                <PulseRow
-                  label="Efektif komisyon"
-                  value={`${effectiveCommissionRate.toFixed(1)}%`}
-                  progress={effectiveCommissionRate}
-                />
+                <PulseRow label="Efektif komisyon" value={`${effectiveCommissionRate.toFixed(1)}%`} progress={effectiveCommissionRate} />
                 <PulseRow label="Ödeme+Kupon" value={`${paymentFlowRatio.toFixed(1)}%`} progress={paymentFlowRatio} />
                 <PulseRow label="Hizmet Kuponu" value={`${serviceFlowRatio.toFixed(1)}%`} progress={serviceFlowRatio} />
               </div>
-            </article>
+            </HardwarePanel>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-800">Son İşlemler</h2>
-              <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                {transactions.length} kayıt
+          <HardwarePanel className="p-0 overflow-hidden">
+            <div className="p-5 flex items-center justify-between border-b border-[#2d313a] bg-[#101419]">
+              <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">Son İşlemler</h2>
+              <span className="inline-flex rounded border border-[#226785] bg-[#153445] px-2.5 py-1 text-[9px] font-mono uppercase tracking-widest text-[#38bdf8]">
+                {transactions.length} KAYIT
               </span>
             </div>
 
             {transactions.length === 0 ? (
-              <p className="text-sm text-slate-500">Seçili aralıkta işlem bulunamadı.</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b] text-center py-8 bg-[#0a0c10]">
+                SEÇİLİ ARALIKTA İŞLEM BULUNAMADI.
+              </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-slate-500">
-                      <th className="py-2 pr-2">Tarih</th>
-                      <th className="py-2 pr-2">Akış</th>
-                      <th className="py-2 pr-2">Kupon</th>
-                      <th className="py-2 pr-2">Tahsilat</th>
-                      <th className="py-2 pr-2">Komisyon</th>
-                      <th className="py-2 pr-2">Net</th>
-                      <th className="py-2">Ref</th>
+              <div className="overflow-x-auto bg-[#16181d]">
+                <table className="min-w-full text-left border-collapse">
+                  <thead className="bg-[#101419] border-b border-[#2d313a]">
+                    <tr>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Tarih</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Akış</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Kupon</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Tahsilat</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Komisyon</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Net</th>
+                      <th className="px-5 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Ref</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-[#1e232b]">
                     {transactions.map((tx) => {
                       const isService = tx.flow_type === 'service_coupon'
                       return (
-                        <tr key={tx.id} className="border-b border-slate-100 text-slate-700 hover:bg-slate-50/70">
-                          <td className="py-2 pr-2">{tx.used_at ? new Date(tx.used_at).toLocaleString('tr-TR') : '-'}</td>
-                          <td className="py-2 pr-2">
+                        <tr key={tx.id} className="hover:bg-[#1a1d24] transition-colors">
+                          <td className="px-5 py-3 text-[11px] font-mono text-[#cbd5e1] tracking-widest">
+                            {tx.used_at ? new Date(tx.used_at).toLocaleString('tr-TR') : '-'}
+                          </td>
+                          <td className="px-5 py-3">
                             <span
-                              className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${
-                                isService ? 'bg-cyan-50 text-cyan-700' : 'bg-indigo-50 text-indigo-700'
+                              className={`inline-flex rounded border px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest ${
+                                isService ? 'bg-cyan-950/30 border-cyan-900/50 text-cyan-400' : 'bg-indigo-950/30 border-indigo-900/50 text-indigo-400'
                               }`}
                             >
                               {flowLabel(tx.flow_type)}
                             </span>
                           </td>
-                          <td className="py-2 pr-2 font-semibold">{tx.coupon_code || '-'}</td>
-                          <td className="py-2 pr-2 font-bold text-slate-800">{toMoney(tx.final_amount)}</td>
-                          <td className="py-2 pr-2">{toMoney(tx.commission_amount)}</td>
-                          <td className="py-2 pr-2 font-bold text-emerald-700">{toMoney(tx.merchant_net_amount)}</td>
-                          <td className="py-2 text-slate-500">{tx.payment_reference || '-'}</td>
+                          <td className="px-5 py-3 text-[11px] font-mono text-[#38bdf8] tracking-widest">{tx.coupon_code || '-'}</td>
+                          <td className="px-5 py-3 text-[11px] font-mono text-[#e2e8f0] tracking-widest">{toMoney(tx.final_amount)}</td>
+                          <td className="px-5 py-3 text-[11px] font-mono text-[#94a3b8] tracking-widest">{toMoney(tx.commission_amount)}</td>
+                          <td className="px-5 py-3 text-[11px] font-mono text-emerald-400 tracking-widest">{toMoney(tx.merchant_net_amount)}</td>
+                          <td className="px-5 py-3 text-[10px] font-mono text-[#64748b] tracking-widest">{tx.payment_reference || '-'}</td>
                         </tr>
                       )
                     })}
@@ -539,7 +532,7 @@ export default function MerchantKasaPage() {
                 </table>
               </div>
             )}
-          </section>
+          </HardwarePanel>
         </>
       ) : (
         <IyzicoSetupModule businessId={selectedBusinessId} />
@@ -556,18 +549,36 @@ function MetricCard({
 }: {
   label: string
   value: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
   tone: MetricTone
 }) {
+  const hoverStyles: Record<MetricTone, string> = {
+    blue: 'group-hover:bg-[#38bdf8]/50',
+    sky: 'group-hover:bg-[#38bdf8]/50',
+    emerald: 'group-hover:bg-emerald-500/50',
+    violet: 'group-hover:bg-indigo-500/50',
+    amber: 'group-hover:bg-amber-500/50',
+    slate: 'group-hover:bg-[#94a3b8]/50',
+  }
+
+  const iconColors: Record<MetricTone, string> = {
+    blue: 'text-[#38bdf8]',
+    sky: 'text-[#38bdf8]',
+    emerald: 'text-emerald-400',
+    violet: 'text-indigo-400',
+    amber: 'text-amber-400',
+    slate: 'text-[#94a3b8]',
+  }
+
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-3 shadow-[0_14px_24px_-22px_rgba(15,23,42,0.7)]">
-      <div className={`absolute right-0 top-0 h-14 w-14 rounded-bl-2xl bg-gradient-to-br ${toneMap[tone]} opacity-90`} />
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50 text-slate-700">
-        <Icon size={16} />
-      </span>
-      <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-black text-slate-800">{value}</p>
-    </article>
+    <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 relative overflow-hidden group transition-colors hover:border-[#475569]">
+      <div className={`absolute top-0 left-0 w-full h-[1px] bg-transparent ${hoverStyles[tone]} transition-colors duration-300`} />
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">{label}</p>
+        <Icon className={`w-4 h-4 ${iconColors[tone]}`} strokeWidth={1.5} />
+      </div>
+      <p className="text-xl font-mono text-[#e2e8f0]">{value}</p>
+    </div>
   )
 }
 
@@ -576,14 +587,14 @@ function PulseRow({ label, value, progress }: { label: string; value: string; pr
 
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-700">
+      <div className="mb-2 flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
         <span>{label}</span>
-        <span>{value}</span>
+        <span className="text-[#e2e8f0]">{value}</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 overflow-hidden rounded-full bg-[#16181d] border border-[#2d313a]">
         <div
-          className="h-2 rounded-full bg-[linear-gradient(90deg,#0ea5e9_0%,#2563eb_100%)]"
-          style={{ width: `${width}%` }}
+          className="h-full bg-[#38bdf8] transition-all"
+          style={{ width: `${width}%`, boxShadow: '0 0 8px rgba(56,189,248,0.5)' }}
         />
       </div>
     </div>

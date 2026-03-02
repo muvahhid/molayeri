@@ -1,5 +1,6 @@
 'use client'
 
+import { ModuleTitle } from '../../merchant/_components/module-title'
 import { useEffect, useMemo, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -47,9 +48,6 @@ type DetailTab = 'profil' | 'yetki' | 'ham'
 
 const PAGE_WINDOW = 10
 const PAGE_SIZE_OPTIONS = [25, 50, 100]
-
-const panelCardClass =
-  'rounded-2xl border border-white/80 bg-white/95 shadow-[0_16px_24px_-20px_rgba(15,23,42,0.6)] backdrop-blur'
 
 function normalizeText(value: string): string {
   return value
@@ -99,10 +97,10 @@ function roleLabel(value: string | null): string {
 
 function roleTone(value: string | null): string {
   const role = normalizeText(value || '')
-  if (role === 'admin') return 'bg-purple-50 border-purple-200 text-purple-700'
-  if (role === 'isletmeci') return 'bg-blue-50 border-blue-200 text-blue-700'
-  if (role === 'pending_business') return 'bg-amber-50 border-amber-200 text-amber-700'
-  return 'bg-slate-100 border-slate-200 text-slate-600'
+  if (role === 'admin') return 'bg-indigo-950/30 border-indigo-900/50 text-indigo-400'
+  if (role === 'isletmeci') return 'bg-[#153445]/30 border-[#226785] text-[#38bdf8]'
+  if (role === 'pending_business') return 'bg-amber-950/30 border-amber-900/50 text-amber-400'
+  return 'bg-[#16181d] border-[#2d313a] text-[#64748b]'
 }
 
 function statusLabel(value: string | null): string {
@@ -113,8 +111,8 @@ function statusLabel(value: string | null): string {
 
 function statusTone(value: string | null): string {
   const status = normalizeText(value || '')
-  if (status === 'banned') return 'bg-rose-50 border-rose-200 text-rose-700'
-  return 'bg-emerald-50 border-emerald-200 text-emerald-700'
+  if (status === 'banned') return 'bg-rose-950/30 border-rose-900/50 text-rose-400'
+  return 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
 }
 
 function safeStringify(value: unknown): string {
@@ -150,6 +148,17 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   return chunks
 }
 
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
+
 function RawTable({ title, data }: { title: string; data: GenericRow | null }) {
   const entries = useMemo(() => {
     if (!data) return [] as Array<{ key: string; value: string }>
@@ -162,25 +171,25 @@ function RawTable({ title, data }: { title: string; data: GenericRow | null }) {
   }, [data])
 
   return (
-    <div className={`${panelCardClass} p-3`}>
-      <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">{title}</p>
+    <HardwarePanel className="p-5">
+      <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">{title}</p>
       {entries.length === 0 ? (
-        <p className="text-sm text-slate-500 mt-2">Kayıt yok.</p>
+        <p className="text-[10px] text-[#64748b] font-mono mt-4 uppercase tracking-widest">Kayıt yok.</p>
       ) : (
-        <div className="mt-2 rounded-xl border border-slate-200/80 max-h-[420px] overflow-y-auto">
+        <div className="mt-4 rounded border border-[#2d313a] bg-[#101419] max-h-[420px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left">
-            <tbody className="divide-y divide-slate-200/70">
+            <tbody className="divide-y divide-[#1e232b]">
               {entries.map((entry) => (
-                <tr key={entry.key}>
-                  <td className="w-[35%] px-3 py-2 text-[11px] font-semibold text-slate-500 align-top">{entry.key}</td>
-                  <td className="px-3 py-2 text-[12px] text-slate-700 break-all align-top">{entry.value}</td>
+                <tr key={entry.key} className="hover:bg-[#16181d] transition-colors">
+                  <td className="w-[35%] px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b] border-r border-[#1e232b] align-top">{entry.key}</td>
+                  <td className="px-4 py-3 text-[11px] font-mono text-[#cbd5e1] break-all align-top">{entry.value}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-    </div>
+    </HardwarePanel>
   )
 }
 
@@ -493,12 +502,12 @@ export default function AdminUsersPage() {
     currentPageUserIds.length > 0 && currentPageSelectedCount === currentPageUserIds.length
 
   return (
-    <div className="h-full flex flex-col gap-4 text-slate-700">
-      <section className={`${panelCardClass} p-4 md:p-5`}>
+    <div className="h-full flex flex-col gap-4 text-[#e2e8f0]">
+      <HardwarePanel className="p-5 md:p-6 border-b border-[#2d313a]">
         <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Kullanıcı Operasyon Merkezi</h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <ModuleTitle title="Kullanıcı Operasyon Merkezi" />
+            <p className="mt-2 text-[10px] font-mono tracking-widest uppercase text-[#64748b]">
               Yüksek hacimli kullanıcı havuzu için filtre, yetki, güvenlik ve iletişim akışlarını tek panelden yönetin.
             </p>
           </div>
@@ -509,48 +518,54 @@ export default function AdminUsersPage() {
               void fetchUsers(true)
             }}
             disabled={refreshing}
-            className="h-11 px-4 rounded-xl border border-slate-200/80 bg-white text-sm font-semibold text-slate-700 inline-flex items-center gap-2 disabled:opacity-60"
+            className="h-11 px-4 rounded bg-[#16181d] border border-[#2d313a] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] inline-flex items-center gap-2 disabled:opacity-50 hover:bg-[#1a1d24] transition-colors"
           >
-            {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            {refreshing ? <Loader2 size={14} className="animate-spin text-[#38bdf8]" /> : <RefreshCw size={14} />}
             Yenile
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500">Toplam</p>
-            <p className="mt-1 text-xl font-bold text-slate-900">{stats.total}</p>
+        <div className="mt-5 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Toplam</p>
+            <p className="mt-1 text-xl font-mono text-[#e2e8f0]">{stats.total}</p>
           </div>
-          <div className="rounded-xl border border-purple-200/80 bg-purple-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-purple-700">Admin</p>
-            <p className="mt-1 text-xl font-bold text-purple-900">{stats.admin}</p>
+          <div className="rounded border border-indigo-900/50 bg-indigo-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-indigo-500/0 group-hover:bg-indigo-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-indigo-400/80">Admin</p>
+            <p className="mt-1 text-xl font-mono text-indigo-400">{stats.admin}</p>
           </div>
-          <div className="rounded-xl border border-blue-200/80 bg-blue-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-blue-700">İşletmeci</p>
-            <p className="mt-1 text-xl font-bold text-blue-900">{stats.merchant}</p>
+          <div className="rounded border border-[#226785] bg-[#153445]/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#38bdf8]/80">İşletmeci</p>
+            <p className="mt-1 text-xl font-mono text-[#38bdf8]">{stats.merchant}</p>
           </div>
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-700">Onay Bekleyen</p>
-            <p className="mt-1 text-xl font-bold text-amber-900">{stats.pendingBusiness}</p>
+          <div className="rounded border border-amber-900/50 bg-amber-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-amber-500/0 group-hover:bg-amber-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-amber-500/80">Onay Bekleyen</p>
+            <p className="mt-1 text-xl font-mono text-amber-400">{stats.pendingBusiness}</p>
           </div>
-          <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-700">Kullanıcı</p>
-            <p className="mt-1 text-xl font-bold text-emerald-900">{stats.standard}</p>
+          <div className="rounded border border-[#2d313a] bg-[#0a0c10] px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#38bdf8]/0 group-hover:bg-[#38bdf8]/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-[#64748b]">Kullanıcı</p>
+            <p className="mt-1 text-xl font-mono text-[#e2e8f0]">{stats.standard}</p>
           </div>
-          <div className="rounded-xl border border-rose-200/80 bg-rose-50 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-rose-700">Yasaklı</p>
-            <p className="mt-1 text-xl font-bold text-rose-900">{stats.banned}</p>
+          <div className="rounded border border-rose-900/50 bg-rose-950/20 px-4 py-3 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-rose-500/0 group-hover:bg-rose-500/50 transition-colors" />
+            <p className="text-[9px] uppercase tracking-widest font-mono text-rose-500/80">Yasaklı</p>
+            <p className="mt-1 text-xl font-mono text-rose-400">{stats.banned}</p>
           </div>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className={`${panelCardClass} p-3 md:p-4`}>
-        <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_repeat(4,minmax(0,1fr))] gap-2.5">
+      <HardwarePanel className="p-4 md:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_repeat(4,minmax(0,1fr))] gap-4">
           <div>
-            <label className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Ara</label>
-            <div className="mt-1.5 flex gap-2">
+            <label className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Ara</label>
+            <div className="mt-2 flex gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#475569] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
@@ -561,7 +576,7 @@ export default function AdminUsersPage() {
                     }
                   }}
                   placeholder="Ad soyad veya e-posta"
-                  className="w-full h-11 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-700 outline-none"
+                  className="w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] pl-10 pr-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569]"
                 />
               </div>
               <button
@@ -570,7 +585,7 @@ export default function AdminUsersPage() {
                   setPage(1)
                   setSearchApplied(searchInput.trim())
                 }}
-                className="h-11 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                className="h-11 px-5 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[10px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 transition-all"
               >
                 Ara
               </button>
@@ -578,376 +593,372 @@ export default function AdminUsersPage() {
           </div>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Rol</span>
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Rol</span>
             <select
               value={roleFilter}
               onChange={(event) => {
                 setRoleFilter(event.target.value)
                 setPage(1)
               }}
-              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+              className="mt-2 w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
             >
-              <option value="all">Tümü</option>
-              <option value="user">Kullanıcı</option>
-              <option value="pending_business">Onay Bekleyen</option>
-              <option value="isletmeci">İşletmeci</option>
-              <option value="admin">Admin</option>
+              <option value="all">TÜMÜ</option>
+              <option value="user">KULLANICI</option>
+              <option value="pending_business">ONAY BEKLEYEN</option>
+              <option value="isletmeci">İŞLETMECİ</option>
+              <option value="admin">ADMİN</option>
             </select>
           </label>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Durum</span>
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Durum</span>
             <select
               value={statusFilter}
               onChange={(event) => {
                 setStatusFilter(event.target.value as 'all' | 'active' | 'banned')
                 setPage(1)
               }}
-              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+              className="mt-2 w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
             >
-              <option value="all">Tümü</option>
-              <option value="active">Aktif</option>
-              <option value="banned">Yasaklı</option>
+              <option value="all">TÜMÜ</option>
+              <option value="active">AKTİF</option>
+              <option value="banned">YASAKLI</option>
             </select>
           </label>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Sıralama</span>
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Sıralama</span>
             <select
               value={sort}
               onChange={(event) => {
                 setSort(event.target.value as SortValue)
                 setPage(1)
               }}
-              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+              className="mt-2 w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
             >
-              <option value="created_desc">Yeni → Eski</option>
-              <option value="created_asc">Eski → Yeni</option>
-              <option value="name_asc">Ad A → Z</option>
-              <option value="name_desc">Ad Z → A</option>
+              <option value="created_desc">YENİ → ESKİ</option>
+              <option value="created_asc">ESKİ → YENİ</option>
+              <option value="name_asc">İSİM A → Z</option>
+              <option value="name_desc">İSİM Z → A</option>
             </select>
           </label>
 
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-500">Sayfa Boyutu</span>
+            <span className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Sayfa Boyutu</span>
             <select
               value={pageSize}
               onChange={(event) => {
                 setPageSize(Number(event.target.value))
                 setPage(1)
               }}
-              className="mt-1.5 w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+              className="mt-2 w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-3 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
-                  {size} kayıt
+                  {size} KAYIT
                 </option>
               ))}
             </select>
           </label>
         </div>
-      </section>
+      </HardwarePanel>
 
-      <section className={`${panelCardClass} p-3 md:p-4`}>
-        <div className="mb-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
-            <div className="text-xs font-semibold text-slate-600">
-              Seçili kullanıcı: <span className="text-slate-900">{selectedUserIds.length}</span> • Bu sayfa: {currentPageSelectedCount}/
-              {currentPageUserIds.length}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={toggleSelectCurrentPage}
-                disabled={loading || users.length === 0 || bulkProcessing}
-                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 disabled:opacity-50"
-              >
-                {isCurrentPageAllSelected ? 'Sayfayı Bırak' : 'Sayfayı Seç'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedUserIds([])}
-                disabled={selectedUserIds.length === 0 || bulkProcessing}
-                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 disabled:opacity-50"
-              >
-                Seçimi Temizle
-              </button>
+      <HardwarePanel className="p-0 overflow-hidden flex flex-col h-full">
+        <div className="px-4 py-3 bg-[#0f1115] border-b border-[#2d313a] flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+          <div className="text-[10px] font-mono text-[#64748b] tracking-widest uppercase">
+            SEÇİLİ KULLANICI: <span className="text-[#e2e8f0]">{selectedUserIds.length}</span> • BU SAYFA: {currentPageSelectedCount}/
+            {currentPageUserIds.length}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleSelectCurrentPage}
+              disabled={loading || users.length === 0 || bulkProcessing}
+              className="h-9 px-4 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
+            >
+              {isCurrentPageAllSelected ? 'SAYFAYI BIRAK' : 'SAYFAYI SEÇ'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedUserIds([])}
+              disabled={selectedUserIds.length === 0 || bulkProcessing}
+              className="h-9 px-4 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
+            >
+              SEÇİMİ TEMİZLE
+            </button>
 
-              <select
-                value={bulkRole}
-                onChange={(event) => setBulkRole(event.target.value)}
-                disabled={bulkProcessing}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none disabled:opacity-50"
-              >
-                <option value="user">user</option>
-                <option value="pending_business">pending_business</option>
-                <option value="isletmeci">isletmeci</option>
-                <option value="admin">admin</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => void applyBulkRole()}
-                disabled={selectedUserIds.length === 0 || bulkProcessing || saving}
-                className="h-9 px-3 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 inline-flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {bulkProcessing ? <Loader2 size={13} className="animate-spin" /> : <Shield size={13} />}
-                Rol Uygula
-              </button>
+            <select
+              value={bulkRole}
+              onChange={(event) => setBulkRole(event.target.value)}
+              disabled={bulkProcessing}
+              className="h-9 rounded border border-[#2d313a] bg-[#0a0c10] px-3 text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] outline-none disabled:opacity-50 appearance-none"
+            >
+              <option value="user">USER</option>
+              <option value="pending_business">PENDING_BUSINESS</option>
+              <option value="isletmeci">ISLETMECI</option>
+              <option value="admin">ADMIN</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => void applyBulkRole()}
+              disabled={selectedUserIds.length === 0 || bulkProcessing || saving}
+              className="h-9 px-4 rounded border border-[#226785] bg-[#153445] text-[#38bdf8] text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:brightness-110 disabled:opacity-50 transition-colors"
+            >
+              {bulkProcessing ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+              ROL UYGULA
+            </button>
 
-              <select
-                value={bulkStatus}
-                onChange={(event) => setBulkStatus(event.target.value as 'active' | 'banned')}
-                disabled={bulkProcessing}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none disabled:opacity-50"
-              >
-                <option value="active">active</option>
-                <option value="banned">banned</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => void applyBulkStatus()}
-                disabled={selectedUserIds.length === 0 || bulkProcessing || saving}
-                className="h-9 px-3 rounded-lg border border-amber-200 bg-amber-50 text-xs font-semibold text-amber-700 inline-flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {bulkProcessing ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
-                Durum Uygula
-              </button>
-            </div>
+            <select
+              value={bulkStatus}
+              onChange={(event) => setBulkStatus(event.target.value as 'active' | 'banned')}
+              disabled={bulkProcessing}
+              className="h-9 rounded border border-[#2d313a] bg-[#0a0c10] px-3 text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] outline-none disabled:opacity-50 appearance-none"
+            >
+              <option value="active">ACTIVE</option>
+              <option value="banned">BANNED</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => void applyBulkStatus()}
+              disabled={selectedUserIds.length === 0 || bulkProcessing || saving}
+              className="h-9 px-4 rounded border border-amber-900/50 bg-amber-950/20 text-amber-400 text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:bg-amber-900/40 disabled:opacity-50 transition-colors"
+            >
+              {bulkProcessing ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+              DURUM UYGULA
+            </button>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 overflow-hidden">
-          <div className="max-h-[600px] overflow-y-auto">
-            <table className="w-full text-left">
-              <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200/80">
-                <tr className="text-[11px] uppercase tracking-[0.14em] text-slate-500 font-semibold">
-                  <th className="w-12 px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={isCurrentPageAllSelected}
-                      onChange={toggleSelectCurrentPage}
-                      disabled={loading || users.length === 0 || bulkProcessing}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                      aria-label="Bu sayfadaki kullanıcıları seç"
-                    />
-                  </th>
-                  <th className="px-3 py-3">Kullanıcı</th>
-                  <th className="px-3 py-3">Rol</th>
-                  <th className="px-3 py-3">Durum</th>
-                  <th className="px-3 py-3">Kayıt</th>
-                  <th className="px-3 py-3 text-right">Aksiyon</th>
+        <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar bg-[#16181d]">
+          <table className="min-w-full text-left border-collapse">
+            <thead className="sticky top-0 z-10 bg-[#101419] border-b border-[#2d313a] shadow-sm">
+              <tr className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                <th className="w-12 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={isCurrentPageAllSelected}
+                    onChange={toggleSelectCurrentPage}
+                    disabled={loading || users.length === 0 || bulkProcessing}
+                    className="h-4 w-4 rounded border-[#2d313a] bg-[#0a0c10] accent-[#38bdf8]"
+                    aria-label="Bu sayfadaki kullanıcıları seç"
+                  />
+                </th>
+                <th className="px-4 py-3">Kullanıcı</th>
+                <th className="px-4 py-3">Rol</th>
+                <th className="px-4 py-3">Durum</th>
+                <th className="px-4 py-3">Kayıt</th>
+                <th className="px-4 py-3 text-right">Aksiyon</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1e232b]">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <Loader2 className="w-7 h-7 animate-spin text-[#38bdf8] mx-auto" />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/70">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <Loader2 className="w-7 h-7 animate-spin text-blue-500 mx-auto" />
-                    </td>
-                  </tr>
-                ) : users.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-sm text-slate-500 font-semibold">
-                      Filtrelere uygun kullanıcı bulunamadı.
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((user) => {
-                    const selected = selectedUserIdSet.has(user.id)
-                    const isBanned = normalizeText(user.status || '') === 'banned'
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                    FİLTRELERE UYGUN KULLANICI BULUNAMADI.
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => {
+                  const selected = selectedUserIdSet.has(user.id)
+                  const isBanned = normalizeText(user.status || '') === 'banned'
 
-                    return (
-                      <tr key={user.id} className={`${selected ? 'bg-blue-50/50' : ''} hover:bg-slate-50/80`}>
-                        <td className="px-3 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() => toggleUserSelection(user.id)}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                            aria-label={`${user.full_name || 'Kullanıcı'} seç`}
-                          />
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-10 h-10 rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-                              {user.avatar_url ? (
-                                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <User className="w-4 h-4 text-slate-500" />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-slate-800 truncate">{user.full_name || 'İsimsiz kullanıcı'}</p>
-                              <p className="text-xs text-slate-500 truncate">{user.email || '-'}</p>
-                              <p className="text-[11px] text-slate-500 font-mono truncate">{user.id}</p>
-                            </div>
+                  return (
+                    <tr key={user.id} className={`${selected ? 'bg-[#153445]/20' : ''} hover:bg-[#1a1d24] transition-colors`}>
+                      <td className="px-4 py-4 align-top">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleUserSelection(user.id)}
+                          className="h-4 w-4 rounded border-[#2d313a] bg-[#0a0c10] accent-[#38bdf8]"
+                          aria-label={`${user.full_name || 'Kullanıcı'} seç`}
+                        />
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded border border-[#2d313a] bg-[#16181d] overflow-hidden flex items-center justify-center shrink-0">
+                            {user.avatar_url ? (
+                              <img src={user.avatar_url} alt="" className="w-full h-full object-cover mix-blend-lighten opacity-80" />
+                            ) : (
+                              <User className="w-4 h-4 text-[#475569]" />
+                            )}
                           </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold border ${roleTone(user.role)}`}>
-                            {roleLabel(user.role)}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold border ${statusTone(user.status)}`}>
-                            {statusLabel(user.status)}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-slate-600">{formatDate(user.created_at)}</td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => sendMessage(user.id)}
-                              disabled={bulkProcessing || saving}
-                              className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 disabled:opacity-50"
-                            >
-                              <MessageSquare size={13} />
-                              Mesaj
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void quickToggleBan(user)}
-                              disabled={bulkProcessing || saving}
-                              className={`h-9 px-3 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50 ${
-                                isBanned
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                  : 'border-rose-200 bg-rose-50 text-rose-700'
-                              }`}
-                            >
-                              {isBanned ? <CheckCircle2 size={13} /> : <Ban size={13} />}
-                              {isBanned ? 'Yasağı Kaldır' : 'Yasakla'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void openDetail(user)}
-                              disabled={bulkProcessing || saving}
-                              className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 disabled:opacity-50"
-                            >
-                              <Eye size={13} />
-                              İncele
-                            </button>
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{user.full_name || 'İSİMSİZ KULLANICI'}</p>
+                            <p className="mt-0.5 text-[10px] font-mono text-[#cbd5e1] truncate">{user.email || '-'}</p>
+                            <p className="mt-1.5 text-[9px] text-[#64748b] font-mono truncate">ID: {user.id}</p>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border ${roleTone(user.role)}`}>
+                          {roleLabel(user.role)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-widest border ${statusTone(user.status)}`}>
+                          {statusLabel(user.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 align-top text-[10px] font-mono text-[#64748b] tracking-widest">{formatDate(user.created_at)}</td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => sendMessage(user.id)}
+                            disabled={bulkProcessing || saving}
+                            className="h-9 px-3 rounded border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
+                          >
+                            <MessageSquare size={14} className="text-[#38bdf8]" />
+                            MESAJ
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void quickToggleBan(user)}
+                            disabled={bulkProcessing || saving}
+                            className={`h-9 px-3 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 disabled:opacity-50 transition-colors ${
+                              isBanned
+                                ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/40'
+                                : 'border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40'
+                            }`}
+                          >
+                            {isBanned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
+                            {isBanned ? 'YASAĞI KALDIR' : 'YASAKLA'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void openDetail(user)}
+                            disabled={bulkProcessing || saving}
+                            className="h-9 px-3 rounded border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:bg-[#1a1d24] disabled:opacity-50 transition-colors"
+                          >
+                            <Eye size={14} className="text-[#94a3b8]" />
+                            İNCELE
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          <div className="border-t border-slate-200/80 px-3 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <p className="text-xs font-semibold text-slate-500">
-              Filtre sonucu {totalCount} kayıt • Sayfa {safePage}/{totalPages}
-            </p>
+        <div className="border-t border-[#2d313a] bg-[#101419] px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+            TOPLAM {totalCount} KAYIT • SAYFA {safePage}/{totalPages}
+          </p>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(1, windowStart - PAGE_WINDOW))}
+              disabled={windowStart <= 1}
+              className="h-8 px-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronsLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(1, safePage - 1))}
+              disabled={safePage === 1}
+              className="h-8 px-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            {pageNumbers.map((num) => (
               <button
+                key={num}
                 type="button"
-                onClick={() => setPage(Math.max(1, windowStart - PAGE_WINDOW))}
-                disabled={windowStart <= 1}
-                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
+                onClick={() => setPage(num)}
+                className={`h-8 min-w-[32px] px-2 rounded text-[10px] font-mono uppercase tracking-widest border transition-colors ${
+                  num === safePage
+                    ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                    : 'bg-[#16181d] border-[#2d313a] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24]'
+                }`}
               >
-                <ChevronsLeft size={14} />
+                {num}
               </button>
-              <button
-                type="button"
-                onClick={() => setPage(Math.max(1, safePage - 1))}
-                disabled={safePage === 1}
-                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              {pageNumbers.map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  onClick={() => setPage(num)}
-                  className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold border ${
-                    num === safePage
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-slate-700 border-slate-200'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
-                disabled={safePage === totalPages}
-                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-              >
-                <ChevronRight size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage(Math.min(totalPages, windowEnd + 1))}
-                disabled={windowEnd >= totalPages}
-                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-              >
-                <ChevronsRight size={14} />
-              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+              disabled={safePage === totalPages}
+              className="h-8 px-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(totalPages, windowEnd + 1))}
+              disabled={windowEnd >= totalPages}
+              className="h-8 px-2.5 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronsRight size={14} />
+            </button>
 
-              <div className="ml-2 flex items-center gap-1.5">
-                <input
-                  value={jumpPage}
-                  onChange={(event) => setJumpPage(event.target.value.replace(/[^\d]/g, ''))}
-                  placeholder="Sayfa"
-                  className="h-8 w-20 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = Number(jumpPage || '0')
-                    if (!Number.isFinite(next) || next <= 0) return
-                    setPage(Math.min(totalPages, Math.max(1, next)))
-                  }}
-                  className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
-                >
-                  Git
-                </button>
-              </div>
+            <div className="ml-3 flex items-center gap-1.5">
+              <input
+                value={jumpPage}
+                onChange={(event) => setJumpPage(event.target.value.replace(/[^\d]/g, ''))}
+                placeholder="SAYFA"
+                className="h-8 w-16 rounded border border-[#2d313a] bg-[#0a0c10] px-2 text-[10px] font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] uppercase"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const next = Number(jumpPage || '0')
+                  if (!Number.isFinite(next) || next <= 0) return
+                  setPage(Math.min(totalPages, Math.max(1, next)))
+                }}
+                className="h-8 px-3 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] hover:bg-[#1a1d24] transition-colors"
+              >
+                GİT
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      </HardwarePanel>
 
       {detail && form ? (
-        <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm p-3 md:p-5">
-          <div className="mx-auto w-full max-w-[1120px] h-full max-h-[92vh] rounded-[24px] border border-white/70 bg-[#f8fbff] shadow-[0_30px_44px_-26px_rgba(15,23,42,0.7)] flex flex-col overflow-hidden">
-            <div className="h-[78px] px-4 md:px-6 border-b border-slate-200/80 bg-white flex items-center justify-between gap-3">
-              <div className="min-w-0 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+        <div className="fixed inset-0 z-50 bg-[#050608]/90 backdrop-blur-sm p-4 flex items-center justify-center">
+          <HardwarePanel className="w-full max-w-5xl h-full max-h-[94vh] flex flex-col p-0 overflow-hidden">
+            <div className="px-6 py-5 border-b border-[#2d313a] bg-[#0f1115] flex items-center justify-between gap-4">
+              <div className="min-w-0 flex items-center gap-4">
+                <div className="w-12 h-12 rounded border border-[#2d313a] bg-[#16181d] overflow-hidden flex items-center justify-center shrink-0">
                   {detail.avatar_url ? (
-                    <img src={detail.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <img src={detail.avatar_url} alt="" className="w-full h-full object-cover mix-blend-lighten opacity-80" />
                   ) : (
-                    <UserCircle2 className="w-6 h-6 text-slate-500" />
+                    <UserCircle2 className="w-6 h-6 text-[#475569]" />
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Kullanıcı Detayı</p>
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 truncate">{form.full_name || detail.email || 'İsimsiz kullanıcı'}</h3>
+                  <p className="text-[10px] uppercase tracking-widest font-mono text-[#64748b]">Kullanıcı Detayı</p>
+                  <h3 className="mt-1 text-[16px] font-medium text-[#e2e8f0] uppercase tracking-wide truncate">{form.full_name || detail.email || 'İSİMSİZ KULLANICI'}</h3>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => sendMessage(detail.id)}
-                  className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 inline-flex items-center gap-1.5"
+                  className="h-10 px-4 rounded border border-[#2d313a] bg-[#16181d] text-[#e2e8f0] text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 hover:bg-[#1a1d24] transition-colors"
                 >
-                  <MessageSquare size={14} />
-                  Mesaj
+                  <MessageSquare size={14} className="text-[#38bdf8]" />
+                  MESAJ
                 </button>
                 <button
                   type="button"
                   onClick={() => void saveDetail()}
                   disabled={saving}
-                  className="h-10 px-3 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-blue-700 disabled:opacity-60"
+                  className="h-10 px-5 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 inline-flex items-center gap-2 transition-all"
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Kaydet
+                  KAYDET
                 </button>
                 <button
                   type="button"
@@ -955,27 +966,27 @@ export default function AdminUsersPage() {
                     setDetail(null)
                     setForm(null)
                   }}
-                  className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-600 inline-flex items-center justify-center"
+                  className="h-10 w-10 rounded border border-[#2d313a] bg-[#16181d] text-[#64748b] hover:text-[#e2e8f0] hover:bg-[#1a1d24] inline-flex items-center justify-center transition-colors"
                 >
                   <X size={16} />
                 </button>
               </div>
             </div>
 
-            <div className="h-[52px] px-4 md:px-6 border-b border-slate-200/70 bg-white flex items-center gap-1.5 overflow-x-auto">
+            <div className="flex items-center gap-1 overflow-x-auto px-6 py-3 border-b border-[#2d313a] bg-[#0a0c10] custom-scrollbar">
               {([
-                ['profil', 'Profil'],
-                ['yetki', 'Yetki & Güvenlik'],
-                ['ham', 'Ham Veri'],
+                ['profil', 'PROFİL'],
+                ['yetki', 'YETKİ & GÜVENLİK'],
+                ['ham', 'HAM VERİ'],
               ] as Array<[DetailTab, string]>).map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setActiveTab(value)}
-                  className={`h-9 px-3 rounded-lg text-xs font-semibold whitespace-nowrap ${
+                  className={`h-9 px-4 rounded text-[10px] font-mono uppercase tracking-widest whitespace-nowrap transition-colors border ${
                     activeTab === value
-                      ? 'bg-blue-50 border border-blue-200 text-blue-700'
-                      : 'bg-white border border-slate-200 text-slate-600'
+                      ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                      : 'bg-transparent border-transparent text-[#64748b] hover:bg-[#16181d] hover:text-[#e2e8f0]'
                   }`}
                 >
                   {label}
@@ -983,74 +994,76 @@ export default function AdminUsersPage() {
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-5">
+            <div className="flex-1 overflow-y-auto p-5 md:p-6 bg-[#0c0e12] custom-scrollbar">
               {detailLoading ? (
                 <div className="h-full flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
                 </div>
               ) : (
-                <>
+                <div className="space-y-5">
                   {activeTab === 'profil' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
-                      <div className={`${panelCardClass} p-4`}>
-                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Profil Bilgileri</p>
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-5">
+                      <HardwarePanel className="p-5">
+                        <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Profil Bilgileri</p>
 
-                        <label className="block mt-3">
-                          <span className="text-[11px] text-slate-500 font-semibold">Ad Soyad</span>
+                        <label className="block mt-4">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Ad Soyad</span>
                           <input
                             value={form.full_name}
                             onChange={(event) => setForm((current) => (current ? { ...current, full_name: event.target.value } : current))}
-                            className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none"
+                            className="mt-2 w-full h-11 rounded bg-[#0a0c10] border border-[#2d313a] px-4 text-sm font-mono text-[#e2e8f0] outline-none focus:border-[#38bdf8]/50"
                           />
                         </label>
 
-                        <label className="block mt-3">
-                          <span className="text-[11px] text-slate-500 font-semibold">E-posta</span>
-                          <div className="mt-1.5 h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 inline-flex items-center w-full">
-                            <Mail className="w-4 h-4 text-slate-400 mr-2" />
+                        <div className="block mt-4">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">E-posta</span>
+                          <div className="mt-2 h-11 rounded border border-[#2d313a] bg-[#101419] px-4 text-[12px] font-mono text-[#cbd5e1] inline-flex items-center w-full">
+                            <Mail className="w-4 h-4 text-[#475569] mr-2" />
                             {detail.email || '-'}
                           </div>
-                        </label>
+                        </div>
 
-                        <label className="block mt-3">
-                          <span className="text-[11px] text-slate-500 font-semibold">Kullanıcı ID</span>
-                          <div className="mt-1.5 h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 inline-flex items-center w-full font-mono truncate">
+                        <div className="block mt-4">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Kullanıcı ID</span>
+                          <div className="mt-2 h-11 rounded border border-[#2d313a] bg-[#101419] px-4 text-[12px] font-mono text-[#cbd5e1] inline-flex items-center w-full truncate">
                             {detail.id}
                           </div>
-                        </label>
+                        </div>
 
-                        <label className="block mt-3">
-                          <span className="text-[11px] text-slate-500 font-semibold">Avatar URL</span>
-                          <div className="mt-1.5 h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 inline-flex items-center w-full truncate">
+                        <div className="block mt-4">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Avatar URL</span>
+                          <div className="mt-2 h-11 rounded border border-[#2d313a] bg-[#101419] px-4 text-[12px] font-mono text-[#cbd5e1] inline-flex items-center w-full truncate">
                             {detail.avatar_url || '-'}
                           </div>
-                        </label>
-                      </div>
+                        </div>
+                      </HardwarePanel>
 
-                      <div className="space-y-3">
-                        <div className={`${panelCardClass} p-4`}>
-                          <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Hesap Durumu</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${roleTone(form.role)}`}>
+                      <div className="space-y-5">
+                        <HardwarePanel className="p-5">
+                          <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Hesap Durumu</p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className={`inline-flex px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border ${roleTone(form.role)}`}>
                               {roleLabel(form.role)}
                             </span>
-                            <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${statusTone(form.status)}`}>
+                            <span className={`inline-flex px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-widest border ${statusTone(form.status)}`}>
                               {statusLabel(form.status)}
                             </span>
                           </div>
-                          <p className="mt-2 text-xs text-slate-500">Kayıt: {formatDateTime(detail.created_at)}</p>
-                        </div>
+                          <p className="mt-4 text-[9px] font-mono uppercase tracking-widest text-[#64748b]">
+                            KAYIT: {formatDateTime(detail.created_at)}
+                          </p>
+                        </HardwarePanel>
 
-                        <div className={`${panelCardClass} p-4`}>
-                          <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Hızlı Aksiyon</p>
-                          <div className="mt-2 grid grid-cols-1 gap-2">
+                        <HardwarePanel className="p-5">
+                          <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Hızlı Aksiyon</p>
+                          <div className="mt-4 grid grid-cols-1 gap-3">
                             <button
                               type="button"
                               onClick={() => sendMessage(detail.id)}
-                              className="h-10 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700 inline-flex items-center justify-center gap-2"
+                              className="h-11 rounded border border-[#2d313a] bg-[#16181d] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0] inline-flex items-center justify-center gap-2 hover:bg-[#1a1d24] transition-colors"
                             >
-                              <MessageSquare size={14} />
-                              Mesaj Gönder
+                              <MessageSquare size={14} className="text-[#38bdf8]" />
+                              MESAJ GÖNDER
                             </button>
                             <button
                               type="button"
@@ -1064,26 +1077,26 @@ export default function AdminUsersPage() {
                                     : current
                                 )
                               }
-                              className={`h-10 rounded-lg border text-sm font-semibold inline-flex items-center justify-center gap-2 ${
+                              className={`h-11 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center justify-center gap-2 transition-colors ${
                                 normalizeText(form.status) === 'banned'
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                  : 'border-rose-200 bg-rose-50 text-rose-700'
+                                  ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/40'
+                                  : 'border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-900/40'
                               }`}
                             >
                               {normalizeText(form.status) === 'banned' ? <CheckCircle2 size={14} /> : <Ban size={14} />}
-                              {normalizeText(form.status) === 'banned' ? 'Yasağı Kaldır' : 'Yasakla'}
+                              {normalizeText(form.status) === 'banned' ? 'YASAĞI KALDIR' : 'YASAKLA'}
                             </button>
                           </div>
-                        </div>
+                        </HardwarePanel>
                       </div>
                     </div>
                   ) : null}
 
                   {activeTab === 'yetki' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className={`${panelCardClass} p-4`}>
-                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Rol Seçimi</p>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                      <HardwarePanel className="p-5">
+                        <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Rol Seçimi</p>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
                           {['user', 'pending_business', 'isletmeci', 'admin'].map((role) => {
                             const selected = form.role === role
                             return (
@@ -1091,10 +1104,10 @@ export default function AdminUsersPage() {
                                 key={role}
                                 type="button"
                                 onClick={() => setForm((current) => (current ? { ...current, role } : current))}
-                                className={`h-10 rounded-lg border text-xs font-semibold ${
+                                className={`h-11 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                                   selected
-                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                    : 'bg-white border-slate-200 text-slate-700'
+                                    ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                                 }`}
                               >
                                 {role}
@@ -1102,11 +1115,11 @@ export default function AdminUsersPage() {
                             )
                           })}
                         </div>
-                      </div>
+                      </HardwarePanel>
 
-                      <div className={`${panelCardClass} p-4`}>
-                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500">Durum</p>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
+                      <HardwarePanel className="p-5">
+                        <p className="text-[11px] uppercase tracking-widest font-mono text-[#e2e8f0] border-b border-[#1e232b] pb-3">Durum</p>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
                           {['active', 'banned'].map((status) => {
                             const selected = form.status === status
                             return (
@@ -1114,12 +1127,12 @@ export default function AdminUsersPage() {
                                 key={status}
                                 type="button"
                                 onClick={() => setForm((current) => (current ? { ...current, status } : current))}
-                                className={`h-10 rounded-lg border text-xs font-semibold ${
+                                className={`h-11 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                                   selected
                                     ? status === 'banned'
-                                      ? 'bg-rose-50 border-rose-200 text-rose-700'
-                                      : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                    : 'bg-white border-slate-200 text-slate-700'
+                                      ? 'bg-rose-950/30 border-rose-900/50 text-rose-400'
+                                      : 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
+                                    : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                                 }`}
                               >
                                 {status}
@@ -1127,18 +1140,18 @@ export default function AdminUsersPage() {
                             )
                           })}
                         </div>
-                        <p className="mt-2 text-xs text-slate-500">
-                          Değişiklikler sadece <strong>Kaydet</strong> ile kalıcı olur.
+                        <p className="mt-4 text-[9px] font-mono uppercase tracking-widest text-[#475569]">
+                          DEĞİŞİKLİKLER SADECE &quot;KAYDET&quot; İLE KALICI OLUR.
                         </p>
-                      </div>
+                      </HardwarePanel>
                     </div>
                   ) : null}
 
                   {activeTab === 'ham' ? <RawTable title="Kullanıcı Ham Alanları" data={detail.raw} /> : null}
-                </>
+                </div>
               )}
             </div>
-          </div>
+          </HardwarePanel>
         </div>
       ) : null}
     </div>

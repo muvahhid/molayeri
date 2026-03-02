@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { PanelTitle } from '../_components/panel-title'
 import {
   ArrowUpDown,
   Check,
@@ -12,7 +13,6 @@ import {
   Trash2,
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
-import { ModuleTitle } from '../_components/module-title'
 
 type BusinessPhoto = {
   id: string
@@ -93,6 +93,17 @@ function getCoverPhotoUrl(business: BusinessWithPhotos): string | null {
   const cover = photos.find((photo) => photo.is_cover)
   return cover?.url || photos[0]?.url || null
 }
+
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
 
 export default function MerchantBusinessesPage() {
   const supabase = useMemo(() => getBrowserSupabase(), [])
@@ -528,98 +539,100 @@ export default function MerchantBusinessesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <ModuleTitle title="Şubelerim" />
-        <p className="text-sm text-slate-500 mt-1">Mobildeki İşletmelerim ekranının web karşılığı.</p>
+      <div className="border-b border-[#2d313a] pb-4">
+        <PanelTitle title="Şubelerim" />
+        <p className="mt-2 text-[11px] text-[#64748b]">İşletmelerinizin web yönetim ekranı.</p>
       </div>
 
-      <div className="rounded-[28px] p-5 md:p-6 bg-[linear-gradient(145deg,#ffffff_0%,#f3f7ff_100%)] shadow-[0_20px_28px_-22px_rgba(15,23,42,0.55)] space-y-4">
+      <div className="space-y-4">
         {!loading && businesses.length > 0 ? (
-          <div className="rounded-2xl p-4 bg-[#edf2fa] shadow-[inset_4px_4px_10px_rgba(148,163,184,0.2),inset_-4px_-4px_10px_rgba(255,255,255,0.9)]">
+          <div className="bg-[#16181d] border border-[#2d313a] rounded-md p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 bg-white shadow-sm">
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                Filtreler
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
+                <SlidersHorizontal className="w-3.5 h-3.5" /> Filtreler
               </span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-white shadow-sm">
-                {filteredBusinesses.length} / {businesses.length} şube
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono uppercase tracking-widest text-[#e2e8f0]">
+                {filteredBusinesses.length} / {businesses.length} ŞUBE
               </span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 bg-white shadow-sm">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[10px] font-mono uppercase tracking-widest text-[#94a3b8]">
                 <List className="w-3.5 h-3.5" />
                 {activeViewMode === 'single'
-                  ? 'Tek Kart'
+                  ? 'TEK KART'
                   : activeViewMode === 'grid-2'
-                    ? '2 Kolon'
+                    ? '2 KOLON'
                     : activeViewMode === 'grid-3'
-                      ? '3 Kolon'
-                      : 'Tablo Liste'}
+                      ? '3 KOLON'
+                      : 'TABLO LİSTE'}
               </span>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Kategori
                 <select
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-semibold shadow-sm"
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-medium outline-none focus:border-[#38bdf8]/50"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
                   value={categoryFilter}
                   onChange={(event) => setCategoryFilter(event.target.value)}
                 >
-                  <option value="all">Tüm Kategoriler</option>
+                  <option value="all">TÜM KATEGORİLER</option>
                   {availableCategoryFilters.map((category) => (
                     <option key={category} value={category}>
-                      {category}
+                      {category.toUpperCase()}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Açık / Kapalı
                 <select
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-semibold shadow-sm"
+                  className="mt-2 w-full px-3 py-2.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-medium outline-none focus:border-[#38bdf8]/50"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
                   value={openFilter}
                   onChange={(event) => setOpenFilter(event.target.value as OpenFilterValue)}
                 >
-                  <option value="all">Tümü</option>
-                  <option value="open">Açık</option>
-                  <option value="closed">Kapalı</option>
+                  <option value="all">TÜMÜ</option>
+                  <option value="open">AÇIK</option>
+                  <option value="closed">KAPALI</option>
                 </select>
               </label>
 
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
                 Sıralama
-                <div className="mt-1.5 relative">
-                  <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none" />
+                <div className="mt-2 relative">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#64748b] absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none" />
                   <select
-                    className="w-full px-3 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-semibold shadow-sm appearance-none"
+                    className="w-full px-3 py-2.5 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] text-sm font-medium outline-none focus:border-[#38bdf8]/50 appearance-none"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
                     value={sortOrder}
                     onChange={(event) => setSortOrder(event.target.value as SortOrderValue)}
                   >
-                    <option value="newest">Yeniden Eskiye</option>
-                    <option value="oldest">Eskiden Yeniye</option>
+                    <option value="newest">YENİDEN ESKİYE</option>
+                    <option value="oldest">ESKİDEN YENİYE</option>
                   </select>
                 </div>
               </label>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Görünüm</span>
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#1e232b] pt-4">
+              <span className="text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest mr-2">Görünüm</span>
               {(
                 [
-                  { key: 'auto', label: 'Otomatik' },
-                  { key: 'grid-2', label: '2 Kolon' },
-                  { key: 'grid-3', label: '3 Kolon' },
-                  { key: 'table', label: 'Tablo' },
+                  { key: 'auto', label: 'OTOMATİK' },
+                  { key: 'grid-2', label: '2 KOLON' },
+                  { key: 'grid-3', label: '3 KOLON' },
+                  { key: 'table', label: 'TABLO' },
                 ] as { key: ViewModeOverride; label: string }[]
               ).map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => setViewModeOverride(item.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded text-[10px] font-mono tracking-widest uppercase transition-colors border ${
                     viewModeOverride === item.key
-                      ? 'bg-slate-800 text-white shadow-[0_10px_16px_-12px_rgba(15,23,42,0.72)]'
-                      : 'bg-white text-slate-600 shadow-sm hover:text-slate-800'
+                      ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                      : 'bg-transparent border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                   }`}
                 >
                   {item.label}
@@ -631,19 +644,19 @@ export default function MerchantBusinessesPage() {
 
         {loading ? (
           <div className="h-[260px] flex items-center justify-center">
-            <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#38bdf8]" />
           </div>
         ) : businesses.length === 0 ? (
-          <div className="h-[200px] flex items-center justify-center text-sm font-bold text-slate-500">
-            Henüz işletmeniz yok.
+          <div className="h-[200px] flex items-center justify-center text-[11px] font-mono text-[#64748b] uppercase tracking-widest border border-dashed border-[#2d313a] rounded-md bg-[#0a0c10]">
+            HENÜZ İŞLETMENİZ YOK.
           </div>
         ) : filteredBusinesses.length === 0 ? (
-          <div className="h-[200px] flex items-center justify-center text-sm font-bold text-slate-500">
-            Filtreye uyan şube bulunamadı.
+          <div className="h-[200px] flex items-center justify-center text-[11px] font-mono text-[#64748b] uppercase tracking-widest border border-dashed border-[#2d313a] rounded-md bg-[#0a0c10]">
+            FİLTREYE UYAN ŞUBE BULUNAMADI.
           </div>
         ) : activeViewMode === 'table' ? (
-          <div className="rounded-2xl overflow-hidden border border-white/70 bg-white shadow-[0_14px_24px_-18px_rgba(15,23,42,0.55)]">
-            <div className="hidden lg:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_120px_90px] gap-3 px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400 bg-[#f7f9fd] border-b border-slate-200/70">
+          <div className="rounded-md border border-[#2d313a] bg-[#16181d] overflow-hidden">
+            <div className="hidden lg:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_120px_90px] gap-3 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-[#64748b] bg-[#101419] border-b border-[#2d313a]">
               <span>İşletme</span>
               <span>Kategori</span>
               <span>Durum</span>
@@ -651,7 +664,7 @@ export default function MerchantBusinessesPage() {
               <span />
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#1e232b]">
               {tablePageBusinesses.map((business) => {
                 const cover = getCoverPhotoUrl(business)
                 const categories = formatBusinessCategories(business)
@@ -662,51 +675,51 @@ export default function MerchantBusinessesPage() {
                     key={business.id}
                     type="button"
                     onClick={() => openEdit(business)}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50/80 transition-colors"
+                    className="w-full text-left px-4 py-3 hover:bg-[#1a1d24] transition-colors"
                   >
                     <div className="hidden lg:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_120px_90px] gap-3 items-center">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0">
+                        <div className="w-12 h-12 rounded border border-[#2d313a] overflow-hidden bg-[#0a0c10] shrink-0">
                           {cover ? (
-                            <img src={cover} alt={business.name} className="w-full h-full object-cover" />
+                            <img src={cover} alt={business.name} className="w-full h-full object-cover mix-blend-lighten opacity-80" />
                           ) : (
-                            <div className="h-full w-full flex items-center justify-center text-[10px] font-bold text-slate-500">
-                              Görsel
+                            <div className="h-full w-full flex items-center justify-center text-[9px] font-mono uppercase tracking-widest text-[#475569]">
+                              GÖRSEL
                             </div>
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-700 truncate">{business.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{business.phone || business.address_text || 'Bilgi yok'}</p>
+                          <p className="text-[13px] font-medium text-[#e2e8f0] truncate">{business.name}</p>
+                          <p className="text-[11px] font-mono text-[#64748b] truncate">{business.phone || business.address_text || 'Bilgi yok'}</p>
                         </div>
                       </div>
 
-                      <p className="text-xs text-slate-600 truncate">{categories.slice(0, 2).join(', ')}</p>
+                      <p className="text-[11px] font-mono text-[#94a3b8] truncate uppercase">{categories.slice(0, 2).join(', ')}</p>
 
                       <span
-                        className={`inline-flex justify-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                          open ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'
+                        className={`inline-flex justify-center px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-widest border ${
+                          open ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50' : 'text-rose-400 bg-rose-950/30 border-rose-900/50'
                         }`}
                       >
-                        {open ? 'Açık' : 'Kapalı'}
+                        {open ? 'AÇIK' : 'KAPALI'}
                       </span>
 
-                      <p className="text-xs text-slate-500">{formatBusinessDate(business.created_at)}</p>
-                      <p className="text-xs font-semibold text-slate-600">Düzenle</p>
+                      <p className="text-[11px] font-mono text-[#64748b]">{formatBusinessDate(business.created_at)}</p>
+                      <p className="text-[10px] font-mono text-[#38bdf8] uppercase tracking-widest">DÜZENLE</p>
                     </div>
 
                     <div className="lg:hidden">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-700 truncate">{business.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{categories.slice(0, 2).join(', ')}</p>
+                          <p className="text-[13px] font-medium text-[#e2e8f0] truncate">{business.name}</p>
+                          <p className="text-[11px] font-mono text-[#64748b] truncate uppercase mt-1">{categories.slice(0, 2).join(', ')}</p>
                         </div>
                         <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                            open ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'
+                          className={`inline-flex px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-widest border ${
+                            open ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50' : 'text-rose-400 bg-rose-950/30 border-rose-900/50'
                           }`}
                         >
-                          {open ? 'Açık' : 'Kapalı'}
+                          {open ? 'AÇIK' : 'KAPALI'}
                         </span>
                       </div>
                     </div>
@@ -715,11 +728,10 @@ export default function MerchantBusinessesPage() {
               })}
             </div>
 
-            <div className="px-4 py-3 border-t border-slate-200/70 bg-[#f7f9fd] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <p className="text-xs text-slate-500">
+            <div className="px-4 py-3 border-t border-[#2d313a] bg-[#101419] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                 {filteredBusinesses.length} işletme içinde {tableStartIndex + 1}-
-                {Math.min(tableStartIndex + TABLE_PAGE_SIZE, filteredBusinesses.length)} arası
-                gösteriliyor.
+                {Math.min(tableStartIndex + TABLE_PAGE_SIZE, filteredBusinesses.length)} arası.
               </p>
 
               <div className="flex flex-wrap items-center gap-1.5">
@@ -727,17 +739,17 @@ export default function MerchantBusinessesPage() {
                   type="button"
                   onClick={() => setTablePage(Math.max(1, tableWindowStart - TABLE_PAGE_WINDOW))}
                   disabled={tableWindowStart === 1}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 rounded border border-[#2d313a] text-[10px] font-mono tracking-widest bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  10 Geri
+                  10 GERİ
                 </button>
                 <button
                   type="button"
                   onClick={() => setTablePage(Math.max(1, clampedTablePage - 1))}
                   disabled={clampedTablePage === 1}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 rounded border border-[#2d313a] text-[10px] font-mono tracking-widest bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  Geri
+                  GERİ
                 </button>
 
                 {tableWindowPages.map((page) => (
@@ -745,10 +757,10 @@ export default function MerchantBusinessesPage() {
                     key={page}
                     type="button"
                     onClick={() => setTablePage(page)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    className={`px-2.5 py-1.5 rounded border text-[10px] font-mono tracking-widest transition-colors ${
                       page === clampedTablePage
-                        ? 'bg-slate-800 text-white shadow-[0_8px_14px_-10px_rgba(15,23,42,0.78)]'
-                        : 'bg-white text-slate-600 shadow-sm hover:text-slate-800'
+                        ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                        : 'bg-transparent border-[#2d313a] text-[#64748b] hover:bg-[#1a1d24] hover:text-[#e2e8f0]'
                     }`}
                   >
                     {page}
@@ -759,17 +771,17 @@ export default function MerchantBusinessesPage() {
                   type="button"
                   onClick={() => setTablePage(Math.min(tableTotalPages, clampedTablePage + 1))}
                   disabled={clampedTablePage === tableTotalPages}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 rounded border border-[#2d313a] text-[10px] font-mono tracking-widest bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  İleri
+                  İLERİ
                 </button>
                 <button
                   type="button"
                   onClick={() => setTablePage(Math.min(tableTotalPages, tableWindowEnd + 1))}
                   disabled={tableWindowEnd === tableTotalPages}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 rounded border border-[#2d313a] text-[10px] font-mono tracking-widest bg-transparent text-[#94a3b8] hover:bg-[#1a1d24] disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  10 İleri
+                  10 İLERİ
                 </button>
               </div>
             </div>
@@ -782,90 +794,90 @@ export default function MerchantBusinessesPage() {
               const open = isBusinessOpen(business)
 
               return (
-                <button
+                <HardwarePanel
                   key={business.id}
-                  type="button"
-                  onClick={() => openEdit(business)}
-                  className={`text-left rounded-2xl bg-white shadow-[0_14px_20px_-18px_rgba(15,23,42,0.58)] border border-white/70 transition-transform hover:-translate-y-0.5 ${
+                  className={`text-left group transition-all hover:border-[#475569] ${
                     activeViewMode === 'single' ? 'p-0 overflow-hidden' : 'p-4'
                   }`}
                 >
-                  {activeViewMode === 'single' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-                      <div className="h-64 lg:h-[360px] bg-slate-200 overflow-hidden">
-                        {cover ? (
-                          <img src={cover} alt={business.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center text-sm font-bold text-slate-500">
-                            Görsel yok
+                  <button type="button" onClick={() => openEdit(business)} className="w-full text-left">
+                    {activeViewMode === 'single' ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
+                        <div className="h-64 lg:h-[360px] bg-[#0a0c10] border-r border-[#2d313a] overflow-hidden">
+                          {cover ? (
+                            <img src={cover} alt={business.name} className="w-full h-full object-cover mix-blend-lighten opacity-80" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[11px] font-mono uppercase tracking-widest text-[#475569]">
+                              GÖRSEL YOK
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-6 flex flex-col relative z-10">
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <h2 className="text-xl md:text-2xl font-medium text-[#e2e8f0]">{business.name}</h2>
+                            <span
+                              className={`inline-flex px-3 py-1 rounded border text-[10px] font-mono uppercase tracking-widest ${
+                                open ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50' : 'text-rose-400 bg-rose-950/30 border-rose-900/50'
+                              }`}
+                            >
+                              {open ? 'AÇIK' : 'KAPALI'}
+                            </span>
                           </div>
-                        )}
+                          <p className="mt-2 text-[13px] font-mono text-[#94a3b8] line-clamp-2 leading-relaxed">{business.address_text || 'Adres bilgisi girilmemiş.'}</p>
+                          <div className="mt-6 flex flex-wrap gap-2">
+                            {categories.slice(0, 4).map((categoryName) => (
+                              <span key={`${business.id}-${categoryName}`} className="px-2.5 py-1 rounded bg-[#0a0c10] border border-[#2d313a] text-[10px] font-mono text-[#64748b] uppercase tracking-wide">
+                                {categoryName}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="mt-auto pt-6 flex items-center justify-between text-[11px] font-mono text-[#64748b] border-t border-[#1e232b]">
+                            <span>{business.phone || 'TELEFON YOK'}</span>
+                            <span>{formatBusinessDate(business.created_at)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-6 flex flex-col">
-                        <div className="flex items-start justify-between gap-3">
-                          <h2 className="text-[28px] leading-tight font-bold text-slate-800">{business.name}</h2>
+                    ) : (
+                      <>
+                        <div className="h-36 rounded bg-[#0a0c10] border border-[#2d313a] overflow-hidden mb-4 relative z-10">
+                          {cover ? (
+                            <img src={cover} alt={business.name} className="w-full h-full object-cover mix-blend-lighten opacity-80" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[10px] font-mono uppercase tracking-widest text-[#475569]">
+                              GÖRSEL YOK
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-start justify-between gap-3 relative z-10">
+                          <h2 className="text-[15px] font-medium text-[#e2e8f0] truncate">{business.name}</h2>
                           <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                              open ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'
+                            className={`inline-flex px-2.5 py-1 rounded border text-[9px] font-mono uppercase tracking-widest shrink-0 ${
+                              open ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50' : 'text-rose-400 bg-rose-950/30 border-rose-900/50'
                             }`}
                           >
-                            {open ? 'Açık' : 'Kapalı'}
+                            {open ? 'AÇIK' : 'KAPALI'}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-500 line-clamp-2">{business.address_text || 'Adres bilgisi girilmemiş.'}</p>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {categories.slice(0, 4).map((categoryName) => (
-                            <span key={`${business.id}-${categoryName}`} className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100">
+
+                        <p className="text-[11px] font-mono text-[#64748b] mt-2 line-clamp-1 relative z-10">{business.address_text || 'Adres bilgisi yok'}</p>
+
+                        <div className="mt-4 flex flex-wrap gap-2 relative z-10">
+                          {categories.slice(0, 2).map((categoryName) => (
+                            <span key={`${business.id}-${categoryName}`} className="px-2 py-1 rounded bg-[#0a0c10] border border-[#2d313a] text-[9px] font-mono text-[#64748b] uppercase tracking-wide">
                               {categoryName}
                             </span>
                           ))}
                         </div>
-                        <div className="mt-auto pt-6 flex items-center justify-between text-xs text-slate-500">
-                          <span>{business.phone || 'Telefon yok'}</span>
+
+                        <div className="mt-4 pt-3 flex items-center justify-between border-t border-[#1e232b] text-[10px] font-mono text-[#475569] relative z-10">
+                          <span>{business.phone || '-'}</span>
                           <span>{formatBusinessDate(business.created_at)}</span>
                         </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="h-36 rounded-xl bg-slate-200 overflow-hidden mb-3">
-                        {cover ? (
-                          <img src={cover} alt={business.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center text-xs font-bold text-slate-500">
-                            Görsel yok
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-start justify-between gap-3">
-                        <h2 className="text-base font-semibold text-slate-700">{business.name}</h2>
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                            open ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'
-                          }`}
-                        >
-                          {open ? 'Açık' : 'Kapalı'}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">{business.address_text || 'Adres bilgisi yok'}</p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {categories.slice(0, 2).map((categoryName) => (
-                          <span key={`${business.id}-${categoryName}`} className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100">
-                            {categoryName}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
-                        <span>{business.phone || '-'}</span>
-                        <span>{formatBusinessDate(business.created_at)}</span>
-                      </div>
-                    </>
-                  )}
-                </button>
+                      </>
+                    )}
+                  </button>
+                </HardwarePanel>
               )
             })}
           </div>
@@ -873,49 +885,50 @@ export default function MerchantBusinessesPage() {
       </div>
 
       {selectedBusiness && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm p-4 flex items-center justify-center">
-          <div className="w-full max-w-5xl max-h-[94vh] overflow-hidden rounded-[32px] border border-white/80 bg-[linear-gradient(160deg,#f8fbff_0%,#f1f5fd_100%)] shadow-[0_28px_55px_-30px_rgba(15,23,42,0.65)] flex flex-col">
-            <div className="px-6 py-5 border-b border-slate-200/70 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] flex items-start justify-between gap-4">
+        <div className="fixed inset-0 z-50 bg-[#050608]/90 backdrop-blur-sm p-4 flex items-center justify-center">
+          <HardwarePanel className="w-full max-w-5xl max-h-[94vh] flex flex-col p-0">
+            <div className="px-6 py-5 border-b border-[#2d313a] bg-[#0f1115] flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-slate-500">Şube Yönetimi</p>
-                <h2 className="mt-1 text-2xl font-bold text-slate-800">{selectedBusiness.name}</h2>
+                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#64748b]">Şube Yönetimi</p>
+                <h2 className="mt-1 text-xl font-medium text-[#e2e8f0] tracking-wide">{selectedBusiness.name}</h2>
               </div>
               <button
                 type="button"
                 onClick={closeEdit}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white shadow-sm"
+                className="px-4 py-2 rounded text-[10px] font-mono tracking-widest uppercase border border-[#2d313a] text-[#94a3b8] hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors"
               >
                 Kapat
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_1fr] gap-5">
-                <section className="rounded-2xl p-5 bg-white/90 border border-white/70 shadow-[0_16px_24px_-22px_rgba(15,23,42,0.6)] space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-widest">İşletme Bilgileri</h3>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-[#0c0e12]">
+              <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_1fr] gap-6">
+                
+                <section className="rounded-md p-5 bg-[#16181d] border border-[#2d313a] space-y-4">
+                  <h3 className="text-[11px] font-mono text-[#e2e8f0] uppercase tracking-widest mb-4 border-b border-[#1e232b] pb-2">İşletme Bilgileri</h3>
 
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     İşletme Adı
                     <input
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50"
                       value={form.name}
                       onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                     />
                   </label>
 
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Telefon
                     <input
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50"
                       value={form.phone}
                       onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
                     />
                   </label>
 
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Adres
                     <input
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50"
                       value={form.address_text}
                       onChange={(event) =>
                         setForm((current) => ({ ...current, address_text: event.target.value }))
@@ -923,10 +936,10 @@ export default function MerchantBusinessesPage() {
                     />
                   </label>
 
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Açıklama
                     <textarea
-                      className="mt-2 w-full min-h-24 px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+                      className="mt-2 w-full min-h-[100px] px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 custom-scrollbar resize-none"
                       value={form.description}
                       onChange={(event) =>
                         setForm((current) => ({ ...current, description: event.target.value }))
@@ -934,53 +947,52 @@ export default function MerchantBusinessesPage() {
                     />
                   </label>
 
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  <label className="block text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
                     Durum
                     <select
-                      className="mt-2 w-full px-4 py-3 rounded-xl bg-white text-slate-700 font-bold shadow-sm"
+                      className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] border border-[#2d313a] text-[#e2e8f0] font-mono text-sm outline-none focus:border-[#38bdf8]/50 appearance-none"
                       value={form.status}
                       onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
                     >
-                      <option value="active">Aktif</option>
-                      <option value="passive">Pasif</option>
-                      <option value="rejected">Reddedildi</option>
+                      <option value="active">AKTİF</option>
+                      <option value="passive">PASİF</option>
+                      <option value="rejected">REDDEDİLDİ</option>
                     </select>
                   </label>
                 </section>
 
-                <section className="rounded-2xl p-5 bg-white/90 border border-white/70 shadow-[0_16px_24px_-22px_rgba(15,23,42,0.6)] space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-widest">Galeri ve Vitrin</h3>
-                    <span className="text-[11px] text-slate-500">{galleryPhotos.length} görsel</span>
+                <section className="rounded-md p-5 bg-[#16181d] border border-[#2d313a] space-y-4">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#1e232b] pb-2 mb-4">
+                    <h3 className="text-[11px] font-mono text-[#e2e8f0] uppercase tracking-widest">Galeri ve Vitrin</h3>
+                    <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-widest">{galleryPhotos.length} GÖRSEL</span>
                   </div>
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     {galleryPhotos.map((photo) => (
-                      <div key={photo.id} className="relative rounded-xl overflow-hidden bg-slate-200 aspect-square shadow-sm">
-                        <img src={photo.url} className="w-full h-full object-cover" alt="İşletme fotoğrafı" />
+                      <div key={photo.id} className="relative rounded border border-[#2d313a] overflow-hidden bg-[#0a0c10] aspect-square group">
+                        <img src={photo.url} className="w-full h-full object-cover mix-blend-lighten opacity-80" alt="İşletme fotoğrafı" />
                         {photo.is_cover ? (
-                          <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold text-amber-800 bg-amber-100">
-                            <Star className="w-3 h-3" />
-                            Vitrin
+                          <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-mono uppercase tracking-widest border border-amber-900/50 text-amber-400 bg-amber-950/50">
+                            <Star className="w-2.5 h-2.5" /> VİTRİN
                           </span>
                         ) : null}
 
-                        <div className="absolute inset-x-1 bottom-1 flex gap-1">
+                        <div className="absolute inset-x-0 bottom-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-[#06080b] to-transparent pt-4">
                           <button
                             type="button"
                             onClick={() => setCoverPhoto(photo.id)}
-                            className={`flex-1 px-2 py-1 rounded-md text-[10px] font-semibold ${
+                            className={`flex-1 px-1.5 py-1 rounded text-[8px] font-mono uppercase tracking-widest border ${
                               photo.is_cover
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-white/90 text-slate-700'
+                                ? 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400'
+                                : 'bg-[#16181d]/90 border-[#2d313a] text-[#94a3b8] hover:text-[#e2e8f0]'
                             }`}
                           >
-                            {photo.is_cover ? 'Vitrin Foto' : 'Vitrin Yap'}
+                            {photo.is_cover ? 'VİTRİN FOTO' : 'VİTRİN YAP'}
                           </button>
                           <button
                             type="button"
                             onClick={() => removePhoto(photo.id)}
-                            className="w-7 h-7 rounded-md bg-rose-500 text-white flex items-center justify-center"
+                            className="w-6 h-6 rounded border border-rose-900/50 bg-rose-950/80 text-rose-400 flex items-center justify-center hover:bg-rose-900"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -991,10 +1003,10 @@ export default function MerchantBusinessesPage() {
                     <button
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
-                      className="rounded-xl border-2 border-dashed border-slate-300 text-slate-500 flex flex-col items-center justify-center gap-2 aspect-square bg-white/70"
+                      className="rounded border border-dashed border-[#333842] hover:border-[#38bdf8]/50 text-[#64748b] hover:text-[#38bdf8] flex flex-col items-center justify-center gap-2 aspect-square bg-[#0a0c10] transition-colors"
                     >
-                      {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                      <span className="text-[10px] font-semibold uppercase tracking-widest">Foto Ekle</span>
+                      {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" strokeWidth={1.5} />}
+                      <span className="text-[9px] font-mono uppercase tracking-widest">FOTO EKLE</span>
                     </button>
                     <input
                       ref={photoInputRef}
@@ -1013,15 +1025,15 @@ export default function MerchantBusinessesPage() {
                 </section>
               </div>
 
-              <section className="rounded-2xl p-5 bg-white/90 border border-white/70 shadow-[0_16px_24px_-22px_rgba(15,23,42,0.6)] space-y-4">
-                <div className="inline-flex rounded-xl p-1 bg-[#edf2f9] shadow-[inset_3px_3px_8px_rgba(148,163,184,0.2),inset_-3px_-3px_8px_rgba(255,255,255,0.85)]">
+              <section className="rounded-md p-5 bg-[#16181d] border border-[#2d313a] space-y-5">
+                <div className="inline-flex rounded border border-[#2d313a] p-1 bg-[#0a0c10]">
                   <button
                     type="button"
                     onClick={() => setManagementTab('categories')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                    className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest transition-colors ${
                       managementTab === 'categories'
-                        ? 'bg-white text-slate-800 shadow-sm'
-                        : 'text-slate-500'
+                        ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]'
+                        : 'text-[#64748b] hover:text-[#94a3b8]'
                     }`}
                   >
                     Kategoriler
@@ -1029,10 +1041,10 @@ export default function MerchantBusinessesPage() {
                   <button
                     type="button"
                     onClick={() => setManagementTab('features')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                    className={`px-4 py-2 rounded text-[10px] font-mono uppercase tracking-widest transition-colors ${
                       managementTab === 'features'
-                        ? 'bg-white text-slate-800 shadow-sm'
-                        : 'text-slate-500'
+                        ? 'bg-[#153445] border border-[#226785] text-[#38bdf8]'
+                        : 'text-[#64748b] hover:text-[#94a3b8]'
                     }`}
                   >
                     Özellikler
@@ -1041,8 +1053,8 @@ export default function MerchantBusinessesPage() {
 
                 {managementTab === 'categories' ? (
                   <div>
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Kategori Seçimi</div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest mb-3 border-b border-[#1e232b] pb-2">Kategori Seçimi</div>
+                    <div className="flex flex-wrap gap-2 mt-4">
                       {allCategories.map((category) => {
                         const selected = selectedCategoryIds.includes(category.id)
                         return (
@@ -1050,10 +1062,10 @@ export default function MerchantBusinessesPage() {
                             key={category.id}
                             type="button"
                             onClick={() => toggleValue(selectedCategoryIds, category.id, setSelectedCategoryIds)}
-                            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                            className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                               selected
-                                ? 'bg-blue-100 border-blue-300 text-blue-700'
-                                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-800'
+                                ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                                : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                             }`}
                           >
                             {category.name}
@@ -1063,17 +1075,17 @@ export default function MerchantBusinessesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Özellik Seçimi</div>
+                  <div className="space-y-4">
+                    <div className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest border-b border-[#1e232b] pb-2">Özellik Seçimi</div>
 
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => setFeatureCategoryTab('global')}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                        className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                           featureCategoryTab === 'global'
-                            ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                            : 'bg-white border-slate-200 text-slate-600'
+                            ? 'bg-[#14532d]/40 border-[#166534] text-emerald-400'
+                            : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:text-[#e2e8f0]'
                         }`}
                       >
                         Genel
@@ -1083,10 +1095,10 @@ export default function MerchantBusinessesPage() {
                           key={categoryTab.id}
                           type="button"
                           onClick={() => setFeatureCategoryTab(categoryTab.id)}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                          className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors ${
                             featureCategoryTab === categoryTab.id
-                              ? 'bg-blue-100 border-blue-300 text-blue-700'
-                              : 'bg-white border-slate-200 text-slate-600'
+                              ? 'bg-[#153445] border-[#226785] text-[#38bdf8]'
+                              : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:text-[#e2e8f0]'
                           }`}
                         >
                           {categoryTab.name}
@@ -1095,8 +1107,8 @@ export default function MerchantBusinessesPage() {
                     </div>
 
                     {visibleFeatures.length === 0 ? (
-                      <div className="rounded-xl p-3 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200">
-                        Bu sekmede gösterilecek özellik bulunamadı.
+                      <div className="rounded p-4 text-[10px] font-mono text-[#475569] uppercase tracking-widest border border-dashed border-[#2d313a] bg-[#0a0c10]">
+                        BU SEKMEYE AİT ÖZELLİK BULUNAMADI.
                       </div>
                     ) : (
                       <div className="flex flex-wrap gap-2">
@@ -1107,13 +1119,13 @@ export default function MerchantBusinessesPage() {
                               key={feature.id}
                               type="button"
                               onClick={() => toggleValue(selectedFeatureIds, feature.id, setSelectedFeatureIds)}
-                              className={`px-3 py-2 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5 transition-colors ${
+                              className={`px-3 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest inline-flex items-center gap-2 transition-colors ${
                                 selected
-                                  ? 'bg-green-100 border-green-300 text-green-700'
-                                  : 'bg-white border-slate-200 text-slate-600'
+                                  ? 'bg-[#14532d]/40 border-[#166534] text-emerald-400'
+                                  : 'bg-[#0a0c10] border-[#2d313a] text-[#64748b] hover:border-[#475569] hover:text-[#e2e8f0]'
                               }`}
                             >
-                              {selected ? <Check className="w-3.5 h-3.5" /> : null}
+                              {selected ? <Check className="w-3.5 h-3.5" strokeWidth={2} /> : null}
                               {feature.name}
                             </button>
                           )
@@ -1125,12 +1137,12 @@ export default function MerchantBusinessesPage() {
               </section>
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-200/70 bg-[linear-gradient(145deg,#ffffff_0%,#f5f8ff_100%)] flex flex-wrap gap-3 justify-end">
+            <div className="px-6 py-4 border-t border-[#2d313a] bg-[#0f1115] flex flex-wrap gap-3 justify-end">
               <button
                 type="button"
                 onClick={deleteBusiness}
                 disabled={saving}
-                className="px-4 py-3 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                className="px-6 py-3 rounded text-[11px] font-mono tracking-widest uppercase border border-rose-900/50 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 disabled:opacity-50 transition-colors"
               >
                 İşletmeyi Sil
               </button>
@@ -1138,12 +1150,13 @@ export default function MerchantBusinessesPage() {
                 type="button"
                 onClick={saveChanges}
                 disabled={saving}
-                className="px-4 py-3 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                className="px-6 py-3 rounded text-[11px] font-mono tracking-widest uppercase bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 disabled:opacity-50 flex items-center gap-2"
               >
-                {saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {saving ? 'KAYDEDİLİYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
               </button>
             </div>
-          </div>
+          </HardwarePanel>
         </div>
       )}
     </div>

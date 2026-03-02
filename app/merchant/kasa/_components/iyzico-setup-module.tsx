@@ -136,6 +136,17 @@ function validateProfile(profile: ProfileForm, markReady: boolean): string | nul
   return null
 }
 
+// Ortak Donanım Kartı Kapsayıcısı
+const HardwarePanel = ({ children, className = "" }: { children: ReactNode, className?: string }) => (
+  <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
+    <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
+    {children}
+  </div>
+)
+
 type InputProps = {
   label: string
   value: string
@@ -164,10 +175,10 @@ function InputField({
   inputMode,
 }: InputProps) {
   return (
-    <label className="block text-sm font-semibold text-slate-700">
+    <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
       <span className="inline-flex items-center gap-1">
         {label}
-        {requiredField ? <span className="text-rose-600">*</span> : null}
+        {requiredField ? <span className="text-[#38bdf8]">*</span> : null}
       </span>
       {rows > 1 ? (
         <textarea
@@ -176,7 +187,7 @@ function InputField({
           rows={rows}
           maxLength={maxLength}
           placeholder={placeholder}
-          className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+          className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] transition-colors resize-none custom-scrollbar"
         />
       ) : (
         <input
@@ -187,10 +198,10 @@ function InputField({
           maxLength={maxLength}
           autoComplete={autoComplete}
           inputMode={inputMode}
-          className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+          className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 placeholder:text-[#475569] transition-colors"
         />
       )}
-      {helperText ? <p className="mt-1 text-[11px] font-semibold text-slate-500">{helperText}</p> : null}
+      {helperText ? <p className="mt-1.5 text-[9px] font-mono tracking-widest text-[#475569] uppercase">{helperText}</p> : null}
     </label>
   )
 }
@@ -207,14 +218,14 @@ function SectionCard({
   children: ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-      <div className="mb-3 flex items-start gap-2">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
-          <Icon size={15} />
+    <div className="rounded border border-[#2d313a] bg-[#16181d] p-5 space-y-4">
+      <div className="flex items-start gap-3 border-b border-[#1e232b] pb-3 mb-4">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#2d313a] bg-[#0a0c10] text-[#38bdf8] shrink-0">
+          <Icon size={16} strokeWidth={1.5} />
         </span>
         <div>
-          <p className="text-sm font-extrabold text-slate-800">{title}</p>
-          <p className="text-xs font-semibold text-slate-500">{subtitle}</p>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0]">{title}</p>
+          <p className="mt-1 text-[9px] font-mono uppercase tracking-widest text-[#64748b] leading-relaxed">{subtitle}</p>
         </div>
       </div>
       {children}
@@ -381,224 +392,236 @@ export function IyzicoSetupModule({ businessId }: { businessId: string }) {
   const isPersonal = profile.submerchantType === 'PERSONAL'
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
+    <HardwarePanel className="p-5 md:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#2d313a] pb-5">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700">
-            <ShieldCheck size={12} />
+          <div className="inline-flex items-center gap-2 rounded px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest bg-[#153445] border border-[#226785] text-[#38bdf8]">
+            <ShieldCheck className="w-3.5 h-3.5" />
             iyzico Kurulum
+          </div>
+          <h2 className="mt-3 text-[14px] font-medium tracking-wide text-[#e2e8f0] uppercase">İşletme Ödeme Profili</h2>
+          <p className="mt-1.5 text-[11px] font-mono text-[#94a3b8] leading-relaxed">
+            Kurulum tamamlandığında tek QR ile ödeme + kupon tahsilatı aktif olur.
           </p>
-          <h2 className="mt-2 text-lg font-black text-slate-800">İşletme Ödeme Profili</h2>
-          <p className="mt-1 text-sm text-slate-600">Kurulum tamamlandığında tek QR ile ödeme + kupon tahsilatı aktif olur.</p>
-          <p className="mt-1 text-xs font-semibold text-slate-500">Durum: {profile.onboardingStatus}</p>
-          {profile.iyzicoStatus ? (
-            <p className="mt-1 text-xs font-semibold text-slate-500">iyzico durumu: {profile.iyzicoStatus}</p>
-          ) : null}
+          <div className="mt-3 flex items-center gap-4">
+            <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+              DURUM: <span className="text-[#e2e8f0]">{profile.onboardingStatus}</span>
+            </p>
+            {profile.iyzicoStatus ? (
+              <p className="text-[10px] font-mono text-[#64748b] uppercase tracking-widest">
+                IYZICO DURUMU: <span className="text-[#38bdf8]">{profile.iyzicoStatus}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
         <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${
-            profile.isReady ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+          className={`inline-flex items-center gap-2 rounded px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest border ${
+            profile.isReady ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-400' : 'border-amber-900/50 bg-amber-950/30 text-amber-400'
           }`}
         >
-          {profile.isReady ? <BadgeCheck size={14} /> : <AlertCircle size={14} />}
-          {profile.isReady ? 'Satışa Hazır' : 'Hazır Değil'}
+          {profile.isReady ? <BadgeCheck className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+          {profile.isReady ? 'SATIŞA HAZIR' : 'HAZIR DEĞİL'}
         </span>
       </div>
 
       {loading ? (
-        <div className="py-10 text-center">
-          <Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-500" />
+        <div className="py-12 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-[#38bdf8]" />
         </div>
       ) : null}
 
       {!loading ? (
-        <div className="mt-4 space-y-4">
+        <div className="mt-6 space-y-5">
           {error ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</div>
+            <div className="rounded border border-rose-900/50 bg-rose-950/20 p-4 text-[11px] font-mono text-rose-400 uppercase tracking-wide flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> [HATA] {error}
+            </div>
           ) : null}
 
           {info ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
-              {info}
+            <div className="rounded border border-emerald-900/50 bg-emerald-950/20 p-4 text-[11px] font-mono text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+              <BadgeCheck className="w-4 h-4 shrink-0" /> [SİSTEM] {info}
             </div>
           ) : null}
 
           {profile.missingFields.length > 0 ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
-              Eksik alanlar: {profile.missingFields.join(', ')}
+            <div className="rounded border border-amber-900/50 bg-amber-950/20 p-4 text-[11px] font-mono text-amber-400 uppercase tracking-wide flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> [UYARI] EKSİK ALANLAR: {profile.missingFields.join(', ')}
             </div>
           ) : null}
 
-          <SectionCard
-            icon={ShieldCheck}
-            title="1. Alt üye tipi"
-            subtitle="İşletme statünüze göre doğru profili seçin."
-          >
-            <label className="block text-sm font-semibold text-slate-700">
-              Alt Üye Tipi <span className="text-rose-600">*</span>
-              <select
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
-                value={profile.submerchantType}
-                onChange={(event) =>
-                  updateField('submerchantType', event.target.value as ProfileForm['submerchantType'])
-                }
-              >
-                <option value="PERSONAL">Bireysel</option>
-                <option value="PRIVATE_COMPANY">Şahıs Şirketi</option>
-                <option value="LIMITED_OR_JOINT_STOCK_COMPANY">Limited / A.Ş.</option>
-              </select>
-            </label>
-          </SectionCard>
+          <div className="grid grid-cols-1 gap-5">
+            <SectionCard
+              icon={ShieldCheck}
+              title="1. Alt üye tipi"
+              subtitle="İşletme statünüze göre doğru profili seçin."
+            >
+              <label className="block text-[10px] font-mono font-semibold text-[#64748b] uppercase tracking-widest">
+                Alt Üye Tipi <span className="text-[#38bdf8]">*</span>
+                <select
+                  className="mt-2 w-full px-4 py-3 rounded bg-[#0a0c10] text-[#e2e8f0] text-sm font-mono border border-[#2d313a] outline-none focus:border-[#38bdf8]/50 appearance-none uppercase"
+                  value={profile.submerchantType}
+                  onChange={(event) =>
+                    updateField('submerchantType', event.target.value as ProfileForm['submerchantType'])
+                  }
+                >
+                  <option value="PERSONAL">BİREYSEL</option>
+                  <option value="PRIVATE_COMPANY">ŞAHIS ŞİRKETİ</option>
+                  <option value="LIMITED_OR_JOINT_STOCK_COMPANY">LİMİTED / A.Ş.</option>
+                </select>
+              </label>
+            </SectionCard>
 
-          <SectionCard
-            icon={UserRound}
-            title="2. Yetkili bilgileri"
-            subtitle="Doğrulama ve sözleşme tarafında kullanılan iletişim bilgileri."
-          >
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <InputField
-                label="Yetkili Adı"
-                value={profile.contactName}
-                onChange={(value) => updateField('contactName', value)}
-                placeholder="Ad"
-                requiredField
-                autoComplete="given-name"
-              />
-              <InputField
-                label="Yetkili Soyadı"
-                value={profile.contactSurname}
-                onChange={(value) => updateField('contactSurname', value)}
-                placeholder="Soyad"
-                requiredField
-                autoComplete="family-name"
-              />
-              <InputField
-                label="E-posta"
-                value={profile.email}
-                onChange={(value) => updateField('email', value)}
-                type="email"
-                placeholder="ornek@firma.com"
-                requiredField
-                autoComplete="email"
-              />
-              <InputField
-                label="Telefon (GSM)"
-                value={profile.gsmNumber}
-                onChange={(value) => updateField('gsmNumber', onlyDigits(value))}
-                placeholder="905XXXXXXXXX"
-                helperText="Sadece rakam girin."
-                requiredField
-                maxLength={12}
-                inputMode="numeric"
-                autoComplete="tel"
-              />
-            </div>
-          </SectionCard>
+            <SectionCard
+              icon={UserRound}
+              title="2. Yetkili bilgileri"
+              subtitle="Doğrulama ve sözleşme tarafında kullanılan iletişim bilgileri."
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InputField
+                  label="Yetkili Adı"
+                  value={profile.contactName}
+                  onChange={(value) => updateField('contactName', value)}
+                  placeholder="Ad"
+                  requiredField
+                  autoComplete="given-name"
+                />
+                <InputField
+                  label="Yetkili Soyadı"
+                  value={profile.contactSurname}
+                  onChange={(value) => updateField('contactSurname', value)}
+                  placeholder="Soyad"
+                  requiredField
+                  autoComplete="family-name"
+                />
+                <InputField
+                  label="E-posta"
+                  value={profile.email}
+                  onChange={(value) => updateField('email', value)}
+                  type="email"
+                  placeholder="ornek@firma.com"
+                  requiredField
+                  autoComplete="email"
+                />
+                <InputField
+                  label="Telefon (GSM)"
+                  value={profile.gsmNumber}
+                  onChange={(value) => updateField('gsmNumber', onlyDigits(value))}
+                  placeholder="905XXXXXXXXX"
+                  helperText="Sadece rakam girin."
+                  requiredField
+                  maxLength={12}
+                  inputMode="numeric"
+                  autoComplete="tel"
+                />
+              </div>
+            </SectionCard>
 
-          <SectionCard icon={Landmark} title="3. Ödeme hesabı" subtitle="Tahsilatların aktarılacağı hesap bilgisi.">
-            <InputField
-              label="IBAN"
-              value={profile.iban}
-              onChange={(value) => updateField('iban', value.toUpperCase())}
-              placeholder="TRXXXXXXXXXXXXXXXXXXXXXXXX"
-              helperText="TR ile başlamalı, toplam 26 karakter olmalıdır."
-              requiredField
-              maxLength={34}
-              autoComplete="off"
-            />
-          </SectionCard>
-
-          {isPersonal ? (
-            <SectionCard icon={UserRound} title="4. Bireysel kimlik" subtitle="Bireysel alt üye açılışı için zorunludur.">
+            <SectionCard icon={Landmark} title="3. Ödeme hesabı" subtitle="Tahsilatların aktarılacağı hesap bilgisi.">
               <InputField
-                label="T.C. Kimlik Numarası"
-                value={profile.identityNumber}
-                onChange={(value) => updateField('identityNumber', onlyDigits(value))}
-                placeholder="11 hane"
+                label="IBAN"
+                value={profile.iban}
+                onChange={(value) => updateField('iban', value.toUpperCase())}
+                placeholder="TRXXXXXXXXXXXXXXXXXXXXXXXX"
+                helperText="TR ile başlamalı, toplam 26 karakter olmalıdır."
                 requiredField
-                maxLength={11}
-                inputMode="numeric"
+                maxLength={34}
+                autoComplete="off"
               />
             </SectionCard>
-          ) : (
-            <SectionCard icon={Building2} title="4. Kurumsal vergi bilgileri" subtitle="Şirket alt üye kaydı için zorunlu alanlar.">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+
+            {isPersonal ? (
+              <SectionCard icon={UserRound} title="4. Bireysel kimlik" subtitle="Bireysel alt üye açılışı için zorunludur.">
                 <InputField
-                  label="Vergi Numarası"
-                  value={profile.taxNumber}
-                  onChange={(value) => updateField('taxNumber', onlyDigits(value))}
+                  label="T.C. Kimlik Numarası"
+                  value={profile.identityNumber}
+                  onChange={(value) => updateField('identityNumber', onlyDigits(value))}
+                  placeholder="11 hane"
                   requiredField
-                  maxLength={16}
+                  maxLength={11}
                   inputMode="numeric"
                 />
+              </SectionCard>
+            ) : (
+              <SectionCard icon={Building2} title="4. Kurumsal vergi bilgileri" subtitle="Şirket alt üye kaydı için zorunlu alanlar.">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <InputField
+                    label="Vergi Numarası"
+                    value={profile.taxNumber}
+                    onChange={(value) => updateField('taxNumber', onlyDigits(value))}
+                    requiredField
+                    maxLength={16}
+                    inputMode="numeric"
+                  />
+                  <InputField
+                    label="Vergi Dairesi"
+                    value={profile.taxOffice}
+                    onChange={(value) => updateField('taxOffice', value)}
+                    requiredField
+                  />
+                  <InputField
+                    label="Şirket Ünvanı"
+                    value={profile.legalCompanyTitle}
+                    onChange={(value) => updateField('legalCompanyTitle', value)}
+                    requiredField
+                  />
+                </div>
+              </SectionCard>
+            )}
+
+            <SectionCard icon={MapPin} title="5. Adres bilgileri" subtitle="İşletmenin resmi adresi ve ülke bilgisi.">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <InputField
-                  label="Vergi Dairesi"
-                  value={profile.taxOffice}
-                  onChange={(value) => updateField('taxOffice', value)}
+                  label="Açık Adres"
+                  value={profile.address}
+                  onChange={(value) => updateField('address', value)}
+                  rows={3}
+                  placeholder="Mahalle, cadde, bina no"
                   requiredField
                 />
-                <InputField
-                  label="Şirket Ünvanı"
-                  value={profile.legalCompanyTitle}
-                  onChange={(value) => updateField('legalCompanyTitle', value)}
-                  requiredField
-                />
+                <div className="space-y-4">
+                  <InputField
+                    label="Şehir"
+                    value={profile.city}
+                    onChange={(value) => updateField('city', value)}
+                    placeholder="İstanbul"
+                    requiredField
+                  />
+                  <InputField
+                    label="Ülke"
+                    value={profile.country}
+                    onChange={(value) => updateField('country', value.toUpperCase())}
+                    placeholder="TR"
+                    requiredField
+                    maxLength={2}
+                  />
+                </div>
               </div>
             </SectionCard>
-          )}
+          </div>
 
-          <SectionCard icon={MapPin} title="5. Adres bilgileri" subtitle="İşletmenin resmi adresi ve ülke bilgisi.">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <InputField
-                label="Açık Adres"
-                value={profile.address}
-                onChange={(value) => updateField('address', value)}
-                rows={3}
-                placeholder="Mahalle, cadde, bina no"
-                requiredField
-              />
-              <div className="space-y-3">
-                <InputField
-                  label="Şehir"
-                  value={profile.city}
-                  onChange={(value) => updateField('city', value)}
-                  placeholder="İstanbul"
-                  requiredField
-                />
-                <InputField
-                  label="Ülke"
-                  value={profile.country}
-                  onChange={(value) => updateField('country', value.toUpperCase())}
-                  placeholder="TR"
-                  requiredField
-                  maxLength={2}
-                />
-              </div>
-            </div>
-          </SectionCard>
-
-          <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-[#2d313a]">
             <button
               type="button"
               onClick={() => void saveProfile(false)}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded border border-[#2d313a] bg-[#0a0c10] text-[#94a3b8] text-[11px] font-mono uppercase tracking-widest hover:bg-[#1a1d24] hover:text-[#e2e8f0] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Save size={14} />
+              <Save className="w-4 h-4" />
               Taslak Kaydet
             </button>
             <button
               type="button"
               onClick={() => void saveProfile(true)}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(90deg,#0f766e_0%,#0284c7_100%)] px-4 py-2 text-sm font-bold text-white shadow-[0_14px_24px_-16px_rgba(2,132,199,0.65)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded bg-[linear-gradient(180deg,#1e6b8a_0%,#134e68_100%)] text-[#f8fafc] text-[11px] font-mono uppercase tracking-widest border border-[#2e8fac]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-110 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
               Satışa Hazır Yap
             </button>
           </div>
         </div>
       ) : null}
-    </section>
+    </HardwarePanel>
   )
 }
