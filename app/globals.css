@@ -1802,3 +1802,21 @@ a {
     font-size: 24px;
   }
 }
+
+
+/* Keep native dropdown typography stable across pages */
+select,
+select option,
+select optgroup {
+  font-family: var(--font-body), 'Avenir Next', 'Segoe UI', sans-serif !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+
+body.hardware-shell {
+  background: #06080b !important;
+  color: #e2e8f0;
+  overscroll-behavior-y: none;
+}
+

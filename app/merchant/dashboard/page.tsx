@@ -818,7 +818,7 @@ export default function MerchantDashboardPage() {
         {/* Üst Bilgi Çubuğu (Header) */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-[#2d313a] pb-4 gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)] animate-pulse" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
             <div className="flex flex-col">
               <span className="text-[9px] uppercase tracking-[0.2em] text-[#64748b]">Sistem</span>
               <span className="text-sm font-mono tracking-widest text-[#e2e8f0]">İşletmeci Paneli</span>

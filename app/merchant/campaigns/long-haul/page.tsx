@@ -452,7 +452,7 @@ export default function MerchantLongHaulCampaignsPage() {
                       value={selectedCouponId}
                       onChange={(event) => setSelectedCouponId(event.target.value)}
                     >
-                      <option value="">KUPON BAĞLAMA</option>
+                      <option value="">KUPON BAĞLA</option>
                       {coupons.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
                           {coupon.title || 'Kupon'} • {couponSummary(coupon)}

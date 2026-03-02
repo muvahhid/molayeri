@@ -88,6 +88,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/merchant/settings', label: 'Ayarlar', icon: Settings },
 ]
 
+
+const PANEL_LOGO_URL =
+  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/logo.png'
+
 export default function MerchantLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -99,6 +103,14 @@ export default function MerchantLayout({ children }: { children: React.ReactNode
   const [loggingOut, setLoggingOut] = useState(false)
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.body.classList.add('hardware-shell')
+    return () => {
+      document.body.classList.remove('hardware-shell')
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -290,6 +302,68 @@ export default function MerchantLayout({ children }: { children: React.ReactNode
               {children}
             </div>
           </main>
+
+          <footer className="border-t border-[#23272f] bg-[#0f1115] px-4 py-3.5 md:px-6">
+            <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={PANEL_LOGO_URL}
+                  alt="Molayeri Logo"
+                  className="h-7 w-auto object-contain opacity-90"
+                  draggable={false}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-medium text-[#e2e8f0]">İşletmeci Kontrol Merkezi</p>
+                  <p className="mt-0.5 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">Canlı Operasyon Paneli</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#64748b]">
+                <span className="inline-flex items-center gap-1.5 rounded border border-[#14532d] bg-[#052e1f] px-2.5 py-1 text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Sistem Aktif
+                </span>
+                <span className="rounded border border-[#2d313a] bg-[#12141a] px-2.5 py-1 text-[#94a3b8]">Molayeri © App 2026</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/merchant/settings"
+                  className="inline-flex items-center rounded border border-[#2d313a] bg-[#12141a] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0] transition-colors"
+                >
+                  Ayarlar
+                </Link>
+                <Link
+                  href="/merchant/kasa"
+                  className="inline-flex items-center rounded border border-[#2d313a] bg-[#12141a] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0] transition-colors"
+                >
+                  Kasa
+                </Link>
+                <a
+                  href="mailto:destek@molayeri.app"
+                  className="inline-flex items-center rounded border border-[#2d313a] bg-[#12141a] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0] transition-colors"
+                >
+                  Destek
+                </a>
+                <a
+                  href="https://molayeri.app/kullanim-sartlari"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center rounded border border-[#2d313a] bg-[#12141a] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0] transition-colors"
+                >
+                  Kullanım Şartları
+                </a>
+                <a
+                  href="https://molayeri.app/sss"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center rounded border border-[#2d313a] bg-[#12141a] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#94a3b8] hover:border-[#475569] hover:text-[#e2e8f0] transition-colors"
+                >
+                  SSS
+                </a>
+              </div>
+            </div>
+          </footer>
         </section>
       </div>
 

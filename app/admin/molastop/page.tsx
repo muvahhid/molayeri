@@ -136,6 +136,12 @@ const DEFAULT_STATE: ApiState = {
   fetchedAt: null,
 }
 
+const isAbortLikeError = (value: unknown) => {
+  const raw = value instanceof Error ? `${value.name} ${value.message}` : String(value ?? '')
+  const message = raw.toLowerCase()
+  return message.includes('aborterror') || message.includes('aborted') || message.includes('operation was aborted')
+}
+
 function toTs(raw: string): number {
   const ts = new Date(raw).getTime()
   return Number.isFinite(ts) ? ts : 0
@@ -310,6 +316,7 @@ export default function AdminMolaStopPage() {
         fetchedAt: payload.fetchedAt || new Date().toISOString(),
       })
     } catch (err) {
+      if (isAbortLikeError(err)) return
       const message = err instanceof Error ? err.message : 'Bilinmeyen hata.'
       setError(message)
     } finally {
@@ -347,6 +354,7 @@ export default function AdminMolaStopPage() {
       }
       await loadData(true)
     } catch (err) {
+      if (isAbortLikeError(err)) return
       const message = err instanceof Error ? err.message : 'Müdahale başarısız.'
       setError(message)
     } finally {

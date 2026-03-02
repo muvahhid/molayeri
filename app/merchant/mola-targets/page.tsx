@@ -683,7 +683,7 @@ export default function MerchantMolaTargetsPage() {
                   value={selectedCouponId}
                   onChange={(event) => setSelectedCouponId(event.target.value)}
                 >
-                  <option value="">Kupon Bağlama</option>
+                  <option value="">KUPON BAĞLA</option>
                   {coupons.map((coupon) => (
                     <option key={coupon.id} value={coupon.id}>
                       {(coupon.title || 'Kupon')} • {couponSummary(coupon)}

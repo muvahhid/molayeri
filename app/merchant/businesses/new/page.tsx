@@ -75,6 +75,12 @@ type SectionHeaderProps = {
   title: string
 }
 
+const isAbortLikeError = (value: unknown) => {
+  const raw = value instanceof Error ? `${value.name} ${value.message}` : String(value ?? '')
+  const message = raw.toLowerCase()
+  return message.includes('aborterror') || message.includes('aborted') || message.includes('operation was aborted')
+}
+
 // Ortak Donanım Kartı Kapsayıcısı
 const HardwarePanel = ({ children, className = "" }: HardwarePanelProps) => (
   <div className={`relative bg-[#16181d] border border-[#2d313a] rounded-md shadow-lg ${className}`}>
@@ -354,7 +360,9 @@ export default function BusinessWizard() {
       const res = await fetch(`${PROXY}/places/autocomplete?input=${val}&token=${Date.now()}`)
       const json = await res.json()
       setPredictions(json.predictions || [])
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      if (!isAbortLikeError(e)) console.error(e)
+    }
   }
 
   const selectPlace = async (placeId: string, desc: string) => {
@@ -387,7 +395,9 @@ export default function BusinessWizard() {
         const match = desc.match(/\b(O-\s*\d+|E\s*-?\s*\d{1,3}|D\s*-?\s*\d{1,3}|TEM|E-?5)\b/i)
         if (match) setBizForm(prev => ({ ...prev, roadName: match[0].toUpperCase().replace(/\s/g, '') }))
       }
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      if (!isAbortLikeError(e)) console.error(e)
+    }
   }
 
   // HARİTA BUTONU
@@ -650,7 +660,7 @@ export default function BusinessWizard() {
         {/* TELEMETRY HEADER BAR */}
         <header className="px-6 py-4 flex items-center justify-between border-b border-[#2d313a] bg-[#0f1115]">
           <div className="flex items-center gap-4">
-             <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)] animate-pulse" />
+             <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
              <div className="flex flex-col">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-[#64748b]">Platform</span>
                 <span className="text-xs font-mono tracking-widest text-[#e2e8f0]">MOLAYERI CONTROL</span>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import type { ComponentType } from 'react'
 import {
   CircleDollarSign,
@@ -64,6 +64,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.body.classList.add('hardware-shell')
+    return () => {
+      document.body.classList.remove('hardware-shell')
+    }
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -173,7 +181,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             <div className="flex items-center gap-3">
               <div className="hidden md:inline-flex items-center gap-2 rounded border border-[#166534] bg-[#14532d]/40 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 Sistem Aktif
               </div>
 

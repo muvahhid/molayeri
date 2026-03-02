@@ -388,13 +388,13 @@ export default function MerchantCampaignsPage() {
                   <div className="text-[11px] font-mono uppercase tracking-widest text-[#e2e8f0] mb-3 border-b border-[#2d313a] pb-2">Etiket Nerede Görünür?</div>
                   <div className="rounded border border-[#2d313a] bg-[#0a0c10] p-4 flex justify-center">
                     <img
-                      src="/campaign-help/IMG_3872.jpg"
+                      src="https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/IMG_3895.jpg"
                       alt="Kampanya etiketlerinin kartta görünümü"
                       className="w-[85%] rounded border border-[#1e232b] mix-blend-lighten opacity-80"
                     />
                   </div>
                   <p className="mt-3 text-[10px] font-mono text-[#64748b] leading-relaxed tracking-wider uppercase">
-                    Bu örnekteki kırmızı çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir. Dilediğiniz rengi seçip yayınlayabilirsiniz.
+                    Bu örnekteki renkli çerçeveli alanlar, burada oluşturduğun etiket kampanyalarının kullanıcıya görüneceği bölgedir. Dilediğiniz rengi seçip yayınlayabilirsiniz.
                   </p>
                 </HardwarePanel>
               </div>
