@@ -21,6 +21,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { ModuleTitle } from '../../merchant/_components/module-title'
+import { adminJsonHeaders } from '../_lib/csrf'
 
 type GenericRow = Record<string, unknown>
 
@@ -112,7 +113,7 @@ type LooseFeatureRow = {
 async function postAdminApprovalsAction(payload: Record<string, unknown>): Promise<void> {
   const response = await fetch(ADMIN_APPROVALS_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminJsonHeaders(),
     body: JSON.stringify(payload),
   })
 

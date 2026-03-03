@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { jsonNoStore } from '@/lib/security/http'
+import { writeAdminAuditLog, requestAuditMeta } from '@/lib/security/admin-audit-log'
+import { checkDistributedAdminRateLimit } from '@/lib/security/admin-rate-limit'
+import { isValidAdminCsrf } from '@/lib/security/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +21,7 @@ type RateState = {
 type AdminContextOk = {
   ok: true
   adminSupabase: SupabaseClient
+  adminUserId: string
 }
 
 type AdminContextFail = {
@@ -80,7 +85,26 @@ function isTrustedOrigin(request: Request): boolean {
   }
 }
 
-function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+
+function isTrustedFetchSite(request: Request): boolean {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+    return true
+  }
+
+  const site = (request.headers.get('sec-fetch-site') || '').trim().toLowerCase()
+  if (!site) return true
+  return site === 'same-origin' || site === 'same-site' || site === 'none'
+}
+
+async function checkRateLimit(request: Request): Promise<{ ok: boolean; retryAfter: number }> {
+  const distributed = await checkDistributedAdminRateLimit(request, {
+    namespace: 'admin_approvals',
+    windowMs: ADMIN_RATE_WINDOW_MS,
+    maxRequests: ADMIN_RATE_MAX_REQUESTS,
+  })
+  if (distributed) return distributed
+
   const now = Date.now()
   const path = new URL(request.url).pathname
   const key = `${path}:${getRequestIp(request)}`
@@ -115,14 +139,14 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
+      response: jsonNoStore({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
     }
   }
 
   if (!serviceRoleKey) {
     return {
       ok: false,
-      response: NextResponse.json(
+      response: jsonNoStore(
         { error: 'Sunucu admin anahtarı eksik. `SUPABASE_SERVICE_ROLE_KEY` veya `SUPABASE_SECRET_KEY` tanımlanmalı.' },
         { status: 500 }
       ),
@@ -151,7 +175,7 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 }),
+      response: jsonNoStore({ error: 'Oturum bulunamadı.' }, { status: 401 }),
     }
   }
 
@@ -164,21 +188,29 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (role !== 'admin') {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
+      response: jsonNoStore({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
     }
   }
 
-  return { ok: true, adminSupabase }
+  return { ok: true, adminSupabase, adminUserId: user.id }
 }
 
 export async function POST(request: Request) {
   if (!isTrustedOrigin(request)) {
-    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+    return jsonNoStore({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
   }
 
-  const rate = checkRateLimit(request)
+  if (!isTrustedFetchSite(request)) {
+    return jsonNoStore({ error: 'Geçersiz istek bağlamı.' }, { status: 403 })
+  }
+
+  if (!isValidAdminCsrf(request)) {
+    return jsonNoStore({ error: 'Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.' }, { status: 403 })
+  }
+
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -186,22 +218,23 @@ export async function POST(request: Request) {
 
   const ctx = await resolveAdminContext()
   if (!ctx.ok) return ctx.response
+  const auditMeta = requestAuditMeta(request)
 
   let body: ActionBody | null = null
   try {
     body = (await request.json()) as ActionBody
   } catch {
-    return NextResponse.json({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
   }
 
   if (body?.action !== 'set_decision') {
-    return NextResponse.json({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
   }
 
   const businessId = cleanUuid(body.businessId)
   const decision = cleanDecision(body.decision)
   if (!businessId || !decision) {
-    return NextResponse.json({ error: 'Eksik veya geçersiz parametre.' }, { status: 400 })
+    return jsonNoStore({ error: 'Eksik veya geçersiz parametre.' }, { status: 400 })
   }
 
   const businessRes = await ctx.adminSupabase
@@ -211,14 +244,14 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (businessRes.error || !businessRes.data) {
-    return NextResponse.json({ error: 'İşletme kaydı bulunamadı.' }, { status: 404 })
+    return jsonNoStore({ error: 'İşletme kaydı bulunamadı.' }, { status: 404 })
   }
 
   const business = businessRes.data as BusinessOwnerRow
 
   const updateRes = await ctx.adminSupabase.from('businesses').update({ status: decision }).eq('id', businessId)
   if (updateRes.error) {
-    return NextResponse.json({ error: updateRes.error.message || 'İşlem yapılamadı.' }, { status: 500 })
+    return jsonNoStore({ error: updateRes.error.message || 'İşlem yapılamadı.' }, { status: 500 })
   }
 
   const ownerId = cleanUuid(business.owner_id)
@@ -231,7 +264,7 @@ export async function POST(request: Request) {
         .neq('role', 'admin')
 
       if (ownerRes.error) {
-        return NextResponse.json({ error: ownerRes.error.message || 'Sahip profili güncellenemedi.' }, { status: 500 })
+        return jsonNoStore({ error: ownerRes.error.message || 'Sahip profili güncellenemedi.' }, { status: 500 })
       }
     } else {
       const remainingRes = await ctx.adminSupabase
@@ -241,7 +274,7 @@ export async function POST(request: Request) {
         .in('status', ['active', 'pending'])
 
       if (remainingRes.error) {
-        return NextResponse.json({ error: remainingRes.error.message || 'Sahip işletmeleri kontrol edilemedi.' }, { status: 500 })
+        return jsonNoStore({ error: remainingRes.error.message || 'Sahip işletmeleri kontrol edilemedi.' }, { status: 500 })
       }
 
       if ((remainingRes.count || 0) === 0) {
@@ -252,11 +285,21 @@ export async function POST(request: Request) {
           .eq('role', 'pending_business')
 
         if (demoteRes.error) {
-          return NextResponse.json({ error: demoteRes.error.message || 'Sahip rolü güncellenemedi.' }, { status: 500 })
+          return jsonNoStore({ error: demoteRes.error.message || 'Sahip rolü güncellenemedi.' }, { status: 500 })
         }
       }
     }
   }
 
-  return NextResponse.json({ ok: true, businessId, decision })
+  await writeAdminAuditLog(ctx.adminSupabase, {
+    actorId: ctx.adminUserId,
+    scope: 'admin.approvals',
+    action: 'set_decision',
+    targetId: businessId,
+    targetTable: 'businesses',
+    metadata: { decision, ownerId: ownerId || null },
+    ...auditMeta,
+  })
+
+  return jsonNoStore({ ok: true, businessId, decision })
 }

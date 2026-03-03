@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { jsonNoStore } from '@/lib/security/http'
+import { writeAdminAuditLog, requestAuditMeta } from '@/lib/security/admin-audit-log'
+import { checkDistributedAdminRateLimit } from '@/lib/security/admin-rate-limit'
+import { isValidAdminCsrf } from '@/lib/security/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +20,7 @@ type RateState = {
 type AdminContextOk = {
   ok: true
   adminSupabase: SupabaseClient
+  adminUserId: string
 }
 
 type AdminContextFail = {
@@ -79,7 +84,26 @@ function isTrustedOrigin(request: Request): boolean {
   }
 }
 
-function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+
+function isTrustedFetchSite(request: Request): boolean {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+    return true
+  }
+
+  const site = (request.headers.get('sec-fetch-site') || '').trim().toLowerCase()
+  if (!site) return true
+  return site === 'same-origin' || site === 'same-site' || site === 'none'
+}
+
+async function checkRateLimit(request: Request): Promise<{ ok: boolean; retryAfter: number }> {
+  const distributed = await checkDistributedAdminRateLimit(request, {
+    namespace: 'admin_categories',
+    windowMs: ADMIN_RATE_WINDOW_MS,
+    maxRequests: ADMIN_RATE_MAX_REQUESTS,
+  })
+  if (distributed) return distributed
+
   const now = Date.now()
   const path = new URL(request.url).pathname
   const key = `${path}:${getRequestIp(request)}`
@@ -114,14 +138,14 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
+      response: jsonNoStore({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
     }
   }
 
   if (!serviceRoleKey) {
     return {
       ok: false,
-      response: NextResponse.json(
+      response: jsonNoStore(
         { error: 'Sunucu admin anahtarı eksik. `SUPABASE_SERVICE_ROLE_KEY` veya `SUPABASE_SECRET_KEY` tanımlanmalı.' },
         { status: 500 }
       ),
@@ -150,7 +174,7 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 }),
+      response: jsonNoStore({ error: 'Oturum bulunamadı.' }, { status: 401 }),
     }
   }
 
@@ -163,21 +187,29 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (role !== 'admin') {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
+      response: jsonNoStore({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
     }
   }
 
-  return { ok: true, adminSupabase }
+  return { ok: true, adminSupabase, adminUserId: user.id }
 }
 
 export async function POST(request: Request) {
   if (!isTrustedOrigin(request)) {
-    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+    return jsonNoStore({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
   }
 
-  const rate = checkRateLimit(request)
+  if (!isTrustedFetchSite(request)) {
+    return jsonNoStore({ error: 'Geçersiz istek bağlamı.' }, { status: 403 })
+  }
+
+  if (!isValidAdminCsrf(request)) {
+    return jsonNoStore({ error: 'Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.' }, { status: 403 })
+  }
+
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -185,17 +217,18 @@ export async function POST(request: Request) {
 
   const ctx = await resolveAdminContext()
   if (!ctx.ok) return ctx.response
+  const auditMeta = requestAuditMeta(request)
 
   let body: ActionBody | null = null
   try {
     body = (await request.json()) as ActionBody
   } catch {
-    return NextResponse.json({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
   }
 
   const action = body?.action
   if (!action) {
-    return NextResponse.json({ error: 'Eksik işlem tipi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Eksik işlem tipi.' }, { status: 400 })
   }
 
   if (action === 'save_category') {
@@ -203,7 +236,7 @@ export async function POST(request: Request) {
     const slug = cleanText(body?.slug, 120)
     const categoryId = cleanUuid(body?.categoryId)
     if (!name || !slug) {
-      return NextResponse.json({ error: 'Kategori adı ve slug zorunludur.' }, { status: 400 })
+      return jsonNoStore({ error: 'Kategori adı ve slug zorunludur.' }, { status: 400 })
     }
 
     const payload = { name, slug }
@@ -212,16 +245,26 @@ export async function POST(request: Request) {
       : await ctx.adminSupabase.from('categories').insert(payload)
 
     if (res.error) {
-      return NextResponse.json({ error: res.error.message || 'Kategori kaydedilemedi.' }, { status: 500 })
+      return jsonNoStore({ error: res.error.message || 'Kategori kaydedilemedi.' }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.categories',
+      action,
+      targetId: categoryId || slug,
+      targetTable: 'categories',
+      metadata: { name, slug },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'delete_category') {
     const categoryId = cleanUuid(body?.categoryId)
     if (!categoryId) {
-      return NextResponse.json({ error: 'Geçersiz categoryId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz categoryId.' }, { status: 400 })
     }
 
     const featureReset = await ctx.adminSupabase
@@ -230,20 +273,30 @@ export async function POST(request: Request) {
       .eq('category_id', categoryId)
 
     if (featureReset.error) {
-      return NextResponse.json({ error: featureReset.error.message || 'Özellikler taşınamadı.' }, { status: 500 })
+      return jsonNoStore({ error: featureReset.error.message || 'Özellikler taşınamadı.' }, { status: 500 })
     }
 
     const businessCategoryDelete = await ctx.adminSupabase.from('business_categories').delete().eq('category_id', categoryId)
     if (businessCategoryDelete.error) {
-      return NextResponse.json({ error: businessCategoryDelete.error.message || 'Kategori ilişkileri silinemedi.' }, { status: 500 })
+      return jsonNoStore({ error: businessCategoryDelete.error.message || 'Kategori ilişkileri silinemedi.' }, { status: 500 })
     }
 
     const deleteRes = await ctx.adminSupabase.from('categories').delete().eq('id', categoryId)
     if (deleteRes.error) {
-      return NextResponse.json({ error: deleteRes.error.message || 'Kategori silinemedi.' }, { status: 500 })
+      return jsonNoStore({ error: deleteRes.error.message || 'Kategori silinemedi.' }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.categories',
+      action,
+      targetId: categoryId,
+      targetTable: 'categories',
+      metadata: { deleted: true },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'save_feature') {
@@ -252,10 +305,10 @@ export async function POST(request: Request) {
     const targetCategoryId = cleanUuid(body?.feature_category_id)
     const isGlobal = Boolean(body?.is_global)
     if (!name) {
-      return NextResponse.json({ error: 'Özellik adı zorunludur.' }, { status: 400 })
+      return jsonNoStore({ error: 'Özellik adı zorunludur.' }, { status: 400 })
     }
     if (!isGlobal && !targetCategoryId) {
-      return NextResponse.json({ error: 'Kategoriye bağlı özellik için kategori seçilmelidir.' }, { status: 400 })
+      return jsonNoStore({ error: 'Kategoriye bağlı özellik için kategori seçilmelidir.' }, { status: 400 })
     }
 
     const payload = {
@@ -269,30 +322,50 @@ export async function POST(request: Request) {
       : await ctx.adminSupabase.from('features').insert(payload)
 
     if (res.error) {
-      return NextResponse.json({ error: res.error.message || 'Özellik kaydedilemedi.' }, { status: 500 })
+      return jsonNoStore({ error: res.error.message || 'Özellik kaydedilemedi.' }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.categories',
+      action,
+      targetId: featureId || name,
+      targetTable: 'features',
+      metadata: { name, isGlobal, targetCategoryId: isGlobal ? null : targetCategoryId },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'delete_feature') {
     const featureId = cleanUuid(body?.featureId)
     if (!featureId) {
-      return NextResponse.json({ error: 'Geçersiz featureId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz featureId.' }, { status: 400 })
     }
 
     const relationDelete = await ctx.adminSupabase.from('business_features').delete().eq('feature_id', featureId)
     if (relationDelete.error) {
-      return NextResponse.json({ error: relationDelete.error.message || 'Özellik ilişkileri silinemedi.' }, { status: 500 })
+      return jsonNoStore({ error: relationDelete.error.message || 'Özellik ilişkileri silinemedi.' }, { status: 500 })
     }
 
     const deleteRes = await ctx.adminSupabase.from('features').delete().eq('id', featureId)
     if (deleteRes.error) {
-      return NextResponse.json({ error: deleteRes.error.message || 'Özellik silinemedi.' }, { status: 500 })
+      return jsonNoStore({ error: deleteRes.error.message || 'Özellik silinemedi.' }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.categories',
+      action,
+      targetId: featureId,
+      targetTable: 'features',
+      metadata: { deleted: true },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true })
   }
 
-  return NextResponse.json({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
+  return jsonNoStore({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
 }

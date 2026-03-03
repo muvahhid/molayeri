@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { getBrowserSupabase } from '@/lib/browser-client'
 import { ModuleTitle } from '../../merchant/_components/module-title'
+import { adminJsonHeaders } from '../_lib/csrf'
 
 const PAGE_SIZE = 12
 type ReviewFilter = 'all' | 'critical' | 'low_rating' | 'no_reply' | 'replied'
@@ -487,7 +488,7 @@ export default function AdminReviewsPage() {
   const applyModeration = async (reviewId: string, mode: ModerationMode): Promise<void> => {
     const response = await fetch('/api/admin/reviews/moderate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminJsonHeaders(),
       body: JSON.stringify({ reviewId, mode }),
     })
 

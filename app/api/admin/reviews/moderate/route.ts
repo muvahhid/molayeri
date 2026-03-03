@@ -1,7 +1,10 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { jsonNoStore } from '@/lib/security/http'
+import { writeAdminAuditLog, requestAuditMeta } from '@/lib/security/admin-audit-log'
+import { checkDistributedAdminRateLimit } from '@/lib/security/admin-rate-limit'
+import { isValidAdminCsrf } from '@/lib/security/csrf'
 
 const REMOVED_REVIEW_TEXT = 'Yorum yönetim tarafından kaldırıldı.'
 
@@ -92,7 +95,26 @@ function isTrustedOrigin(request: Request): boolean {
   }
 }
 
-function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+
+function isTrustedFetchSite(request: Request): boolean {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+    return true
+  }
+
+  const site = (request.headers.get('sec-fetch-site') || '').trim().toLowerCase()
+  if (!site) return true
+  return site === 'same-origin' || site === 'same-site' || site === 'none'
+}
+
+async function checkRateLimit(request: Request): Promise<{ ok: boolean; retryAfter: number }> {
+  const distributed = await checkDistributedAdminRateLimit(request, {
+    namespace: 'admin_reviews',
+    windowMs: ADMIN_RATE_WINDOW_MS,
+    maxRequests: ADMIN_RATE_MAX_REQUESTS,
+  })
+  if (distributed) return distributed
+
   const now = Date.now()
   const path = new URL(request.url).pathname
   const key = `${path}:${getRequestIp(request)}`
@@ -121,12 +143,20 @@ function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
 
 export async function POST(request: Request) {
   if (!isTrustedOrigin(request)) {
-    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+    return jsonNoStore({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
   }
 
-  const rate = checkRateLimit(request)
+  if (!isTrustedFetchSite(request)) {
+    return jsonNoStore({ error: 'Geçersiz istek bağlamı.' }, { status: 403 })
+  }
+
+  if (!isValidAdminCsrf(request)) {
+    return jsonNoStore({ error: 'Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.' }, { status: 403 })
+  }
+
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -137,11 +167,11 @@ export async function POST(request: Request) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 })
+    return jsonNoStore({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 })
   }
 
   if (!serviceRoleKey) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Sunucu moderasyon anahtarı eksik. `SUPABASE_SERVICE_ROLE_KEY` veya `SUPABASE_SECRET_KEY` tanımlanmalı.' },
       { status: 500 }
     )
@@ -167,7 +197,7 @@ export async function POST(request: Request) {
   } = await userClient.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 })
+    return jsonNoStore({ error: 'Oturum bulunamadı.' }, { status: 401 })
   }
 
   const adminSupabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -177,21 +207,22 @@ export async function POST(request: Request) {
   const adminRoleRes = await adminSupabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   const role = (adminRoleRes.data as { role?: string | null } | null)?.role || null
   if (role !== 'admin') {
-    return NextResponse.json({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 })
+    return jsonNoStore({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 })
   }
 
   let body: ModerateBody | null = null
   try {
     body = (await request.json()) as ModerateBody
   } catch {
-    return NextResponse.json({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
   }
 
   const reviewId = (body?.reviewId || '').trim()
   const mode = body?.mode
+  const auditMeta = requestAuditMeta(request)
 
   if (!reviewId || (mode !== 'close' && mode !== 'remove')) {
-    return NextResponse.json({ error: 'Eksik veya geçersiz parametre.' }, { status: 400 })
+    return jsonNoStore({ error: 'Eksik veya geçersiz parametre.' }, { status: 400 })
   }
 
   const reviewRes = await adminSupabase
@@ -201,7 +232,7 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (reviewRes.error || !reviewRes.data) {
-    return NextResponse.json({ error: 'Yorum kaydı bulunamadı.' }, { status: 404 })
+    return jsonNoStore({ error: 'Yorum kaydı bulunamadı.' }, { status: 404 })
   }
 
   const review = reviewRes.data as ReviewRow
@@ -218,7 +249,7 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (updateRes.error || !updateRes.data) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: `Moderasyon yazımı başarısız: ${updateRes.error?.message || 'Bilinmeyen hata'}` },
       { status: 500 }
     )
@@ -226,14 +257,14 @@ export async function POST(request: Request) {
 
   const updated = updateRes.data as { is_reported?: boolean | null; comment?: string | null }
   if (updated.is_reported !== false) {
-    return NextResponse.json({ error: 'İşlem tamamlanamadı: rapor durumu kapanmadı.' }, { status: 500 })
+    return jsonNoStore({ error: 'İşlem tamamlanamadı: rapor durumu kapanmadı.' }, { status: 500 })
   }
 
   if (
     mode === 'remove' &&
     normalizeText(updated.comment || '') !== normalizeText(REMOVED_REVIEW_TEXT)
   ) {
-    return NextResponse.json({ error: 'İşlem tamamlanamadı: yorum metni güncellenmedi.' }, { status: 500 })
+    return jsonNoStore({ error: 'İşlem tamamlanamadı: yorum metni güncellenmedi.' }, { status: 500 })
   }
 
   // Optional audit fields. Missing column errors are ignored to keep backward compatibility.
@@ -283,7 +314,17 @@ export async function POST(request: Request) {
     })
   }
 
-  return NextResponse.json({
+  await writeAdminAuditLog(adminSupabase, {
+    actorId: user.id,
+    scope: 'admin.reviews',
+    action: mode,
+    targetId: reviewId,
+    targetTable: 'business_reviews',
+    metadata: { businessId: businessId || null, ownerId: ownerId || null },
+    ...auditMeta,
+  })
+
+  return jsonNoStore({
     ok: true,
     reviewId,
     mode,

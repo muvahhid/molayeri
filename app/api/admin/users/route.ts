@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { jsonNoStore } from '@/lib/security/http'
+import { writeAdminAuditLog, requestAuditMeta } from '@/lib/security/admin-audit-log'
+import { checkDistributedAdminRateLimit } from '@/lib/security/admin-rate-limit'
+import { isValidAdminCsrf } from '@/lib/security/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +24,7 @@ type RateState = {
 type AdminContextOk = {
   ok: true
   adminSupabase: SupabaseClient
+  adminUserId: string
 }
 
 type AdminContextFail = {
@@ -104,7 +109,26 @@ function isTrustedOrigin(request: Request): boolean {
   }
 }
 
-function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+
+function isTrustedFetchSite(request: Request): boolean {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+    return true
+  }
+
+  const site = (request.headers.get('sec-fetch-site') || '').trim().toLowerCase()
+  if (!site) return true
+  return site === 'same-origin' || site === 'same-site' || site === 'none'
+}
+
+async function checkRateLimit(request: Request): Promise<{ ok: boolean; retryAfter: number }> {
+  const distributed = await checkDistributedAdminRateLimit(request, {
+    namespace: 'admin_users',
+    windowMs: ADMIN_RATE_WINDOW_MS,
+    maxRequests: ADMIN_RATE_MAX_REQUESTS,
+  })
+  if (distributed) return distributed
+
   const now = Date.now()
   const path = new URL(request.url).pathname
   const key = `${path}:${getRequestIp(request)}`
@@ -139,14 +163,14 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
+      response: jsonNoStore({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
     }
   }
 
   if (!serviceRoleKey) {
     return {
       ok: false,
-      response: NextResponse.json(
+      response: jsonNoStore(
         { error: 'Sunucu admin anahtarı eksik. `SUPABASE_SERVICE_ROLE_KEY` veya `SUPABASE_SECRET_KEY` tanımlanmalı.' },
         { status: 500 }
       ),
@@ -175,7 +199,7 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 }),
+      response: jsonNoStore({ error: 'Oturum bulunamadı.' }, { status: 401 }),
     }
   }
 
@@ -188,11 +212,11 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (role !== 'admin') {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
+      response: jsonNoStore({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
     }
   }
 
-  return { ok: true, adminSupabase }
+  return { ok: true, adminSupabase, adminUserId: user.id }
 }
 
 function cleanUserIds(input: unknown): string[] {
@@ -202,12 +226,20 @@ function cleanUserIds(input: unknown): string[] {
 
 export async function POST(request: Request) {
   if (!isTrustedOrigin(request)) {
-    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+    return jsonNoStore({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
   }
 
-  const rate = checkRateLimit(request)
+  if (!isTrustedFetchSite(request)) {
+    return jsonNoStore({ error: 'Geçersiz istek bağlamı.' }, { status: 403 })
+  }
+
+  if (!isValidAdminCsrf(request)) {
+    return jsonNoStore({ error: 'Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.' }, { status: 403 })
+  }
+
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -215,23 +247,24 @@ export async function POST(request: Request) {
 
   const ctx = await resolveAdminContext()
   if (!ctx.ok) return ctx.response
+  const auditMeta = requestAuditMeta(request)
 
   let body: ActionBody | null = null
   try {
     body = (await request.json()) as ActionBody
   } catch {
-    return NextResponse.json({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
   }
 
   const action = body?.action
   if (!action) {
-    return NextResponse.json({ error: 'Eksik işlem tipi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Eksik işlem tipi.' }, { status: 400 })
   }
 
   if (action === 'update_user') {
     const userId = cleanUuid(body?.userId)
     if (!userId) {
-      return NextResponse.json({ error: 'Geçersiz userId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz userId.' }, { status: 400 })
     }
 
     const patch: Record<string, unknown> = {}
@@ -243,7 +276,7 @@ export async function POST(request: Request) {
     if (body?.role !== undefined) {
       const role = normalizeRole(body.role)
       if (!ALLOWED_ROLES.has(role)) {
-        return NextResponse.json({ error: 'Geçersiz rol değeri.' }, { status: 400 })
+        return jsonNoStore({ error: 'Geçersiz rol değeri.' }, { status: 400 })
       }
       patch.role = role
     }
@@ -251,13 +284,13 @@ export async function POST(request: Request) {
     if (body?.status !== undefined) {
       const status = normalizeStatus(body.status)
       if (!ALLOWED_STATUSES.has(status)) {
-        return NextResponse.json({ error: 'Geçersiz durum değeri.' }, { status: 400 })
+        return jsonNoStore({ error: 'Geçersiz durum değeri.' }, { status: 400 })
       }
       patch.status = status
     }
 
     if (Object.keys(patch).length === 0) {
-      return NextResponse.json({ error: 'Güncellenecek alan yok.' }, { status: 400 })
+      return jsonNoStore({ error: 'Güncellenecek alan yok.' }, { status: 400 })
     }
 
     const updateRes = await ctx.adminSupabase
@@ -268,55 +301,83 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     if (updateRes.error) {
-      return NextResponse.json({ error: updateRes.error.message || 'Kayıt güncellenemedi.' }, { status: 500 })
+      return jsonNoStore({ error: updateRes.error.message || 'Kayıt güncellenemedi.' }, { status: 500 })
     }
 
     if (!updateRes.data) {
-      return NextResponse.json({ error: 'Kullanıcı bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'Kullanıcı bulunamadı.' }, { status: 404 })
     }
 
-    return NextResponse.json({ ok: true, user: updateRes.data })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.users',
+      action,
+      targetId: userId,
+      targetTable: 'profiles',
+      metadata: { fields: Object.keys(patch) },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true, user: updateRes.data })
   }
 
   if (action === 'bulk_role') {
     const userIds = cleanUserIds(body?.userIds)
     const role = normalizeRole(body?.role)
     if (userIds.length === 0) {
-      return NextResponse.json({ error: 'En az bir kullanıcı seçilmelidir.' }, { status: 400 })
+      return jsonNoStore({ error: 'En az bir kullanıcı seçilmelidir.' }, { status: 400 })
     }
     if (!ALLOWED_ROLES.has(role)) {
-      return NextResponse.json({ error: 'Geçersiz rol değeri.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz rol değeri.' }, { status: 400 })
     }
 
     for (const chunk of splitChunks(userIds, BULK_CHUNK_SIZE)) {
       const res = await ctx.adminSupabase.from('profiles').update({ role }).in('id', chunk)
       if (res.error) {
-        return NextResponse.json({ error: res.error.message || 'Toplu rol güncellemesi başarısız.' }, { status: 500 })
+        return jsonNoStore({ error: res.error.message || 'Toplu rol güncellemesi başarısız.' }, { status: 500 })
       }
     }
 
-    return NextResponse.json({ ok: true, affected: userIds.length })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.users',
+      action,
+      targetTable: 'profiles',
+      metadata: { affected: userIds.length, role },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true, affected: userIds.length })
   }
 
   if (action === 'bulk_status') {
     const userIds = cleanUserIds(body?.userIds)
     const status = normalizeStatus(body?.status)
     if (userIds.length === 0) {
-      return NextResponse.json({ error: 'En az bir kullanıcı seçilmelidir.' }, { status: 400 })
+      return jsonNoStore({ error: 'En az bir kullanıcı seçilmelidir.' }, { status: 400 })
     }
     if (!ALLOWED_STATUSES.has(status)) {
-      return NextResponse.json({ error: 'Geçersiz durum değeri.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz durum değeri.' }, { status: 400 })
     }
 
     for (const chunk of splitChunks(userIds, BULK_CHUNK_SIZE)) {
       const res = await ctx.adminSupabase.from('profiles').update({ status }).in('id', chunk)
       if (res.error) {
-        return NextResponse.json({ error: res.error.message || 'Toplu durum güncellemesi başarısız.' }, { status: 500 })
+        return jsonNoStore({ error: res.error.message || 'Toplu durum güncellemesi başarısız.' }, { status: 500 })
       }
     }
 
-    return NextResponse.json({ ok: true, affected: userIds.length })
+    await writeAdminAuditLog(ctx.adminSupabase, {
+      actorId: ctx.adminUserId,
+      scope: 'admin.users',
+      action,
+      targetTable: 'profiles',
+      metadata: { affected: userIds.length, status },
+      ...auditMeta,
+    })
+
+    return jsonNoStore({ ok: true, affected: userIds.length })
   }
 
-  return NextResponse.json({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
+  return jsonNoStore({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
 }

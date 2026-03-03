@@ -1,6 +1,7 @@
 'use client'
 
 import { ModuleTitle } from '../../merchant/_components/module-title'
+import { adminJsonHeaders } from '../_lib/csrf'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Ban,
@@ -345,7 +346,7 @@ export default function AdminMolaStopPage() {
     try {
       const response = await fetch('/api/admin/molastop', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(payload),
       })
       const result = (await response.json()) as { error?: string }

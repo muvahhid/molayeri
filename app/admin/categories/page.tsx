@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { ModuleTitle } from '../../merchant/_components/module-title'
+import { adminJsonHeaders } from '../_lib/csrf'
 
 type CategoryRow = {
   id: string
@@ -79,7 +80,7 @@ type AdminCategoriesApiResult = {
 async function postAdminCategoriesAction(payload: Record<string, unknown>): Promise<void> {
   const response = await fetch(ADMIN_CATEGORIES_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminJsonHeaders(),
     body: JSON.stringify(payload),
   })
   const data = (await response.json().catch(() => null)) as AdminCategoriesApiResult | null

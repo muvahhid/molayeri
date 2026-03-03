@@ -1,6 +1,7 @@
 'use client'
 
 import { ModuleTitle } from '../../merchant/_components/module-title'
+import { adminJsonHeaders } from '../_lib/csrf'
 import { useEffect, useMemo, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
@@ -297,7 +298,7 @@ async function safeCount(
 async function postAdminBusinessesAction(payload: Record<string, unknown>): Promise<AdminBusinessesApiResult> {
   const response = await fetch(ADMIN_BUSINESSES_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminJsonHeaders(),
     body: JSON.stringify(payload),
   })
 

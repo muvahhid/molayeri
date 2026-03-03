@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { jsonNoStore } from '@/lib/security/http'
+import { writeAdminAuditLog, requestAuditMeta } from '@/lib/security/admin-audit-log'
+import { checkDistributedAdminRateLimit } from '@/lib/security/admin-rate-limit'
+import { isValidAdminCsrf } from '@/lib/security/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -175,14 +179,14 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
+      response: jsonNoStore({ error: 'Supabase bağlantı ayarları eksik.' }, { status: 500 }),
     }
   }
 
   if (!serviceRoleKey) {
     return {
       ok: false,
-      response: NextResponse.json(
+      response: jsonNoStore(
         { error: 'Sunucu admin anahtarı eksik. `SUPABASE_SERVICE_ROLE_KEY` veya `SUPABASE_SECRET_KEY` tanımlanmalı.' },
         { status: 500 }
       ),
@@ -211,7 +215,7 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 }),
+      response: jsonNoStore({ error: 'Oturum bulunamadı.' }, { status: 401 }),
     }
   }
 
@@ -225,7 +229,7 @@ async function resolveAdminContext(): Promise<AdminContext> {
   if (role !== 'admin') {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
+      response: jsonNoStore({ error: 'Bu işlem için admin yetkisi gerekli.' }, { status: 403 }),
     }
   }
 
@@ -283,7 +287,26 @@ function isTrustedOrigin(request: Request): boolean {
   }
 }
 
-function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+
+function isTrustedFetchSite(request: Request): boolean {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+    return true
+  }
+
+  const site = (request.headers.get('sec-fetch-site') || '').trim().toLowerCase()
+  if (!site) return true
+  return site === 'same-origin' || site === 'same-site' || site === 'none'
+}
+
+async function checkRateLimit(request: Request): Promise<{ ok: boolean; retryAfter: number }> {
+  const distributed = await checkDistributedAdminRateLimit(request, {
+    namespace: 'admin_molastop',
+    windowMs: ADMIN_RATE_WINDOW_MS,
+    maxRequests: ADMIN_RATE_MAX_REQUESTS,
+  })
+  if (distributed) return distributed
+
   const now = Date.now()
   const path = new URL(request.url).pathname
   const key = `${path}:${getRequestIp(request)}`
@@ -311,9 +334,9 @@ function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
 }
 
 export async function GET(request: Request) {
-  const rate = checkRateLimit(request)
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -434,7 +457,7 @@ export async function GET(request: Request) {
     return shortId(id)
   }
 
-  return NextResponse.json({
+  return jsonNoStore({
     ok: true,
     fetchedAt: new Date().toISOString(),
     kpis: {
@@ -475,12 +498,20 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   if (!isTrustedOrigin(request)) {
-    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+    return jsonNoStore({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
   }
 
-  const rate = checkRateLimit(request)
+  if (!isTrustedFetchSite(request)) {
+    return jsonNoStore({ error: 'Geçersiz istek bağlamı.' }, { status: 403 })
+  }
+
+  if (!isValidAdminCsrf(request)) {
+    return jsonNoStore({ error: 'Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.' }, { status: 403 })
+  }
+
+  const rate = await checkRateLimit(request)
   if (!rate.ok) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
     )
@@ -495,20 +526,33 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as ActionBody
   } catch {
-    return NextResponse.json({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Geçersiz istek gövdesi.' }, { status: 400 })
   }
 
   const action = body?.action
   const reason = cleanReason(body?.reason)
+  const auditMeta = requestAuditMeta(request)
 
   if (!action) {
-    return NextResponse.json({ error: 'Eksik işlem tipi.' }, { status: 400 })
+    return jsonNoStore({ error: 'Eksik işlem tipi.' }, { status: 400 })
+  }
+
+  const logSuccess = async (targetId: string | number, metadata?: Record<string, unknown>) => {
+    await writeAdminAuditLog(adminSupabase, {
+      actorId: adminUserId,
+      scope: 'admin.molastop',
+      action,
+      targetId: String(targetId),
+      targetTable: 'molastop',
+      metadata: metadata || {},
+      ...auditMeta,
+    })
   }
 
   if (action === 'deactivate_post' || action === 'activate_post') {
     const postId = cleanUuid(body?.postId)
     if (!postId) {
-      return NextResponse.json({ error: 'Geçersiz postId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz postId.' }, { status: 400 })
     }
 
     const rowRes = await adminSupabase
@@ -518,14 +562,15 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     if (rowRes.error || !rowRes.data) {
-      return NextResponse.json({ error: 'İlan bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'İlan bulunamadı.' }, { status: 404 })
     }
 
     const row = rowRes.data as { id: string; owner_id: string; title: string | null; is_active: boolean | null }
     const nextActive = action === 'activate_post'
 
     if ((row.is_active ?? false) === nextActive) {
-      return NextResponse.json({ ok: true, unchanged: true })
+      await logSuccess(postId, { unchanged: true })
+      return jsonNoStore({ ok: true, unchanged: true })
     }
 
     const updateRes = await adminSupabase
@@ -536,7 +581,7 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     if (updateRes.error || !updateRes.data) {
-      return NextResponse.json({ error: 'İlan durumu güncellenemedi.' }, { status: 500 })
+      return jsonNoStore({ error: 'İlan durumu güncellenemedi.' }, { status: 500 })
     }
 
     const subject = nextActive ? 'MolaStop ilanınız tekrar aktifleştirildi' : 'MolaStop ilanınız admin tarafından pasife alındı'
@@ -550,13 +595,14 @@ Sebep: ${reason}` : ''}`
       content,
     })
 
-    return NextResponse.json({ ok: true })
+    await logSuccess(postId, { active: nextActive })
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'cancel_request' || action === 'reject_request') {
     const requestId = cleanUuid(body?.requestId)
     if (!requestId) {
-      return NextResponse.json({ error: 'Geçersiz requestId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz requestId.' }, { status: 400 })
     }
 
     const rowRes = await adminSupabase
@@ -566,7 +612,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (rowRes.error || !rowRes.data) {
-      return NextResponse.json({ error: 'İstek bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'İstek bulunamadı.' }, { status: 404 })
     }
 
     const row = rowRes.data as {
@@ -578,7 +624,8 @@ Sebep: ${reason}` : ''}`
     }
 
     if (isFinalRequestStatus(row.status)) {
-      return NextResponse.json({ ok: true, unchanged: true })
+      await logSuccess(requestId, { unchanged: true })
+      return jsonNoStore({ ok: true, unchanged: true })
     }
 
     const nextStatus = action === 'reject_request' ? 'rejected' : 'cancelled'
@@ -591,7 +638,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (updateRes.error || !updateRes.data) {
-      return NextResponse.json({ error: 'İstek güncellenemedi.' }, { status: 500 })
+      return jsonNoStore({ error: 'İstek güncellenemedi.' }, { status: 500 })
     }
 
     const subject = `MolaStop isteği ${nextStatus === 'cancelled' ? 'iptal edildi' : 'reddedildi'}`
@@ -605,13 +652,14 @@ Sebep: ${reason}` : ''}`
       content,
     })
 
-    return NextResponse.json({ ok: true })
+    await logSuccess(requestId, { status: nextStatus })
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'cancel_match' || action === 'complete_match') {
     const matchId = cleanUuid(body?.matchId)
     if (!matchId) {
-      return NextResponse.json({ error: 'Geçersiz matchId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz matchId.' }, { status: 400 })
     }
 
     const rowRes = await adminSupabase
@@ -621,7 +669,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (rowRes.error || !rowRes.data) {
-      return NextResponse.json({ error: 'Eşleşme bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'Eşleşme bulunamadı.' }, { status: 404 })
     }
 
     const row = rowRes.data as {
@@ -635,7 +683,8 @@ Sebep: ${reason}` : ''}`
     const nextStatus = action === 'complete_match' ? 'completed' : 'cancelled'
 
     if (normalizeText(row.status || '') === normalizeText(nextStatus)) {
-      return NextResponse.json({ ok: true, unchanged: true })
+      await logSuccess(matchId, { unchanged: true })
+      return jsonNoStore({ ok: true, unchanged: true })
     }
 
     const updateRes = await adminSupabase
@@ -646,7 +695,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (updateRes.error || !updateRes.data) {
-      return NextResponse.json({ error: 'Eşleşme güncellenemedi.' }, { status: 500 })
+      return jsonNoStore({ error: 'Eşleşme güncellenemedi.' }, { status: 500 })
     }
 
     const relatedRequestStatus = nextStatus === 'completed' ? 'completed' : 'cancelled'
@@ -669,13 +718,14 @@ Sebep: ${reason}` : ''}`
       content,
     })
 
-    return NextResponse.json({ ok: true })
+    await logSuccess(matchId, { status: nextStatus })
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'deactivate_channel' || action === 'activate_channel') {
     const channelId = cleanUuid(body?.channelId)
     if (!channelId) {
-      return NextResponse.json({ error: 'Geçersiz channelId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz channelId.' }, { status: 400 })
     }
 
     const rowRes = await adminSupabase
@@ -685,14 +735,15 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (rowRes.error || !rowRes.data) {
-      return NextResponse.json({ error: 'Kanal bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'Kanal bulunamadı.' }, { status: 404 })
     }
 
     const row = rowRes.data as { id: string; name: string | null; created_by: string; is_active: boolean | null }
     const nextActive = action === 'activate_channel'
 
     if ((row.is_active ?? false) === nextActive) {
-      return NextResponse.json({ ok: true, unchanged: true })
+      await logSuccess(channelId, { unchanged: true })
+      return jsonNoStore({ ok: true, unchanged: true })
     }
 
     const updateRes = await adminSupabase
@@ -703,7 +754,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (updateRes.error || !updateRes.data) {
-      return NextResponse.json({ error: 'Kanal durumu güncellenemedi.' }, { status: 500 })
+      return jsonNoStore({ error: 'Kanal durumu güncellenemedi.' }, { status: 500 })
     }
 
     const subject = nextActive ? 'MolaStop kanalınız tekrar açıldı' : 'MolaStop kanalınız admin tarafından donduruldu'
@@ -717,14 +768,15 @@ Sebep: ${reason}` : ''}`
       content,
     })
 
-    return NextResponse.json({ ok: true })
+    await logSuccess(channelId, { active: nextActive })
+    return jsonNoStore({ ok: true })
   }
 
   if (action === 'delete_channel_message') {
     const rawMessageId = body?.messageId
     const messageId = typeof rawMessageId === 'number' ? rawMessageId : Number(rawMessageId)
     if (!Number.isFinite(messageId)) {
-      return NextResponse.json({ error: 'Geçersiz messageId.' }, { status: 400 })
+      return jsonNoStore({ error: 'Geçersiz messageId.' }, { status: 400 })
     }
 
     const rowRes = await adminSupabase
@@ -734,7 +786,7 @@ Sebep: ${reason}` : ''}`
       .maybeSingle()
 
     if (rowRes.error || !rowRes.data) {
-      return NextResponse.json({ error: 'Mesaj bulunamadı.' }, { status: 404 })
+      return jsonNoStore({ error: 'Mesaj bulunamadı.' }, { status: 404 })
     }
 
     const row = rowRes.data as { id: number; sender_id: string; channel_id: string }
@@ -742,7 +794,7 @@ Sebep: ${reason}` : ''}`
     const deleteRes = await adminSupabase.from('molastop_channel_messages').delete().eq('id', messageId)
 
     if (deleteRes.error) {
-      return NextResponse.json({ error: 'Mesaj silinemedi.' }, { status: 500 })
+      return jsonNoStore({ error: 'Mesaj silinemedi.' }, { status: 500 })
     }
 
     const subject = 'MolaStop kanal mesajınız kaldırıldı'
@@ -756,8 +808,9 @@ Sebep: ${reason}` : ''}`
       content,
     })
 
-    return NextResponse.json({ ok: true })
+    await logSuccess(messageId, { deleted: true })
+    return jsonNoStore({ ok: true })
   }
 
-  return NextResponse.json({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
+  return jsonNoStore({ error: 'Desteklenmeyen işlem tipi.' }, { status: 400 })
 }

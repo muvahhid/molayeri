@@ -6,6 +6,7 @@ import {
   isAdminRole,
   isMerchantRole,
 } from '@/lib/auth-role'
+import { ensureAdminCsrfCookie } from '@/lib/security/csrf'
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -77,11 +78,11 @@ export async function proxy(request: NextRequest) {
   if ((isAdminPath || isMerchantPath || isFuturePath) && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
-    return NextResponse.redirect(loginUrl)
+    return ensureAdminCsrfCookie(request, NextResponse.redirect(loginUrl))
   }
 
   if (!user) {
-    return response
+    return ensureAdminCsrfCookie(request, response)
   }
 
   const role = await fetchUserRoleById(supabase, user.id)
@@ -91,24 +92,24 @@ export async function proxy(request: NextRequest) {
   if (isLoginPath) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = targetDashboard
-    return NextResponse.redirect(redirectUrl)
+    return ensureAdminCsrfCookie(request, NextResponse.redirect(redirectUrl))
   }
 
   // 6. KURAL: Admin alanı sadece admin
   if (isAdminPath && !isAdminRole(role)) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = targetDashboard
-    return NextResponse.redirect(redirectUrl)
+    return ensureAdminCsrfCookie(request, NextResponse.redirect(redirectUrl))
   }
 
   // 7. KURAL: İşletmeci alanı sadece işletmeci/pending_business
   if (isMerchantPath && !isMerchantRole(role)) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = targetDashboard
-    return NextResponse.redirect(redirectUrl)
+    return ensureAdminCsrfCookie(request, NextResponse.redirect(redirectUrl))
   }
 
-  return response
+  return ensureAdminCsrfCookie(request, response)
 }
 
 // Hangi sayfalarda çalışacağını belirtiyoruz (Gereksiz dosyaları yormasın diye)
