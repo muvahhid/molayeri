@@ -104,6 +104,18 @@ type AdminContextFail = {
 
 type AdminContext = AdminContextOk | AdminContextFail
 
+const ADMIN_RATE_WINDOW_MS = 60_000
+const ADMIN_RATE_MAX_REQUESTS = 120
+
+type RateState = {
+  count: number
+  resetAt: number
+}
+
+const globalRateStore = globalThis as typeof globalThis & {
+  __adminMolastopRateStore?: Map<string, RateState>
+}
+
 function normalizeText(value: string): string {
   return value
     .toLowerCase()
@@ -239,7 +251,74 @@ async function sendAdminSignals(
   await adminSupabase.from('messages').insert(payload)
 }
 
-export async function GET() {
+function getRequestIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const first = forwarded.split(',')[0]?.trim()
+    if (first) return first
+  }
+  const realIp = request.headers.get('x-real-ip')?.trim()
+  if (realIp) return realIp
+  return 'unknown'
+}
+
+function isTrustedOrigin(request: Request): boolean {
+  const origin = request.headers.get('origin')
+  if (!origin) return true
+
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  if (!host) return false
+
+  const proto = request.headers.get('x-forwarded-proto')
+  const allowed = new Set<string>([
+    `https://${host}`,
+    `http://${host}`,
+    proto ? `${proto}://${host}` : '',
+  ])
+
+  try {
+    return allowed.has(new URL(origin).origin)
+  } catch {
+    return false
+  }
+}
+
+function checkRateLimit(request: Request): { ok: boolean; retryAfter: number } {
+  const now = Date.now()
+  const path = new URL(request.url).pathname
+  const key = `${path}:${getRequestIp(request)}`
+
+  if (!globalRateStore.__adminMolastopRateStore) {
+    globalRateStore.__adminMolastopRateStore = new Map<string, RateState>()
+  }
+
+  const store = globalRateStore.__adminMolastopRateStore
+  const current = store.get(key)
+
+  if (!current || now > current.resetAt) {
+    store.set(key, { count: 1, resetAt: now + ADMIN_RATE_WINDOW_MS })
+    return { ok: true, retryAfter: 0 }
+  }
+
+  if (current.count >= ADMIN_RATE_MAX_REQUESTS) {
+    const retryAfter = Math.max(1, Math.ceil((current.resetAt - now) / 1000))
+    return { ok: false, retryAfter }
+  }
+
+  current.count += 1
+  store.set(key, current)
+  return { ok: true, retryAfter: 0 }
+}
+
+export async function GET(request: Request) {
+  const rate = checkRateLimit(request)
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
+    )
+  }
+
   const ctx = await resolveAdminContext()
   if (!ctx.ok) return ctx.response
 
@@ -395,6 +474,18 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!isTrustedOrigin(request)) {
+    return NextResponse.json({ error: 'Geçersiz istek kaynağı.' }, { status: 403 })
+  }
+
+  const rate = checkRateLimit(request)
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
+    )
+  }
+
   const ctx = await resolveAdminContext()
   if (!ctx.ok) return ctx.response
 

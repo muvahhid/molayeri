@@ -32,18 +32,22 @@ export function getDashboardPathForRole(role: string | null | undefined): string
 
 export async function fetchUserRoleById(
   supabase: SupabaseClient,
-  userId: string,
-  fallbackRole?: string | null
+  userId: string
 ): Promise<ProfileRole> {
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', userId)
       .maybeSingle()
 
-    return normalizeRole((data as { role?: string | null } | null)?.role || fallbackRole)
+    if (error) {
+      return 'user'
+    }
+
+    const role = (data as { role?: string | null } | null)?.role
+    return normalizeRole(role || 'user')
   } catch {
-    return normalizeRole(fallbackRole)
+    return 'user'
   }
 }

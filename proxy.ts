@@ -84,11 +84,7 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  const fallbackRole =
-    ((user.user_metadata as Record<string, unknown> | undefined)?.role as
-      | string
-      | undefined) || 'user'
-  const role = await fetchUserRoleById(supabase, user.id, fallbackRole)
+  const role = await fetchUserRoleById(supabase, user.id)
   const targetDashboard = getDashboardPathForRole(role)
 
   // 5. KURAL: Kullanıcı login ekranındaysa doğrudan rol paneline yönlendir

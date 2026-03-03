@@ -96,10 +96,30 @@ type DetailState = {
 
 type DecisionType = 'active' | 'rejected'
 
+const ADMIN_APPROVALS_API = '/api/admin/approvals'
+
+type AdminApprovalsApiResult = {
+  ok?: boolean
+  error?: string
+}
+
 type LooseFeatureRow = {
   feature_id?: string | number | null
   feature_name?: string | null
   value?: string | null
+}
+
+async function postAdminApprovalsAction(payload: Record<string, unknown>): Promise<void> {
+  const response = await fetch(ADMIN_APPROVALS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const data = (await response.json().catch(() => null)) as AdminApprovalsApiResult | null
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || 'İşlem başarısız.')
+  }
 }
 
 function normalizeText(value: string): string {
@@ -705,6 +725,7 @@ export default function ApprovalsPage() {
     return items
   }, [pendingItems, searchTerm, sortOrder])
 
+
   const handleDecision = async (decision: DecisionType) => {
     if (!detail) return
 
@@ -721,36 +742,19 @@ export default function ApprovalsPage() {
 
     setDecisionLoading(decision)
 
-    const updateRes = await supabase.from('businesses').update({ status: decision }).eq('id', businessId)
-    if (updateRes.error) {
+    try {
+      await postAdminApprovalsAction({
+        action: 'set_decision',
+        businessId,
+        decision,
+      })
+      await fetchPending(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'İşlem yapılamadı.'
+      alert(`İşlem yapılamadı: ${message}`)
+    } finally {
       setDecisionLoading(null)
-      alert(`İşlem yapılamadı: ${updateRes.error.message}`)
-      return
     }
-
-    const ownerId = detail.owner?.id || (detail.business.owner_id || '')
-    if (ownerId) {
-      if (decision === 'active') {
-        await supabase
-          .from('profiles')
-          .update({ role: 'isletmeci', status: 'active' })
-          .eq('id', ownerId)
-          .neq('role', 'admin')
-      } else {
-        const remainingRes = await supabase
-          .from('businesses')
-          .select('id', { count: 'exact', head: true })
-          .eq('owner_id', ownerId)
-          .in('status', ['active', 'pending'])
-
-        if (!remainingRes.error && (remainingRes.count || 0) === 0) {
-          await supabase.from('profiles').update({ role: 'user' }).eq('id', ownerId).eq('role', 'pending_business')
-        }
-      }
-    }
-
-    await fetchPending(true)
-    setDecisionLoading(null)
   }
 
   const businessCard = detail?.business || null

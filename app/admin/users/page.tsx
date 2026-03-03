@@ -48,6 +48,7 @@ type DetailTab = 'profil' | 'yetki' | 'ham'
 
 const PAGE_WINDOW = 10
 const PAGE_SIZE_OPTIONS = [25, 50, 100]
+const ADMIN_USERS_API = '/api/admin/users'
 
 function normalizeText(value: string): string {
   return value
@@ -146,6 +147,26 @@ function chunkArray<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(index, index + size))
   }
   return chunks
+}
+
+type AdminUsersApiResult = {
+  ok?: boolean
+  error?: string
+  user?: GenericRow
+}
+
+async function postAdminUsersAction(payload: Record<string, unknown>): Promise<AdminUsersApiResult> {
+  const response = await fetch(ADMIN_USERS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const data = (await response.json().catch(() => null)) as AdminUsersApiResult | null
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || 'İşlem başarısız.')
+  }
+  return data
 }
 
 // Ortak Donanım Kartı Kapsayıcısı
@@ -337,28 +358,30 @@ export default function AdminUsersPage() {
     if (!detail || !form) return
     setSaving(true)
 
-    const payload = {
+    const payload: { full_name: string | null; role: string; status: string } = {
       full_name: form.full_name.trim() || null,
       role: form.role,
       status: form.status,
     }
 
-    const res = await supabase.from('profiles').update(payload).eq('id', detail.id)
+    try {
+      const result = await postAdminUsersAction({
+        action: 'update_user',
+        userId: detail.id,
+        ...payload,
+      })
 
-    if (res.error) {
-      window.alert(`Kaydedilemedi: ${res.error.message}`)
+      const mergedUser = buildUserRow((result.user as GenericRow) || { ...detail.raw, ...payload, id: detail.id })
+      setUsers((current) => current.map((user) => (user.id === detail.id ? mergedUser : user)))
+      setDetail(mergedUser)
+
+      await fetchStats()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Kaydedilemedi.'
+      window.alert(`Kaydedilemedi: ${message}`)
+    } finally {
       setSaving(false)
-      return
     }
-
-    const mergedRaw = { ...detail.raw, ...payload, id: detail.id }
-    const mergedUser = buildUserRow(mergedRaw)
-
-    setUsers((current) => current.map((user) => (user.id === detail.id ? mergedUser : user)))
-    setDetail(mergedUser)
-
-    await fetchStats()
-    setSaving(false)
   }
 
   const sendMessage = (userId: string) => {
@@ -398,8 +421,11 @@ export default function AdminUsersPage() {
 
     try {
       for (const chunk of chunkArray(ids, 250)) {
-        const res = await supabase.from('profiles').update({ role: bulkRole }).in('id', chunk)
-        if (res.error) throw new Error(res.error.message)
+        await postAdminUsersAction({
+          action: 'bulk_role',
+          userIds: chunk,
+          role: bulkRole,
+        })
       }
 
       if (detail && form && ids.includes(detail.id)) {
@@ -429,8 +455,11 @@ export default function AdminUsersPage() {
 
     try {
       for (const chunk of chunkArray(ids, 250)) {
-        const res = await supabase.from('profiles').update({ status: bulkStatus }).in('id', chunk)
-        if (res.error) throw new Error(res.error.message)
+        await postAdminUsersAction({
+          action: 'bulk_status',
+          userIds: chunk,
+          status: bulkStatus,
+        })
       }
 
       if (detail && form && ids.includes(detail.id)) {
@@ -461,9 +490,15 @@ export default function AdminUsersPage() {
 
     if (!confirmed) return
 
-    const res = await supabase.from('profiles').update({ status: nextStatus }).eq('id', user.id)
-    if (res.error) {
-      window.alert(`İşlem başarısız: ${res.error.message}`)
+    try {
+      await postAdminUsersAction({
+        action: 'update_user',
+        userId: user.id,
+        status: nextStatus,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'İşlem başarısız.'
+      window.alert(`İşlem başarısız: ${message}`)
       return
     }
 

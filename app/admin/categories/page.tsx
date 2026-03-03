@@ -43,6 +43,8 @@ type FeatureFormState = {
   categoryId: string
 }
 
+const ADMIN_CATEGORIES_API = '/api/admin/categories'
+
 function normalizeText(value: string): string {
   return value
     .toLowerCase()
@@ -67,6 +69,23 @@ function formatDate(raw: string | null): string {
   const date = new Date(raw)
   if (Number.isNaN(date.getTime())) return '-'
   return date.toLocaleDateString('tr-TR')
+}
+
+type AdminCategoriesApiResult = {
+  ok?: boolean
+  error?: string
+}
+
+async function postAdminCategoriesAction(payload: Record<string, unknown>): Promise<void> {
+  const response = await fetch(ADMIN_CATEGORIES_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const data = (await response.json().catch(() => null)) as AdminCategoriesApiResult | null
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || 'İşlem başarısız.')
+  }
 }
 
 // Ortak Donanım Kartı Kapsayıcısı
@@ -262,19 +281,20 @@ export default function AdminCategoriesPage() {
       slug: categoryForm.slug.trim(),
     }
 
-    const res = editingCategoryId
-      ? await supabase.from('categories').update(payload).eq('id', editingCategoryId)
-      : await supabase.from('categories').insert(payload)
-
-    setSavingCategory(false)
-
-    if (res.error) {
-      window.alert(`Kaydedilemedi: ${res.error.message}`)
-      return
+    try {
+      await postAdminCategoriesAction({
+        action: 'save_category',
+        categoryId: editingCategoryId || undefined,
+        ...payload,
+      })
+      setCategoryModalOpen(false)
+      await fetchData(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Kaydedilemedi.'
+      window.alert(`Kaydedilemedi: ${message}`)
+    } finally {
+      setSavingCategory(false)
     }
-
-    setCategoryModalOpen(false)
-    await fetchData(true)
   }
 
   const removeCategory = async (category: CategoryRow) => {
@@ -291,35 +311,21 @@ export default function AdminCategoriesPage() {
 
     setDeletingCategoryId(category.id)
 
-    if (relatedFeatureCount > 0) {
-      const featureReset = await supabase
-        .from('features')
-        .update({ category_id: null, is_global: true })
-        .eq('category_id', category.id)
-
-      if (featureReset.error) {
-        window.alert(`Kategori silme ön hazırlığı başarısız: ${featureReset.error.message}`)
-        setDeletingCategoryId('')
-        return
+    try {
+      await postAdminCategoriesAction({
+        action: 'delete_category',
+        categoryId: category.id,
+      })
+      if (focusCategoryId === category.id) {
+        setFocusCategoryId('')
       }
+      await fetchData(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Silinemedi.'
+      window.alert(`Silinemedi: ${message}`)
+    } finally {
+      setDeletingCategoryId('')
     }
-
-    await supabase.from('business_categories').delete().eq('category_id', category.id)
-
-    const deleteRes = await supabase.from('categories').delete().eq('id', category.id)
-
-    setDeletingCategoryId('')
-
-    if (deleteRes.error) {
-      window.alert(`Silinemedi: ${deleteRes.error.message}`)
-      return
-    }
-
-    if (focusCategoryId === category.id) {
-      setFocusCategoryId('')
-    }
-
-    await fetchData(true)
   }
 
   const openCreateFeatureModal = (categoryId?: string) => {
@@ -364,19 +370,21 @@ export default function AdminCategoriesPage() {
       category_id: isGlobal ? null : featureForm.categoryId,
     }
 
-    const res = editingFeatureId
-      ? await supabase.from('features').update(payload).eq('id', editingFeatureId)
-      : await supabase.from('features').insert(payload)
-
-    setSavingFeature(false)
-
-    if (res.error) {
-      window.alert(`Kaydedilemedi: ${res.error.message}`)
-      return
+    try {
+      await postAdminCategoriesAction({
+        action: 'save_feature',
+        featureId: editingFeatureId || undefined,
+        ...payload,
+        feature_category_id: payload.category_id,
+      })
+      setFeatureModalOpen(false)
+      await fetchData(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Kaydedilemedi.'
+      window.alert(`Kaydedilemedi: ${message}`)
+    } finally {
+      setSavingFeature(false)
     }
-
-    setFeatureModalOpen(false)
-    await fetchData(true)
   }
 
   const removeFeature = async (feature: FeatureRow) => {
@@ -387,18 +395,18 @@ export default function AdminCategoriesPage() {
 
     setDeletingFeatureId(feature.id)
 
-    await supabase.from('business_features').delete().eq('feature_id', feature.id)
-
-    const res = await supabase.from('features').delete().eq('id', feature.id)
-
-    setDeletingFeatureId('')
-
-    if (res.error) {
-      window.alert(`Silinemedi: ${res.error.message}`)
-      return
+    try {
+      await postAdminCategoriesAction({
+        action: 'delete_feature',
+        featureId: feature.id,
+      })
+      await fetchData(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Silinemedi.'
+      window.alert(`Silinemedi: ${message}`)
+    } finally {
+      setDeletingFeatureId('')
     }
-
-    await fetchData(true)
   }
 
   return (

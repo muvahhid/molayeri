@@ -27,11 +27,7 @@ export default function LoginPage() {
 
   const redirectByRole = useCallback(
     async (user: User) => {
-      const role = await fetchUserRoleById(
-        supabase,
-        user.id,
-        (user.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined
-      )
+      const role = await fetchUserRoleById(supabase, user.id)
       router.refresh()
       router.push(getDashboardPathForRole(role))
     },

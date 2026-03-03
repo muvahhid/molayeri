@@ -50,10 +50,26 @@ function toTs(raw: string): number {
   return Number.isFinite(ts) ? ts : 0
 }
 
+function sanitizeAttachmentUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const raw = value.trim()
+  if (!raw) return null
+
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'https:') return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
 function mapMessage(row: GenericRow): MessageRecord {
   const attachmentsRaw = row.attachments
   const attachments = Array.isArray(attachmentsRaw)
-    ? attachmentsRaw.filter((item) => typeof item === 'string').map((item) => String(item))
+    ? attachmentsRaw
+        .map((item) => sanitizeAttachmentUrl(item))
+        .filter((item): item is string => Boolean(item))
     : null
 
   return {
@@ -734,7 +750,7 @@ function MessagesCenterContent() {
                             key={`${selectedMessage.id}-att-${index}`}
                             href={url}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer nofollow"
                             className="px-3 py-1.5 rounded bg-[#16181d] border border-[#2d313a] text-[10px] font-mono text-[#38bdf8] hover:bg-[#1a1d24] transition-colors break-all max-w-full truncate"
                           >
                             EK DOSYA {index + 1}

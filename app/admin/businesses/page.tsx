@@ -130,6 +130,13 @@ type TabValue = 'genel' | 'konum' | 'kategori' | 'medya' | 'sahip' | 'ham'
 
 const PAGE_WINDOW = 10
 const PAGE_SIZE_OPTIONS = [25, 50, 100]
+const ADMIN_BUSINESSES_API = '/api/admin/businesses'
+
+type AdminBusinessesApiResult = {
+  ok?: boolean
+  error?: string
+  affected?: number
+}
 
 function normalizeText(value: string): string {
   return value
@@ -165,14 +172,6 @@ function parseNumber(raw: unknown): number | null {
   return null
 }
 
-function chunkArray<T>(items: T[], size: number): T[][] {
-  if (size <= 0) return [items]
-  const chunks: T[][] = []
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size))
-  }
-  return chunks
-}
 
 function buildBusinessRow(raw: GenericRow): BusinessRow {
   return {
@@ -295,6 +294,20 @@ async function safeCount(
   }
 }
 
+async function postAdminBusinessesAction(payload: Record<string, unknown>): Promise<AdminBusinessesApiResult> {
+  const response = await fetch(ADMIN_BUSINESSES_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const data = (await response.json().catch(() => null)) as AdminBusinessesApiResult | null
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || 'İşlem başarısız.')
+  }
+  return data
+}
+
 export default function AdminBusinessesPage() {
   const supabase = useMemo(
     () =>
@@ -352,13 +365,6 @@ export default function AdminBusinessesPage() {
     return map
   }, [categories])
 
-  const featureNameById = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const feature of features) {
-      map.set(feature.id, feature.name)
-    }
-    return map
-  }, [features])
 
   const fetchLookups = async () => {
     const [categoryRes, featureRes] = await Promise.all([
@@ -449,21 +455,6 @@ export default function AdminBusinessesPage() {
     }
 
     return { rows: [], readMode: 'id' }
-  }
-
-  const insertBusinessFeatures = async (rows: Array<Record<string, unknown>>) => {
-    if (rows.length === 0) return
-
-    const withValueRes = await supabase
-      .from('business_features')
-      .insert(rows.map((row) => ({ ...row, value: 'true' })))
-
-    if (!withValueRes.error) return
-
-    const plainRes = await supabase.from('business_features').insert(rows)
-    if (plainRes.error) {
-      throw new Error(plainRes.error.message)
-    }
   }
 
   const fetchBusinesses = async (soft = false) => {
@@ -737,57 +728,6 @@ export default function AdminBusinessesPage() {
     setDetailLoading(false)
   }
 
-  const writeCategories = async (businessId: string, categoryIds: string[]) => {
-    await supabase.from('business_categories').delete().eq('business_id', businessId)
-    if (categoryIds.length === 0) return
-    const inserts = categoryIds.map((categoryId) => ({ business_id: businessId, category_id: categoryId }))
-    const insertRes = await supabase.from('business_categories').insert(inserts)
-    if (insertRes.error) {
-      throw new Error(insertRes.error.message)
-    }
-  }
-
-  const writeFeatures = async (
-    businessId: string,
-    selectedFeatureIds: string[],
-    legacyNames: string[],
-    writeMode: 'id' | 'name' | 'mixed'
-  ) => {
-    await supabase.from('business_features').delete().eq('business_id', businessId)
-
-    const uniqueIds = Array.from(new Set(selectedFeatureIds.filter((id) => id.trim().length > 0)))
-    const namesFromIds = uniqueIds
-      .map((id) => featureNameById.get(id) || '')
-      .filter((name) => name.trim().length > 0)
-    const uniqueNames = Array.from(new Set([...namesFromIds, ...legacyNames].map((value) => value.trim()).filter((value) => value.length > 0)))
-
-    if (uniqueIds.length === 0 && uniqueNames.length === 0) {
-      return
-    }
-
-    if (writeMode === 'name') {
-      if (uniqueNames.length > 0) {
-        await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
-      }
-      return
-    }
-
-    if (uniqueIds.length > 0) {
-      try {
-        await insertBusinessFeatures(uniqueIds.map((featureId) => ({ business_id: businessId, feature_id: featureId })))
-        if (writeMode === 'mixed' && uniqueNames.length > 0) {
-          await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
-        }
-        return
-      } catch {
-        // Falls back to legacy name mode below.
-      }
-    }
-
-    if (uniqueNames.length > 0) {
-      await insertBusinessFeatures(uniqueNames.map((name) => ({ business_id: businessId, feature_name: name })))
-    }
-  }
 
   const saveDetail = async () => {
     if (!detail || !form) return
@@ -815,20 +755,20 @@ export default function AdminBusinessesPage() {
       is_open: form.is_open,
     }
 
-    const updateRes = await supabase.from('businesses').update(payload).eq('id', businessId)
-    if (updateRes.error) {
-      setSaving(false)
-      window.alert(`Kaydedilemedi: ${updateRes.error.message}`)
-      return
-    }
-
     try {
-      await writeCategories(businessId, editCategoryIds)
-      await writeFeatures(businessId, editFeatureIds, featureLegacyNames, featureWriteMode)
+      await postAdminBusinessesAction({
+        action: 'save_business',
+        businessId,
+        payload,
+        categoryIds: editCategoryIds,
+        featureIds: editFeatureIds,
+        featureLegacyNames,
+        featureWriteMode,
+      })
     } catch (error) {
       setSaving(false)
-      const message = error instanceof Error ? error.message : 'İlişkili alanlar kaydedilemedi.'
-      window.alert(message)
+      const message = error instanceof Error ? error.message : 'Kaydedilemedi.'
+      window.alert(`Kaydedilemedi: ${message}`)
       return
     }
 
@@ -841,9 +781,11 @@ export default function AdminBusinessesPage() {
     setSaving(false)
   }
 
+
   const deleteBusiness = async (businessId: string, businessName: string) => {
     if (deleting) return
-    const typed = window.prompt(`Silmek için işletme adını yazın:\n${businessName}`)
+    const typed = window.prompt(`Silmek için işletme adını yazın:
+${businessName}`)
     if (typed === null) return
     if (typed.trim() !== businessName.trim()) {
       window.alert('İsim eşleşmedi. Silme iptal edildi.')
@@ -851,9 +793,11 @@ export default function AdminBusinessesPage() {
     }
 
     setDeleting(true)
-    const deleteRes = await supabase.from('businesses').delete().eq('id', businessId)
-    if (deleteRes.error) {
-      window.alert(`Silinemedi: ${deleteRes.error.message}`)
+    try {
+      await postAdminBusinessesAction({ action: 'delete_business', businessId })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Silinemedi.'
+      window.alert(`Silinemedi: ${message}`)
       setDeleting(false)
       return
     }
@@ -890,6 +834,7 @@ export default function AdminBusinessesPage() {
     })
   }
 
+
   const applyBulkStatus = async () => {
     const ids = Array.from(new Set(selectedBusinessIds)).filter((id) => id.length > 0)
     if (ids.length === 0 || bulkProcessing) return
@@ -901,10 +846,11 @@ export default function AdminBusinessesPage() {
 
     setBulkProcessing(true)
     try {
-      for (const chunk of chunkArray(ids, 250)) {
-        const res = await supabase.from('businesses').update({ status: bulkStatus }).in('id', chunk)
-        if (res.error) throw new Error(res.error.message)
-      }
+      await postAdminBusinessesAction({
+        action: 'bulk_status',
+        businessIds: ids,
+        bulkStatus,
+      })
 
       if (detail && ids.includes(detail.business.id)) {
         setForm((current) => (current ? { ...current, status: bulkStatus } : current))
@@ -921,6 +867,7 @@ export default function AdminBusinessesPage() {
     }
   }
 
+
   const deleteSelectedBusinesses = async () => {
     const ids = Array.from(new Set(selectedBusinessIds)).filter((id) => id.length > 0)
     if (ids.length === 0 || bulkProcessing) return
@@ -936,10 +883,10 @@ export default function AdminBusinessesPage() {
 
     setBulkProcessing(true)
     try {
-      for (const chunk of chunkArray(ids, 250)) {
-        const res = await supabase.from('businesses').delete().in('id', chunk)
-        if (res.error) throw new Error(res.error.message)
-      }
+      await postAdminBusinessesAction({
+        action: 'bulk_delete',
+        businessIds: ids,
+      })
 
       if (detail && ids.includes(detail.business.id)) {
         setDetail(null)
