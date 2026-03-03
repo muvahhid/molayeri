@@ -71,6 +71,54 @@ function firstPositiveFromKeys(row: Record<string, unknown>, keys: string[]): nu
   return 0
 }
 
+function normalizeMetricKey(value: string): string {
+  let s = value.toLowerCase()
+  const map: Record<string, string> = {
+    'ç': 'c',
+    'ğ': 'g',
+    'ı': 'i',
+    'ö': 'o',
+    'ş': 's',
+    'ü': 'u',
+  }
+  for (const [from, to] of Object.entries(map)) {
+    s = s.replaceAll(from, to)
+  }
+  return s.replace(/[^a-z0-9]+/g, '')
+}
+
+function metricValueFromBusinessRow(
+  business: MerchantBusiness | null,
+  keys: string[],
+  fuzzyTokens: string[] = []
+): number {
+  if (!business) return 0
+
+  const row = business as unknown as Record<string, unknown>
+  const normalizedDirectKeys = new Set(keys.map(normalizeMetricKey).filter(Boolean))
+
+  for (const key of keys) {
+    const value = toSafeNumber(row[key])
+    if (value > 0) return Math.trunc(value)
+  }
+
+  if (fuzzyTokens.length > 0) {
+    const normalizedTokens = fuzzyTokens.map(normalizeMetricKey).filter(Boolean)
+    for (const [key, raw] of Object.entries(row)) {
+      const normalizedKey = normalizeMetricKey(key)
+      if (!normalizedKey) continue
+      if (normalizedDirectKeys.has(normalizedKey)) continue
+      if (normalizedKey.includes('lat') || normalizedKey.includes('lng') || normalizedKey.includes('lon')) continue
+      if (!normalizedTokens.some((token) => normalizedKey.includes(token))) continue
+
+      const value = toSafeNumber(raw)
+      if (value > 0) return Math.trunc(value)
+    }
+  }
+
+  return 0
+}
+
 function negotiationStatusLabel(status: string | null): string {
   if (status === 'accepted') return 'Kabul'
   if (status === 'pending') return 'Bekliyor'
@@ -548,6 +596,75 @@ export default function MerchantDashboardPage() {
     const sevenDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
     sevenDaysAgo.setHours(0, 0, 0, 0)
     const sevenDaysAgoIso = sevenDaysAgo.toISOString()
+    const todayKey = toDayKey(now)
+
+    const fetchVisitTimelineRows = async () => {
+      const primary = await supabase
+        .from('user_coupons')
+        .select('used_at, created_at')
+        .eq('business_id', businessId)
+        .eq('status', 'used')
+        .gte('used_at', sevenDaysAgoIso)
+
+      if (!primary.error) {
+        return (primary.data || []) as Array<{ used_at?: string | null; created_at?: string | null }>
+      }
+
+      const fallback = await supabase
+        .from('user_coupons')
+        .select('used_at, created_at')
+        .eq('business_id', businessId)
+        .eq('status', 'used')
+        .gte('created_at', sevenDaysAgoIso)
+
+      if (fallback.error) {
+        return []
+      }
+
+      return (fallback.data || []) as Array<{ used_at?: string | null; created_at?: string | null }>
+    }
+
+    const fetchMolaTargetTimelineRows = async (): Promise<Array<{ stop_added_at?: string | null; last_offer_at?: string | null }>> => {
+      const v2 = await supabase.rpc('get_mola_targets_for_business_v2', {
+        p_business_id: businessId,
+      })
+      if (!v2.error && Array.isArray(v2.data)) {
+        return (v2.data || []) as Array<{ stop_added_at?: string | null; last_offer_at?: string | null }>
+      }
+
+      const v1 = await supabase.rpc('get_mola_targets_for_business', {
+        p_business_id: businessId,
+      })
+      if (!v1.error && Array.isArray(v1.data)) {
+        return (v1.data || []) as Array<{ stop_added_at?: string | null; last_offer_at?: string | null }>
+      }
+
+      return []
+    }
+
+    const fetchSearchTimelineRows = async (): Promise<Array<{ sent_at?: string | null; created_at?: string | null }>> => {
+      const primary = await supabase
+        .from('mola_business_offers')
+        .select('sent_at')
+        .eq('business_id', businessId)
+        .gte('sent_at', sevenDaysAgoIso)
+
+      if (!primary.error) {
+        return (primary.data || []) as Array<{ sent_at?: string | null; created_at?: string | null }>
+      }
+
+      const fallback = await supabase
+        .from('mola_business_offers')
+        .select('created_at')
+        .eq('business_id', businessId)
+        .gte('created_at', sevenDaysAgoIso)
+
+      if (fallback.error) {
+        return []
+      }
+
+      return (fallback.data || []) as Array<{ sent_at?: string | null; created_at?: string | null }>
+    }
 
     try {
       const [
@@ -559,8 +676,8 @@ export default function MerchantDashboardPage() {
         targetsCountRes,
         activeTargetOffersCountRes,
         molaTimelineRes,
-        visitTimelineRes,
-        searchTimelineRes,
+        visitTimelineRows,
+        searchTimelineRows,
       ] = await Promise.all([
         supabase
           .from('messages')
@@ -600,17 +717,8 @@ export default function MerchantDashboardPage() {
           .select('created_at')
           .eq('business_id', businessId)
           .gte('created_at', sevenDaysAgoIso),
-        supabase
-          .from('user_coupons')
-          .select('used_at, created_at')
-          .eq('business_id', businessId)
-          .eq('status', 'used')
-          .gte('created_at', sevenDaysAgoIso),
-        supabase
-          .from('mola_business_offers')
-          .select('sent_at, created_at')
-          .eq('business_id', businessId)
-          .gte('created_at', sevenDaysAgoIso),
+        fetchVisitTimelineRows(),
+        fetchSearchTimelineRows(),
       ])
 
       const directMessages = (directMessagesRes.data || []) as DashboardMiniMessage[]
@@ -777,40 +885,102 @@ export default function MerchantDashboardPage() {
         ])
       )
 
+      const addTimelinePoint = (
+        rawValue: string | null | undefined,
+        metric: 'searchSeen' | 'visits' | 'molaAdds'
+      ): boolean => {
+        const raw = (rawValue || '').trim()
+        if (!raw) return false
+        const dt = new Date(raw)
+        if (Number.isNaN(dt.getTime())) return false
+        const key = toDayKey(dt)
+        const slot = slotMap.get(key)
+        if (!slot) return false
+        slot[metric] += 1
+        return true
+      }
+
+      const todaySlot = slotMap.get(todayKey)
+      let molaApplied = 0
+      let visitApplied = 0
+      let searchApplied = 0
+
       for (const row of (molaTimelineRes.data || []) as Array<{ created_at?: string | null }>) {
-        const raw = row.created_at || ''
-        const dt = new Date(raw)
-        if (Number.isNaN(dt.getTime())) continue
-        const key = toDayKey(dt)
-        const slot = slotMap.get(key)
-        if (!slot) continue
-        slot.molaAdds += 1
+        if (addTimelinePoint(row.created_at, 'molaAdds')) {
+          molaApplied += 1
+        }
       }
 
-      for (const row of (visitTimelineRes.data || []) as Array<{ used_at?: string | null; created_at?: string | null }>) {
-        const raw = row.used_at || row.created_at || ''
-        const dt = new Date(raw)
-        if (Number.isNaN(dt.getTime())) continue
-        const key = toDayKey(dt)
-        const slot = slotMap.get(key)
-        if (!slot) continue
-        slot.visits += 1
+      for (const row of visitTimelineRows) {
+        if (addTimelinePoint(row.used_at || row.created_at, 'visits')) {
+          visitApplied += 1
+        }
       }
 
-      for (const row of (searchTimelineRes.data || []) as Array<{ sent_at?: string | null; created_at?: string | null }>) {
-        const raw = row.sent_at || row.created_at || ''
-        const dt = new Date(raw)
-        if (Number.isNaN(dt.getTime())) continue
-        const key = toDayKey(dt)
-        const slot = slotMap.get(key)
-        if (!slot) continue
-        slot.searchSeen += 1
+      for (const row of searchTimelineRows) {
+        if (addTimelinePoint(row.sent_at || row.created_at, 'searchSeen')) {
+          searchApplied += 1
+        }
+      }
+
+      if (molaApplied === 0 || searchApplied === 0) {
+        const targetTimelineRows = await fetchMolaTargetTimelineRows()
+        let targetMolaApplied = 0
+        let targetSearchApplied = 0
+
+        for (const row of targetTimelineRows) {
+          if (molaApplied === 0 && addTimelinePoint(row.stop_added_at, 'molaAdds')) {
+            targetMolaApplied += 1
+          }
+          if (searchApplied === 0 && addTimelinePoint(row.last_offer_at, 'searchSeen')) {
+            targetSearchApplied += 1
+          }
+        }
+
+        if (molaApplied === 0 && targetMolaApplied === 0 && targetTimelineRows.length > 0 && todaySlot) {
+          todaySlot.molaAdds = Math.max(todaySlot.molaAdds, targetTimelineRows.length)
+        }
+
+        molaApplied += targetMolaApplied
+        searchApplied += targetSearchApplied
+      }
+
+      if (visitApplied === 0 && todaySlot) {
+        const usedCountRes = await supabase
+          .from('user_coupons')
+          .select('id', { head: true, count: 'exact' })
+          .eq('business_id', businessId)
+          .eq('status', 'used')
+
+        const usedCount = usedCountRes.error ? 0 : usedCountRes.count || 0
+        if (usedCount > 0) {
+          todaySlot.visits = Math.max(todaySlot.visits, usedCount)
+        }
+      }
+
+      if (searchApplied === 0 && todaySlot) {
+        const businessSearchTotal = metricValueFromBusinessRow(
+          selectedBusiness,
+          [
+            'view_count',
+            'views_count',
+            'views',
+            'goruntulenme_count',
+            'goruntulenme',
+            'impression_count',
+            'impressions_count',
+            'show_count',
+          ],
+          ['view', 'goruntu', 'gosterim', 'impression']
+        )
+        if (businessSearchTotal > 0) {
+          todaySlot.searchSeen = Math.max(todaySlot.searchSeen, businessSearchTotal)
+        }
       }
 
       setAnalyticsSeries(slots.map((slot) => slotMap.get(slot.key) || { key: slot.key, label: slot.label, searchSeen: 0, visits: 0, molaAdds: 0 }))
     } catch {
       resetQuickModuleState()
-      setAnalyticsSeries([])
       setPanelError((current) => current || 'Hızlı modül verileri yüklenemedi. Sayfayı yenileyin.')
     } finally {
       setQuickModulesLoading(false)
@@ -1347,6 +1517,22 @@ export default function MerchantDashboardPage() {
 
     refreshStats()
     loadQuickModules()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBusinessId, userId])
+
+  useEffect(() => {
+    if (!selectedBusinessId || !userId) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      refreshStats()
+      loadQuickModules()
+    }, 30_000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusinessId, userId])
 
