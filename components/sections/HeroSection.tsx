@@ -65,36 +65,44 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
           <div className="grid grid-cols-1 lg:grid-cols-[0.86fr_1.14fr] gap-8 lg:gap-10 items-stretch">
             <div className={`lg:pr-2 flex flex-col min-h-0 ${embedded ? '' : 'lg:min-h-[560px] xl:min-h-[640px]'} pt-[15px]`}>
               <div className="mt-4 md:mt-6 flex flex-col items-center">
-                <img
-                  src={LOGO_URL}
-                  alt="Molayeri Logo"
-                  className="h-auto w-[110px] md:w-[150px] object-contain mb-4 -mt-[7px]"
-                  draggable={false}
-                />
+                <div className="mb-4 -mt-[7px] flex flex-col items-center">
+                  <img
+                    src={LOGO_URL}
+                    alt="Molayeri Logo"
+                    className="h-auto w-[110px] md:w-[150px] object-contain"
+                    draggable={false}
+                  />
+                  <span className="mt-1 block text-center font-mono text-[8px] font-bold tracking-[0.08em] text-[#38BDF8]">
+                    {'>_'} Route OS
+                  </span>
+                </div>
 
-                <h1 className="max-w-[340px] text-[clamp(1.55rem,3.6vw,3.25rem)] font-black tracking-tight leading-[0.98] text-center">
-                  <span style={{ color: '#FFB36B' }}>
-                    Yol İşletim
-                  </span>
-                  <br />
-                  <span
-                    style={{
-                      color: '#FF5A1F',
-                      textShadow: 'none',
-                      WebkitTextStroke: '0.5px rgba(120,35,10,0.32)',
-                    }}
-                  >
-                    Sistemi
-                  </span>
-                </h1>
+                <div className="relative inline-block">
+                  <h1 className="max-w-[340px] text-[clamp(1.55rem,3.6vw,3.25rem)] font-black tracking-tight leading-[0.98] text-center">
+                    <span style={{ color: '#FFB36B' }}>
+                      Rota
+                    </span>
+                    <br />
+                    <span
+                      style={{
+                        color: '#FF5A1F',
+                        textShadow: 'none',
+                        WebkitTextStroke: '0.5px rgba(120,35,10,0.32)',
+                      }}
+                    >
+                      İşletim{'\u00A0'}Sistemi
+                    </span>
+                  </h1>
+
+                </div>
               </div>
 
               <p
                 className="mt-4 max-w-[390px] mx-auto text-[14px] md:text-[15px] leading-relaxed font-semibold text-white/88 text-center"
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
-                Molayeri, keşif, iletişim ve ödeme akışını tek bir yüksek güven deneyiminde birleştirir.
-                Sürücü ve işletme aynı ritimde hareket eder.
+                Keşiften tahsilata kusursuz bir akış. MolaYeri; hareket halindeki kullanıcıyla, onu bekleyen işletmeyi tek bir dijital köprüde birleştirir.
+                İhtiyaç anında fırsatlar saniyeler içinde ekrana düşer, ödemeler pürüzsüzce tamamlanır. Sokağın ve otoyolun ritmi artık aynı frekansta atıyor.
               </p>
 
               <div className="mt-auto pb-[15px] flex flex-col gap-4">
