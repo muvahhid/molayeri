@@ -46,11 +46,9 @@ export const CommandCenterNav = ({
 
   const progressWidth = useTransform(progress, [0, 1], ['0%', '100%'])
   const audienceToggleLabel = audienceMode === 'user' ? 'İşletmeciyim' : 'Kullanıcıyım'
-  const navContainerClass =
-    audienceMode === 'merchant'
-      ? 'w-[98%] sm:w-[97%] md:w-[92%] max-w-[1360px]'
-      : 'w-[96%] sm:w-[95%] md:w-[85%] max-w-5xl'
-  const navItemPaddingClass = audienceMode === 'merchant' ? 'px-2.5 sm:px-4' : 'px-3 sm:px-5'
+  const navContainerClass = 'w-[96%] sm:w-[95%] md:w-[92%]'
+  const navMaxWidth = audienceMode === 'merchant' ? 1360 : 1120
+  const navItemPaddingClass = 'px-3 sm:px-4'
   const [isNavigating, setIsNavigating] = useState(false)
   const [targetLabel, setTargetLabel] = useState<string | null>(null)
   const navTokenRef = useRef(0)
@@ -134,10 +132,16 @@ export const CommandCenterNav = ({
 
   return (
     <>
-      <nav className={`fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 ${navContainerClass}`}>
+      <motion.nav
+        className={`fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 ${navContainerClass}`}
+        animate={{ maxWidth: navMaxWidth }}
+        transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+        style={{ willChange: 'max-width' }}
+      >
         <div className={`p-1.5 sm:p-2 rounded-[1.4rem] sm:rounded-[2rem] ${SPATIAL.glassContainer} border-t-white/20 flex items-center justify-center relative overflow-hidden`}>
           <motion.div className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#FF7043] via-[#8A77FF] to-[#29B6F6]" style={{ width: progressWidth }} />
-          <div className="flex items-center gap-2 p-1 overflow-x-auto">
+          <div className="flex w-full flex-wrap items-center gap-2 p-1">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <button onClick={() => scrollToSection('hero')} className={`relative shrink-0 ${navItemPaddingClass} py-2 rounded-full text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${activeSection === 'hero' ? 'text-white' : THEME.textMuted}`}>
               {activeSection === 'hero' && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 shadow-[inset_0_0_12px_rgba(255,255,255,0.1)] border border-white/20 rounded-full z-0" transition={{ type: 'spring', stiffness: 300, damping: 25 }} />}
               <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -169,9 +173,10 @@ export const CommandCenterNav = ({
             >
               <span className="relative z-10">{audienceToggleLabel}</span>
             </button>
+            </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       <AnimatePresence>
         {isNavigating && (

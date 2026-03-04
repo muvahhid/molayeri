@@ -1,6 +1,6 @@
 'use client'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Store, X } from 'lucide-react'
 import { SPATIAL } from '../../constants/spatialData'
@@ -9,8 +9,10 @@ const LOGO_URL =
   '/logo.png'
 const IYZICO_URL =
   'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/iyzico-white-bg.png'
-const DOWNLOAD_LOGO_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/indirmelogo.png'
+const ANDROID_DOWNLOAD_BUTTON_URL =
+  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/android.png'
+const IOS_DOWNLOAD_BUTTON_URL =
+  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/appios.png'
 const HERO_BIG_PHONE_URL =
   'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/abc.jpg'
 const HERO_SMALL_PHONE_URL =
@@ -105,40 +107,45 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
                 İhtiyaç anında fırsatlar saniyeler içinde ekrana düşer, ödemeler pürüzsüzce tamamlanır. Sokağın ve otoyolun ritmi artık aynı frekansta atıyor.
               </p>
 
-              <div className="mt-auto pb-[15px] flex flex-col gap-4">
-                <div>
-                  <img
-                    src={DOWNLOAD_LOGO_URL}
-                    alt="Uygulamayı İndir"
-                    className="h-auto w-[126px] md:w-[154px] object-contain"
-                    draggable={false}
-                  />
-                </div>
+              <Link
+                href="/register/business"
+                className="mt-[10px] inline-flex self-center h-8 items-center gap-1.5 rounded-[9px] border border-[#364255] bg-[linear-gradient(180deg,#161a21_0%,#0f1319_100%)] px-3 text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_14px_rgba(56,189,248,0.14)] transition-colors hover:border-[#4d5f7a] hover:text-[#e3f6ff] lg:hidden"
+              >
+                <Store className="h-3 w-3 text-[#5ad6ff] drop-shadow-[0_0_6px_rgba(90,214,255,0.45)]" />
+                <span className="text-[#f8fbff] drop-shadow-[0_0_8px_rgba(90,214,255,0.3)]">İşletme Ekle</span>
+              </Link>
 
+              <div className="mt-auto pb-[15px] hidden lg:flex flex-col gap-4">
                 <div className="flex items-center gap-2.5">
-                  <img
-                    src={IYZICO_URL}
-                    alt="iyzico"
-                    className="h-7 w-auto object-contain rounded-[4px] border border-white/20 bg-white/90 px-1.5 py-0.5 shadow-none"
-                    draggable={false}
-                  />
-                  <span className="text-[12px] md:text-[13px] font-bold text-white/75 tracking-wide">
-                    iyzico ile güvenli ödeme
-                  </span>
+                  <div className="overflow-hidden rounded-[9px]">
+                    <img
+                      src={ANDROID_DOWNLOAD_BUTTON_URL}
+                      alt="Google Play'den indir"
+                      className="h-auto w-[122px] md:w-[148px] object-contain scale-[1.01]"
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="overflow-hidden rounded-[9px]">
+                    <img
+                      src={IOS_DOWNLOAD_BUTTON_URL}
+                      alt="App Store'dan indir"
+                      className="h-auto w-[122px] md:w-[148px] object-contain scale-[1.01]"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
 
                 <Link
                   href="/register/business"
-                  className="mt-[10px] h-10 pl-3 pr-[5px] rounded-[12px] text-[12px] md:text-[13px] font-extrabold tracking-wide border border-[#52FF9D]/55 bg-[linear-gradient(135deg,rgba(30,255,140,0.24),rgba(15,120,74,0.14))] inline-flex items-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] hover:brightness-110 transition-all w-fit self-start"
-                  style={{ color: '#52FF9D', WebkitTextFillColor: '#52FF9D' }}
+                  className="inline-flex self-start h-8 items-center gap-1.5 rounded-[9px] border border-[#364255] bg-[linear-gradient(180deg,#161a21_0%,#0f1319_100%)] px-3 text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_14px_rgba(56,189,248,0.14)] transition-colors hover:border-[#4d5f7a] hover:text-[#e3f6ff]"
                 >
-                  <Store size={15} />
-                  İşletmeni Ekle
+                  <Store className="h-3 w-3 text-[#5ad6ff] drop-shadow-[0_0_6px_rgba(90,214,255,0.45)]" />
+                  <span className="text-[#f8fbff] drop-shadow-[0_0_8px_rgba(90,214,255,0.3)]">İşletme Ekle</span>
                 </Link>
               </div>
             </div>
 
-            <div className={`lg:hidden w-full max-w-[460px] mx-auto ${embedded ? 'pt-2' : ''}`}>
+            <div className={`lg:hidden mt-[10px] w-full max-w-[460px] mx-auto ${embedded ? 'pt-2' : ''}`}>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 items-end">
                 <button
                   type="button"
@@ -170,6 +177,33 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
               <p className="mt-2 text-[7px] font-medium leading-[1.2] text-white/55 text-center">
                 *Gerçek uygulama arayüzü, İşletmeler deneme amaçlıdır
               </p>
+              <div className="mt-[13px] inline-flex items-center gap-2">
+                <img
+                  src={IYZICO_URL}
+                  alt="iyzico"
+                  className="h-5 w-auto object-contain rounded-[3px] border border-white/15 bg-white/92 px-1 py-[1px] shadow-none"
+                  draggable={false}
+                />
+                <span className="text-[10px] font-semibold text-white/80 tracking-wide">ile güvenli ödeme</span>
+              </div>
+              <div className="mt-3 flex items-center justify-center gap-2.5">
+                <div className="overflow-hidden rounded-[9px]">
+                  <img
+                    src={ANDROID_DOWNLOAD_BUTTON_URL}
+                    alt="Google Play'den indir"
+                    className="h-auto w-[122px] object-contain scale-[1.01]"
+                    draggable={false}
+                  />
+                </div>
+                <div className="overflow-hidden rounded-[9px]">
+                  <img
+                    src={IOS_DOWNLOAD_BUTTON_URL}
+                    alt="App Store'dan indir"
+                    className="h-auto w-[122px] object-contain scale-[1.01]"
+                    draggable={false}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="hidden lg:block relative mx-auto lg:ml-auto lg:mr-0 w-full max-w-[360px] sm:max-w-[460px] md:max-w-[620px] h-[360px] sm:h-[500px] md:h-[640px]">
@@ -215,9 +249,20 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
                 </button>
               </motion.div>
 
-              <p className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-medium text-white/55">
-                *Gerçek uygulama arayüzü, İşletmeler deneme amaçlıdır
-              </p>
+              <div className="absolute bottom-2 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1">
+                <p className="whitespace-nowrap text-[7px] font-medium text-white/55">
+                  *Gerçek uygulama arayüzü, İşletmeler deneme amaçlıdır
+                </p>
+                <div className="mt-[5px] inline-flex items-center gap-1.5">
+                  <img
+                    src={IYZICO_URL}
+                    alt="iyzico"
+                    className="h-[18px] w-auto object-contain rounded-[3px] border border-white/15 bg-white/92 px-1 py-[1px] shadow-none"
+                    draggable={false}
+                  />
+                  <span className="text-[9px] font-semibold text-white/80 tracking-wide">ile güvenli ödeme</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
