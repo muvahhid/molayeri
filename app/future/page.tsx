@@ -15,7 +15,14 @@ import { WalletFeature } from '../../components/features/WalletFeature'
 import { ConvoyFeature } from '../../components/features/ConvoyFeature'
 import LongRoadFeature from '../../components/features/LongRoadFeature'
 import PanicFeature from '../../components/features/PanicFeature'
-import MerchantTemplateFeature from '../../components/features/MerchantTemplateFeature'
+import MerchantPulseFeature from '../../components/features/merchant/MerchantPulseFeature'
+import MerchantBranchFeature from '../../components/features/merchant/MerchantBranchFeature'
+import MerchantVitrinFeature from '../../components/features/merchant/MerchantVitrinFeature'
+import MerchantCampaignFeature from '../../components/features/merchant/MerchantCampaignFeature'
+import MerchantCouponFeature from '../../components/features/merchant/MerchantCouponFeature'
+import MerchantConvoyFeature from '../../components/features/merchant/MerchantConvoyFeature'
+import MerchantTargetFeature from '../../components/features/merchant/MerchantTargetFeature'
+import MerchantRevenueFeature from '../../components/features/merchant/MerchantRevenueFeature'
 import FutureMobileView from '../../components/sections/FutureMobileView'
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
@@ -33,6 +40,29 @@ const getDesktopSnapshot = () => {
 }
 
 const getDesktopServerSnapshot = () => true
+
+const renderMerchantFeature = (sectionId: string, activeIndex?: number) => {
+  switch (sectionId) {
+    case 'merchant-pulse':
+      return <MerchantPulseFeature activeIndex={activeIndex} />
+    case 'merchant-branch':
+      return <MerchantBranchFeature activeIndex={activeIndex} />
+    case 'merchant-vitrin':
+      return <MerchantVitrinFeature activeIndex={activeIndex} />
+    case 'merchant-campaign':
+      return <MerchantCampaignFeature activeIndex={activeIndex} />
+    case 'merchant-coupon':
+      return <MerchantCouponFeature activeIndex={activeIndex} />
+    case 'merchant-convoy':
+      return <MerchantConvoyFeature activeIndex={activeIndex} />
+    case 'merchant-target':
+      return <MerchantTargetFeature activeIndex={activeIndex} />
+    case 'merchant-revenue':
+      return <MerchantRevenueFeature activeIndex={activeIndex} />
+    default:
+      return null
+  }
+}
 
 export default function FutureLanding() {
   const isDesktop = useSyncExternalStore(subscribeDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
@@ -56,7 +86,7 @@ export default function FutureLanding() {
 
     if (!mobileSelectedSection) return null
     if (audienceMode === 'merchant') {
-      return <MerchantTemplateFeature section={mobileSelectedSection} activeIndex={mobileFeatureIndex} />
+      return renderMerchantFeature(mobileSelectedSection.id, mobileFeatureIndex)
     }
 
     switch (mobileSelectedSection.id) {
@@ -122,14 +152,24 @@ export default function FutureLanding() {
             let ActiveComponent = null
 
             if (audienceMode === 'merchant') {
-              ActiveComponent = <MerchantTemplateFeature section={data} />
+              ActiveComponent = renderMerchantFeature(data.id)
             } else {
               switch (data.id) {
-                case 'radar': ActiveComponent = <RadarFeature />; break
-                case 'wallet': ActiveComponent = <WalletFeature />; break
-                case 'convoy': ActiveComponent = <ConvoyFeature />; break
-                case 'long-road': ActiveComponent = <LongRoadFeature />; break
-                case 'panic': ActiveComponent = <PanicFeature />; break
+                case 'radar':
+                  ActiveComponent = <RadarFeature />
+                  break
+                case 'wallet':
+                  ActiveComponent = <WalletFeature />
+                  break
+                case 'convoy':
+                  ActiveComponent = <ConvoyFeature />
+                  break
+                case 'long-road':
+                  ActiveComponent = <LongRoadFeature />
+                  break
+                case 'panic':
+                  ActiveComponent = <PanicFeature />
+                  break
               }
             }
 
