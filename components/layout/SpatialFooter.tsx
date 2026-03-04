@@ -15,7 +15,7 @@ export const SpatialFooter = () => (
           <img src={LOGO_URL} alt="Molayeri Logo" className="h-8 w-auto object-contain" draggable={false} />
         </div>
 
-        <p className="text-center text-xs font-semibold tracking-wide text-white/70">Molayeri® App 2026</p>
+        <p className="text-center text-xs font-semibold tracking-wide text-white/70">Molayeri® App 2026 • Tüm hakları saklıdır.</p>
 
         <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
           <Link href="/future/sozlesme" className={chipClass}>
