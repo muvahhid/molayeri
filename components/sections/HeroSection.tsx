@@ -111,7 +111,7 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
                   <img
                     src={IYZICO_URL}
                     alt="iyzico"
-                    className="h-8 w-auto object-contain rounded-[12px] bg-white/95 px-2 py-1"
+                    className="h-7 w-auto object-contain rounded-[4px] border border-white/20 bg-white/90 px-1.5 py-0.5 shadow-none"
                     draggable={false}
                   />
                   <span className="text-[12px] md:text-[13px] font-bold text-white/75 tracking-wide">
