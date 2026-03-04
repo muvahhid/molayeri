@@ -37,15 +37,34 @@ export default function FutureMobileView({
       ? 'text-[#38BDF8] border-[#38BDF8]/45 bg-[#38BDF8]/12'
       : 'text-[#FF7043] border-[#FF7043]/45 bg-[#FF7043]/12'
 
-  const stepLabels = useMemo(() => {
-    if (!selectedSection) return HOME_STEP_LABELS
-    if (isHomeSelected) return HOME_STEP_LABELS
-    const labels = selectedSection.features.slice(0, 3).map((feature) => feature.title)
-    while (labels.length < 3) labels.push('Adım')
-    return labels
+  const stepItems = useMemo(() => {
+    if (!selectedSection || isHomeSelected) {
+      return HOME_STEP_LABELS.map((label) => ({
+        compactLabel: label,
+        fullLabel: label,
+        icon: House,
+      }))
+    }
+
+    const items = selectedSection.features.slice(0, 3).map((feature) => ({
+      compactLabel: feature.title,
+      fullLabel: feature.title,
+      icon: feature.icon,
+    }))
+
+    while (items.length < 3) {
+      items.push({
+        compactLabel: `Adım ${items.length + 1}`,
+        fullLabel: 'Hazırlanıyor',
+        icon: selectedSection.icon,
+      })
+    }
+
+    return items
   }, [isHomeSelected, selectedSection])
 
   const activeStep = Math.max(0, Math.min(selectedFeatureIndex, 2))
+  const activeStepItem = stepItems[activeStep] ?? stepItems[0]
 
   const menuItems = useMemo(
     () => [
@@ -125,25 +144,46 @@ export default function FutureMobileView({
         </div>
 
         {!isHomeSelected && (
-          <div className="rounded-[22px] border border-white/12 bg-white/[0.03] backdrop-blur-xl p-4 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
-            <div className="mt-2.5 grid grid-cols-3 gap-2">
+          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(168deg,rgba(255,255,255,0.08)_-18%,rgba(255,255,255,0.02)_62%)] backdrop-blur-xl p-4 shadow-[0_18px_34px_rgba(0,0,0,0.34)]">
+            <div className="mb-2.5 flex items-center justify-between">
+              <span className="text-[10px] font-black tracking-[0.12em] uppercase text-white/55">Adım Geçişi</span>
+              <span className="text-[11px] font-black text-white/75">{activeStep + 1}/3</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
               {[0, 1, 2].map((stepIndex) => {
                 const active = activeStep === stepIndex
+                const item = stepItems[stepIndex] ?? stepItems[0]
                 return (
                   <button
                     key={stepIndex}
                     type="button"
                     onClick={() => onSelectFeatureIndex(stepIndex)}
-                    className={`h-10 rounded-xl border text-[12px] font-extrabold transition-colors ${
-                      active ? 'border-white/35 bg-white/[0.13] text-white' : 'border-white/15 bg-black/20 text-white/70'
+                    aria-current={active ? 'step' : undefined}
+                    className={`relative h-[60px] min-w-0 rounded-[15px] border px-2 pt-2 pb-1.5 transition-[background-color,border-color,box-shadow,color] duration-300 ease-out flex flex-col items-center justify-between ${
+                      active
+                        ? 'border-white/38 bg-white/[0.14] text-white shadow-[0_8px_16px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                        : 'border-white/16 bg-black/20 text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
                     }`}
                   >
-                    {stepIndex + 1}
+                    <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/25" />
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full ${active ? 'bg-white/[0.1]' : 'bg-white/[0.04]'}`}>
+                      <item.icon
+                        size={12}
+                        className={active ? (audienceMode === 'user' ? 'text-[#38BDF8]' : 'text-[#FF7043]') : 'text-white/48'}
+                      />
+                    </span>
+                    <span className="block max-w-full truncate px-1 text-[9.5px] font-semibold leading-[1.05] tracking-[0.01em]">
+                      {item.compactLabel}
+                    </span>
                   </button>
                 )
               })}
             </div>
-            <div className="mt-2 text-white/75 text-[12px] font-semibold">{stepLabels[activeStep]}</div>
+
+            <div className="mt-2 flex h-8 items-center rounded-xl border border-white/12 bg-black/25 px-3 text-[11px] font-semibold text-white/78">
+              <span className="truncate">{activeStepItem.fullLabel}</span>
+            </div>
           </div>
         )}
 
