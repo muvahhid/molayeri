@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Store, X } from 'lucide-react'
+import { Minus, Plus, RotateCcw, Store, X } from 'lucide-react'
 import { SPATIAL } from '../../constants/spatialData'
 
 const LOGO_URL =
@@ -24,13 +24,192 @@ type HeroSectionProps = {
 
 export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
   const [activeMockup, setActiveMockup] = useState<{ src: string; alt: string } | null>(null)
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [isInteracting, setIsInteracting] = useState(false)
+  const viewerRef = useRef<HTMLDivElement | null>(null)
+  const zoomRef = useRef(1)
+  const panOffsetRef = useRef({ x: 0, y: 0 })
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const gestureRef = useRef<{
+    mode: 'none' | 'pan' | 'pinch'
+    startScale: number
+    startDistance: number
+    startOffset: { x: number; y: number }
+    startPoint: { x: number; y: number }
+    startMidpoint: { x: number; y: number }
+  }>({
+    mode: 'none',
+    startScale: 1,
+    startDistance: 0,
+    startOffset: { x: 0, y: 0 },
+    startPoint: { x: 0, y: 0 },
+    startMidpoint: { x: 0, y: 0 },
+  })
+
+  const clampZoom = (value: number) => Math.min(4, Math.max(1, value))
+
+  const clampPan = (nextX: number, nextY: number, nextZoom: number) => {
+    const viewport = viewerRef.current
+    if (!viewport || nextZoom <= 1) return { x: 0, y: 0 }
+    const maxX = (viewport.clientWidth * (nextZoom - 1)) / 2
+    const maxY = (viewport.clientHeight * (nextZoom - 1)) / 2
+    return {
+      x: Math.min(maxX, Math.max(-maxX, nextX)),
+      y: Math.min(maxY, Math.max(-maxY, nextY)),
+    }
+  }
+
+  const applyZoom = (nextZoom: number) => {
+    const normalizedZoom = clampZoom(nextZoom)
+    setZoomLevel(normalizedZoom)
+    zoomRef.current = normalizedZoom
+    const normalizedPan = clampPan(panOffsetRef.current.x, panOffsetRef.current.y, normalizedZoom)
+    setPanOffset(normalizedPan)
+    panOffsetRef.current = normalizedPan
+  }
+
+  const setPan = (nextX: number, nextY: number, nextZoom: number) => {
+    const normalized = clampPan(nextX, nextY, nextZoom)
+    setPanOffset(normalized)
+    panOffsetRef.current = normalized
+  }
+
+  const resetViewer = () => {
+    pointersRef.current.clear()
+    gestureRef.current.mode = 'none'
+    setIsInteracting(false)
+    setZoomLevel(1)
+    zoomRef.current = 1
+    setPanOffset({ x: 0, y: 0 })
+    panOffsetRef.current = { x: 0, y: 0 }
+  }
+
+  const toLocalPoint = (clientX: number, clientY: number) => {
+    const rect = viewerRef.current?.getBoundingClientRect()
+    if (!rect) return { x: clientX, y: clientY }
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    }
+  }
+
+  const getDistance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.hypot(a.x - b.x, a.y - b.y)
+
+  const getMidpoint = (a: { x: number; y: number }, b: { x: number; y: number }) => ({
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+  })
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!viewerRef.current) return
+    viewerRef.current.setPointerCapture(event.pointerId)
+    const point = toLocalPoint(event.clientX, event.clientY)
+    pointersRef.current.set(event.pointerId, point)
+
+    const points = Array.from(pointersRef.current.values())
+    if (points.length >= 2) {
+      const [first, second] = points
+      gestureRef.current = {
+        mode: 'pinch',
+        startScale: zoomRef.current,
+        startDistance: getDistance(first, second),
+        startOffset: panOffsetRef.current,
+        startPoint: first,
+        startMidpoint: getMidpoint(first, second),
+      }
+      setIsInteracting(true)
+      return
+    }
+
+    if (points.length === 1 && zoomRef.current > 1) {
+      gestureRef.current = {
+        ...gestureRef.current,
+        mode: 'pan',
+        startPoint: points[0],
+        startOffset: panOffsetRef.current,
+      }
+      setIsInteracting(true)
+    }
+  }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointersRef.current.has(event.pointerId)) return
+    pointersRef.current.set(event.pointerId, toLocalPoint(event.clientX, event.clientY))
+    const points = Array.from(pointersRef.current.values())
+    const gesture = gestureRef.current
+
+    if (gesture.mode === 'pinch' && points.length >= 2) {
+      const [first, second] = points
+      const distance = getDistance(first, second)
+      if (!Number.isFinite(distance) || distance <= 0 || gesture.startDistance <= 0) return
+      const nextZoom = clampZoom(gesture.startScale * (distance / gesture.startDistance))
+      setZoomLevel(nextZoom)
+      zoomRef.current = nextZoom
+      const midpoint = getMidpoint(first, second)
+      const nextX = gesture.startOffset.x + (midpoint.x - gesture.startMidpoint.x)
+      const nextY = gesture.startOffset.y + (midpoint.y - gesture.startMidpoint.y)
+      setPan(nextX, nextY, nextZoom)
+      return
+    }
+
+    if (gesture.mode === 'pan' && points.length === 1 && zoomRef.current > 1) {
+      const currentPoint = points[0]
+      const dx = currentPoint.x - gesture.startPoint.x
+      const dy = currentPoint.y - gesture.startPoint.y
+      setPan(gesture.startOffset.x + dx, gesture.startOffset.y + dy, zoomRef.current)
+    }
+  }
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(event.pointerId)
+    const points = Array.from(pointersRef.current.values())
+    if (points.length >= 2) {
+      const [first, second] = points
+      gestureRef.current = {
+        mode: 'pinch',
+        startScale: zoomRef.current,
+        startDistance: getDistance(first, second),
+        startOffset: panOffsetRef.current,
+        startPoint: first,
+        startMidpoint: getMidpoint(first, second),
+      }
+      return
+    }
+    if (points.length === 1 && zoomRef.current > 1) {
+      gestureRef.current = {
+        ...gestureRef.current,
+        mode: 'pan',
+        startPoint: points[0],
+        startOffset: panOffsetRef.current,
+      }
+      return
+    }
+    gestureRef.current.mode = 'none'
+    setIsInteracting(false)
+  }
+
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const deltaFactor = event.deltaY < 0 ? 1.09 : 0.91
+    applyZoom(zoomRef.current * deltaFactor)
+  }
+
+  const handleDoubleClick = () => {
+    applyZoom(zoomRef.current > 1.6 ? 1 : 2.2)
+  }
 
   useEffect(() => {
     if (!activeMockup) return undefined
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    resetViewer()
     return () => {
       document.body.style.overflow = prevOverflow
+      pointersRef.current.clear()
+      gestureRef.current.mode = 'none'
+      setIsInteracting(false)
     }
   }, [activeMockup])
 
@@ -271,33 +450,93 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
       <AnimatePresence>
         {activeMockup && (
           <motion.div
-            className="fixed inset-0 z-[90] bg-black/72 backdrop-blur-md px-4 py-6 flex items-center justify-center"
+            className="fixed inset-0 z-[90] bg-[#020409]/82 backdrop-blur-md px-3 py-4 sm:px-6 sm:py-8 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActiveMockup(null)}
           >
             <motion.div
-              className="relative rounded-[26px] border border-white/20 bg-[#050811]/90 p-3 shadow-[0_28px_80px_rgba(0,0,0,0.75)]"
-              initial={{ scale: 0.94, opacity: 0.7 }}
+              className="relative w-full max-w-[980px] rounded-[24px] border border-white/15 bg-[#050811]/94 shadow-[0_30px_90px_rgba(0,0,0,0.78)] overflow-hidden"
+              initial={{ scale: 0.97, opacity: 0.7, y: 12 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0.7 }}
-              transition={{ duration: 0.2 }}
+              exit={{ scale: 0.98, opacity: 0.7, y: 8 }}
+              transition={{ duration: 0.22 }}
               onClick={(event) => event.stopPropagation()}
             >
+              <div className="h-11 border-b border-white/12 bg-white/[0.03] px-3 sm:px-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#38BDF8]" />
+                  <span className="text-[11px] font-semibold tracking-wide text-white/75">Canlı Önizleme</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => applyZoom(zoomRef.current * 0.9)}
+                    className="h-7 w-7 rounded-md border border-white/15 bg-black/25 text-white/80 inline-flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+                    aria-label="Küçült"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetViewer}
+                    className="h-7 w-7 rounded-md border border-white/15 bg-black/25 text-white/80 inline-flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+                    aria-label="Sıfırla"
+                  >
+                    <RotateCcw size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyZoom(zoomRef.current * 1.1)}
+                    className="h-7 w-7 rounded-md border border-white/15 bg-black/25 text-white/80 inline-flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+                    aria-label="Büyüt"
+                  >
+                    <Plus size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMockup(null)}
+                    className="ml-1 h-8 w-8 rounded-lg border border-white/20 bg-black/40 text-white inline-flex items-center justify-center shadow-[0_8px_18px_rgba(0,0,0,0.45)] hover:bg-white/[0.08] transition-colors"
+                    aria-label="Kapat"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                ref={viewerRef}
+                className="relative h-[76vh] sm:h-[80vh] max-h-[860px] overflow-hidden bg-[radial-gradient(circle_at_50%_40%,rgba(56,189,248,0.08),rgba(2,6,23,0.84)_62%)]"
+                onWheel={handleWheel}
+                onDoubleClick={handleDoubleClick}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={{ touchAction: zoomLevel > 1 ? 'none' : 'manipulation' }}
+              >
+                <img
+                  src={activeMockup.src}
+                  alt={activeMockup.alt}
+                  className="pointer-events-none absolute left-1/2 top-1/2 max-h-[94%] max-w-[94%] w-auto h-auto object-contain select-none"
+                  style={{
+                    transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoomLevel})`,
+                    transformOrigin: 'center center',
+                    transition: isInteracting ? 'none' : 'transform 160ms ease-out',
+                  }}
+                  draggable={false}
+                />
+                <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-white/12 bg-black/40 px-3 py-1 text-[10px] font-semibold text-white/70 backdrop-blur-md">
+                  Pinch / Çift dokunma ile büyüt · Sürükle
+                </div>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setActiveMockup(null)}
-                className="absolute -top-3 -right-3 h-9 w-9 rounded-full border border-white/25 bg-black/70 text-white inline-flex items-center justify-center shadow-[0_8px_18px_rgba(0,0,0,0.45)]"
+                className="sr-only"
                 aria-label="Kapat"
-              >
-                <X size={18} />
-              </button>
-              <img
-                src={activeMockup.src}
-                alt={activeMockup.alt}
-                className="block max-h-[86vh] max-w-[92vw] w-auto h-auto object-contain rounded-[20px]"
-                draggable={false}
               />
             </motion.div>
           </motion.div>
