@@ -147,7 +147,6 @@ type ServiceOverride = {
   untilTs: number | null
 }
 
-const HOURS_STORAGE_KEY = 'merchant_working_hours_v1'
 const SERVICE_OVERRIDE_STORAGE_KEY = 'merchant_service_override_v1'
 
 const DAY_DEFINITIONS: { key: DayKey; label: string }[] = [
@@ -160,6 +159,40 @@ const DAY_DEFINITIONS: { key: DayKey; label: string }[] = [
   { key: 'sun', label: 'Pazar' },
 ]
 
+const DAY_TO_DB_KEY: Record<DayKey, string> = {
+  mon: 'monday',
+  tue: 'tuesday',
+  wed: 'wednesday',
+  thu: 'thursday',
+  fri: 'friday',
+  sat: 'saturday',
+  sun: 'sunday',
+}
+
+const DAY_KEY_ALIASES: Record<string, DayKey> = {
+  mon: 'mon',
+  monday: 'mon',
+  pazartesi: 'mon',
+  tue: 'tue',
+  tuesday: 'tue',
+  sali: 'tue',
+  wed: 'wed',
+  wednesday: 'wed',
+  carsamba: 'wed',
+  thu: 'thu',
+  thursday: 'thu',
+  persembe: 'thu',
+  fri: 'fri',
+  friday: 'fri',
+  cuma: 'fri',
+  sat: 'sat',
+  saturday: 'sat',
+  cumartesi: 'sat',
+  sun: 'sun',
+  sunday: 'sun',
+  pazar: 'sun',
+}
+
 function createEmptyFuelPrices(): FuelPriceValues {
   return {
     benzin: '',
@@ -170,14 +203,107 @@ function createEmptyFuelPrices(): FuelPriceValues {
 
 function createDefaultWorkingHours(): WeeklyHours {
   return {
-    mon: { enabled: true, open: '08:00', close: '22:00' },
-    tue: { enabled: true, open: '08:00', close: '22:00' },
-    wed: { enabled: true, open: '08:00', close: '22:00' },
-    thu: { enabled: true, open: '08:00', close: '22:00' },
-    fri: { enabled: true, open: '08:00', close: '22:00' },
-    sat: { enabled: true, open: '09:00', close: '23:00' },
-    sun: { enabled: true, open: '09:00', close: '23:00' },
+    mon: { enabled: true, open: '09:00', close: '22:00' },
+    tue: { enabled: true, open: '09:00', close: '22:00' },
+    wed: { enabled: true, open: '09:00', close: '22:00' },
+    thu: { enabled: true, open: '09:00', close: '22:00' },
+    fri: { enabled: true, open: '09:00', close: '22:00' },
+    sat: { enabled: true, open: '09:00', close: '22:00' },
+    sun: { enabled: false, open: '09:00', close: '22:00' },
   }
+}
+
+function parseBooleanFromRaw(value: unknown, fallback: boolean): boolean {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value !== 0
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'evet') return true
+    if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'hayir' || normalized === 'hayır') return false
+  }
+  return fallback
+}
+
+function parseClockFromRaw(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') {
+    return fallback
+  }
+  const trimmed = value.trim()
+  const match = /^(\d{1,2}):(\d{2})/.exec(trimmed)
+  if (!match) {
+    return fallback
+  }
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
+    return fallback
+  }
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return fallback
+  }
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+function parseWorkingHoursFromRaw(raw: unknown): WeeklyHours {
+  const defaults = createDefaultWorkingHours()
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return defaults
+  }
+
+  const root = raw as Record<string, unknown>
+  const parsed = createDefaultWorkingHours()
+
+  for (const [rawKey, dayValue] of Object.entries(root)) {
+    const normalizedKey = normalizeMetricKey(rawKey)
+    const dayKey = DAY_KEY_ALIASES[normalizedKey]
+    if (!dayKey || !dayValue || typeof dayValue !== 'object' || Array.isArray(dayValue)) {
+      continue
+    }
+
+    const row = dayValue as Record<string, unknown>
+    const current = parsed[dayKey]
+    const openToken = row.open
+    const closeToken = row.close
+    const enabled = parseBooleanFromRaw(
+      row.is_open ?? row.enabled ?? (typeof openToken === 'boolean' ? openToken : undefined),
+      current.enabled
+    )
+    const is24h = parseBooleanFromRaw(row.is_24h ?? row.all_day ?? row.allDay, false)
+    const open = parseClockFromRaw(
+      row.open_at ?? row.open_time ?? row.start ?? row.from ?? (typeof openToken === 'string' ? openToken : undefined),
+      current.open
+    )
+    const close = parseClockFromRaw(
+      row.close_at ?? row.close_time ?? row.end ?? row.to ?? (typeof closeToken === 'string' ? closeToken : undefined),
+      current.close
+    )
+    const hasFullDayClock = open === '00:00' && close === '23:59'
+
+    parsed[dayKey] = {
+      enabled: is24h ? true : enabled,
+      open: is24h || hasFullDayClock ? '00:00' : open,
+      close: is24h || hasFullDayClock ? '00:00' : close,
+    }
+  }
+
+  return parsed
+}
+
+function serializeWorkingHoursForDb(hours: WeeklyHours): Record<string, { is_open: boolean; is_24h: boolean; open_at: string; close_at: string }> {
+  const payload: Record<string, { is_open: boolean; is_24h: boolean; open_at: string; close_at: string }> = {}
+
+  for (const day of DAY_DEFINITIONS) {
+    const source = hours[day.key]
+    const is24h = isFullDayHours(source) || (source.enabled && source.open === '00:00' && source.close === '23:59')
+    payload[DAY_TO_DB_KEY[day.key]] = {
+      is_open: source.enabled,
+      is_24h: is24h,
+      open_at: is24h ? '00:00' : source.open,
+      close_at: is24h ? '23:59' : source.close,
+    }
+  }
+
+  return payload
 }
 
 function parseClockToMinutes(clock: string): number {
@@ -260,24 +386,7 @@ function findNextScheduleTransition(hours: WeeklyHours, now = new Date()): Date 
 }
 
 function isFullDayHours(day: DayHours): boolean {
-  return day.enabled && day.open === '00:00' && day.close === '00:00'
-}
-
-function readWorkingHoursMap(): Record<string, WeeklyHours> {
-  if (typeof window === 'undefined') {
-    return {}
-  }
-
-  try {
-    const raw = window.localStorage.getItem(HOURS_STORAGE_KEY)
-    if (!raw) {
-      return {}
-    }
-    const parsed = JSON.parse(raw) as Record<string, WeeklyHours>
-    return parsed || {}
-  } catch {
-    return {}
-  }
+  return day.enabled && day.open === '00:00' && (day.close === '00:00' || day.close === '23:59')
 }
 
 function readServiceOverrideMap(): Record<string, ServiceOverride> {
@@ -295,20 +404,6 @@ function readServiceOverrideMap(): Record<string, ServiceOverride> {
   } catch {
     return {}
   }
-}
-
-function readWorkingHoursForBusiness(businessId: string): WeeklyHours {
-  const map = readWorkingHoursMap()
-  return map[businessId] || createDefaultWorkingHours()
-}
-
-function writeWorkingHoursForBusiness(businessId: string, hours: WeeklyHours) {
-  if (typeof window === 'undefined') {
-    return
-  }
-  const map = readWorkingHoursMap()
-  map[businessId] = hours
-  window.localStorage.setItem(HOURS_STORAGE_KEY, JSON.stringify(map))
 }
 
 function readServiceOverrideForBusiness(businessId: string): ServiceOverride | null {
@@ -469,6 +564,7 @@ export default function MerchantDashboardPage() {
   const [fuelPrices, setFuelPrices] = useState<FuelPriceValues>(createEmptyFuelPrices())
   const [hoursModalOpen, setHoursModalOpen] = useState(false)
   const [workingHours, setWorkingHours] = useState<WeeklyHours>(createDefaultWorkingHours())
+  const [workingHoursLoadedForBusinessId, setWorkingHoursLoadedForBusinessId] = useState<string>('')
   const [savingHours, setSavingHours] = useState(false)
   const [quickModulesLoading, setQuickModulesLoading] = useState(false)
   const [miniMessages, setMiniMessages] = useState<DashboardMiniMessage[]>([])
@@ -1030,6 +1126,8 @@ export default function MerchantDashboardPage() {
     resetQuickModuleState()
     setAnalyticsSeries([])
     setFuelPrices(createEmptyFuelPrices())
+    setWorkingHours(createDefaultWorkingHours())
+    setWorkingHoursLoadedForBusinessId('')
   }
 
   const refreshSelectedBusinessData = () => {
@@ -1177,6 +1275,8 @@ export default function MerchantDashboardPage() {
         setUserId(null)
         setBusinesses([])
         setSelectedBusinessId('')
+        setWorkingHours(createDefaultWorkingHours())
+        setWorkingHoursLoadedForBusinessId('')
         setUnreadMessages(0)
         setUnreadNegotiations(0)
         setAverageScore('Puan Yok')
@@ -1197,6 +1297,8 @@ export default function MerchantDashboardPage() {
       setUserId(null)
       setBusinesses([])
       setSelectedBusinessId('')
+      setWorkingHours(createDefaultWorkingHours())
+      setWorkingHoursLoadedForBusinessId('')
       setUnreadMessages(0)
       setUnreadNegotiations(0)
       setAverageScore('Puan Yok')
@@ -1341,13 +1443,108 @@ export default function MerchantDashboardPage() {
     }
   }
 
+  const loadWorkingHoursForBusiness = async (businessId: string): Promise<WeeklyHours> => {
+    try {
+      const tableSelects = ['business_id,hours', 'business_id,hours_json']
+      for (const selectCols of tableSelects) {
+        try {
+          const { data, error } = await supabase
+            .from('business_working_hours')
+            .select(selectCols)
+            .eq('business_id', businessId)
+            .maybeSingle()
+
+          if (error || !data) {
+            continue
+          }
+
+          if (typeof data !== 'object' || Array.isArray(data)) {
+            continue
+          }
+
+          const row = data as unknown as Record<string, unknown>
+          const raw = row.hours ?? row.hours_json
+          if (raw) {
+            return parseWorkingHoursFromRaw(raw)
+          }
+        } catch {
+          // no-op
+        }
+      }
+
+      const { data: businessRow } = await supabase
+        .from('businesses')
+        .select('working_hours,opening_hours,business_hours')
+        .eq('id', businessId)
+        .maybeSingle()
+
+      if (businessRow && typeof businessRow === 'object' && !Array.isArray(businessRow)) {
+        const row = businessRow as unknown as Record<string, unknown>
+        const raw = row.working_hours ?? row.opening_hours ?? row.business_hours
+        if (raw) {
+          return parseWorkingHoursFromRaw(raw)
+        }
+      }
+    } catch {
+      // no-op
+    }
+
+    return createDefaultWorkingHours()
+  }
+
+  const saveWorkingHoursForBusiness = async (businessId: string, hours: WeeklyHours): Promise<boolean> => {
+    const payload = serializeWorkingHoursForDb(hours)
+    const nowIso = new Date().toISOString()
+    const upsertRows: Array<Record<string, unknown>> = [
+      { business_id: businessId, hours: payload, updated_at: nowIso },
+      { business_id: businessId, hours: payload },
+      { business_id: businessId, hours_json: payload, updated_at: nowIso },
+      { business_id: businessId, hours_json: payload },
+    ]
+
+    for (const row of upsertRows) {
+      try {
+        const { error } = await supabase.from('business_working_hours').upsert(row, { onConflict: 'business_id' })
+        if (!error) {
+          return true
+        }
+      } catch {
+        // no-op
+      }
+    }
+
+    for (const column of ['working_hours', 'opening_hours', 'business_hours'] as const) {
+      try {
+        const { error } = await supabase
+          .from('businesses')
+          .update({ [column]: payload })
+          .eq('id', businessId)
+
+        if (!error) {
+          return true
+        }
+      } catch {
+        // no-op
+      }
+    }
+
+    return false
+  }
+
+  const getScheduleHoursForBusiness = (businessId: string): WeeklyHours => {
+    if (selectedBusinessId === businessId) {
+      return workingHours
+    }
+    return createDefaultWorkingHours()
+  }
+
   const handleToggleBusinessOpen = async () => {
     if (!selectedBusiness) {
       return
     }
 
     const nextOpen = !(selectedBusiness.is_open ?? true)
-    const manualHours = readWorkingHoursForBusiness(selectedBusiness.id)
+    const manualHours = getScheduleHoursForBusiness(selectedBusiness.id)
     const nextTransition = findNextScheduleTransition(manualHours, new Date())
     writeServiceOverrideForBusiness(selectedBusiness.id, {
       forcedOpen: nextOpen,
@@ -1389,7 +1586,7 @@ export default function MerchantDashboardPage() {
   }
 
   const syncBusinessOpenWithSchedule = async (business: MerchantBusiness) => {
-    const hours = readWorkingHoursForBusiness(business.id)
+    const hours = getScheduleHoursForBusiness(business.id)
     const now = new Date()
     const scheduleOpen = isOpenByWorkingHours(hours, now)
     const override = readServiceOverrideForBusiness(business.id)
@@ -1428,7 +1625,6 @@ export default function MerchantDashboardPage() {
     if (!selectedBusiness) {
       return
     }
-    setWorkingHours(readWorkingHoursForBusiness(selectedBusiness.id))
     setHoursModalOpen(true)
   }
 
@@ -1466,7 +1662,12 @@ export default function MerchantDashboardPage() {
     setNotice(null)
 
     try {
-      writeWorkingHoursForBusiness(selectedBusiness.id, workingHours)
+      const saved = await saveWorkingHoursForBusiness(selectedBusiness.id, workingHours)
+      if (!saved) {
+        throw new Error('hours_save_failed')
+      }
+
+      setWorkingHoursLoadedForBusinessId(selectedBusiness.id)
       await syncBusinessOpenWithSchedule(selectedBusiness)
       setNotice({ type: 'success', message: 'Çalışma saatleri kaydedildi.' })
       setHoursModalOpen(false)
@@ -1544,14 +1745,31 @@ export default function MerchantDashboardPage() {
   useEffect(() => {
     if (!selectedBusiness) {
       setWorkingHours(createDefaultWorkingHours())
+      setWorkingHoursLoadedForBusinessId('')
       return
     }
-    setWorkingHours(readWorkingHoursForBusiness(selectedBusiness.id))
+
+    let cancelled = false
+    const businessId = selectedBusiness.id
+    setWorkingHoursLoadedForBusinessId('')
+
+    const run = async () => {
+      const nextHours = await loadWorkingHoursForBusiness(businessId)
+      if (cancelled) return
+      setWorkingHours(nextHours)
+      setWorkingHoursLoadedForBusinessId(businessId)
+    }
+
+    void run()
+
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusinessId])
 
   useEffect(() => {
-    if (!selectedBusiness) {
+    if (!selectedBusiness || workingHoursLoadedForBusinessId !== selectedBusiness.id) {
       return
     }
 
@@ -1568,7 +1786,7 @@ export default function MerchantDashboardPage() {
       window.clearInterval(intervalId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBusinessId, businesses])
+  }, [selectedBusinessId, businesses, workingHoursLoadedForBusinessId, workingHours])
 
   const hasBusinesses = businesses.length > 0
 

@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Route, Wallet, Mic2, ShieldAlert, Radio, Users,
   Navigation, Target, Map, Tag, CreditCard, Smartphone, MapPin,
-  Store, Megaphone, Handshake, MessageSquare, BarChart3,
+  Store, Megaphone, Handshake, BarChart3,
   LayoutDashboard, ClipboardList, Bell
 } from 'lucide-react'
 
@@ -84,68 +84,107 @@ export const SECTIONS_DATA: SpatialSection[] = [
 
 export const MERCHANT_SECTIONS_DATA: SpatialSection[] = [
   {
-    id: 'merchant-dashboard',
-    title: 'İşletme Kokpiti',
-    navLabel: 'Kokpit',
-    icon: Store,
+    id: 'merchant-pulse',
+    title: 'Nabız',
+    navLabel: 'Nabız',
+    icon: BarChart3,
     color: 'text-[#FF8A3D]',
     glow: 'bg-[#FF8A3D]/20',
     features: [
-      { title: 'Genel Durum', desc: 'Bugünkü trafik, etkileşim ve temel vitrin metrikleri için boş kokpit şablonu.', icon: LayoutDashboard },
-      { title: 'Hızlı Aksiyon', desc: 'İşletmeci ana işlemleri için buton/CTA yerleşimi hazır boş ekran şablonu.', icon: ClipboardList },
-      { title: 'Canlı Uyarılar', desc: 'Yeni teklif ve hareket bildirimleri için bildirim paneli şablonu.', icon: Bell }
+      { title: 'Görünme', desc: 'İşletmenin arama sonuçlarında kaç kez göründüğünü zaman kırılımında izlersin.', icon: Target },
+      { title: 'Ziyaret', desc: 'İşletme kartı ve sayfa etkileşimlerini canlı olarak takip edersin.', icon: Users },
+      { title: 'Mola', desc: 'Mola\'ya ekleme dönüşümünü tek bakışta görür, anlık artışı yakalarsın.', icon: Tag }
     ]
   },
   {
-    id: 'merchant-campaigns',
-    title: 'Kampanya Stüdyosu',
-    navLabel: 'Kampanya',
-    icon: Megaphone,
+    id: 'merchant-branch',
+    title: 'Şube',
+    navLabel: 'Şube',
+    icon: Store,
     color: 'text-[#38BDF8]',
     glow: 'bg-[#38BDF8]/20',
     features: [
-      { title: 'Taslak Alanı', desc: 'Başlık, içerik ve medya blokları için boş kampanya editör şablonu.', icon: ClipboardList },
-      { title: 'Yayın Akışı', desc: 'Aktif/Pasif kampanya kontrol listesi için boş yönetim şablonu.', icon: Bell },
-      { title: 'Hedefleme', desc: 'Kategori ve segment seçimleri için filtre paneli şablonu.', icon: Target }
+      { title: 'Bilgiler', desc: 'Şube adı, iletişim, konum ve temel profil alanlarını tek merkezden yönetirsin.', icon: LayoutDashboard },
+      { title: 'Kategori', desc: 'Kategori ve özellik bağlarını şubeye göre düzenler, görünürlüğü optimize edersin.', icon: ClipboardList },
+      { title: 'Medya', desc: 'Fotoğraf ve vitrin görsellerini güncelleyerek şubenin ilk izlenimini güçlendirirsin.', icon: Bell }
     ]
   },
   {
-    id: 'merchant-offers',
-    title: 'Teklif Yönetimi',
-    navLabel: 'Teklif',
-    icon: Handshake,
+    id: 'merchant-vitrin',
+    title: 'Vitrin',
+    navLabel: 'Vitrin',
+    icon: LayoutDashboard,
     color: 'text-[#4ADE80]',
     glow: 'bg-[#4ADE80]/20',
     features: [
-      { title: 'Gelen Talepler', desc: 'Konvoy/mola taleplerinin listelenmesi için boş istek şablonu.', icon: Users },
-      { title: 'Karar Merkezi', desc: 'Kabul/ret ve not alanları için karar ekranı şablonu.', icon: ClipboardList },
-      { title: 'Teklif Geçmişi', desc: 'Zaman bazlı teklif kayıtları için geçmiş sayfası şablonu.', icon: Route }
+      { title: 'Menü', desc: 'Ürün ve fiyat akışını düzenleyip menü içeriklerini hızlıca yayınlarsın.', icon: ClipboardList },
+      { title: 'Hizmet', desc: 'Sunulan hizmet kalemlerini tek listede yönetir, görünürlük sırasını belirlersin.', icon: Smartphone },
+      { title: 'Şarj', desc: 'Şarj altyapısı detaylarını ekleyip elektrikli araç kullanıcılarına net bilgi verirsin.', icon: MapPin }
     ]
   },
   {
-    id: 'merchant-messages',
-    title: 'Mesaj Merkezi',
-    navLabel: 'Mesajlar',
-    icon: MessageSquare,
+    id: 'merchant-campaign',
+    title: 'Kampanya',
+    navLabel: 'Kampanya',
+    icon: Megaphone,
     color: 'text-[#C084FC]',
     glow: 'bg-[#C084FC]/20',
     features: [
-      { title: 'Sohbet Kutusu', desc: 'Müşteri/katılımcı konuşmaları için boş mesaj görünümü.', icon: MessageSquare },
-      { title: 'Filtreler', desc: 'Okunmamış, öncelikli ve kategoriye göre filtre alanı şablonu.', icon: Target },
-      { title: 'Arşiv', desc: 'Geçmiş konuşmaların saklanması için arşiv şablonu.', icon: ClipboardList }
+      { title: 'Etiket', desc: 'Kısa kampanya notlarını hızlı biçimde üretip işletme kartında öne çıkarırsın.', icon: Tag },
+      { title: 'Uzunyol', desc: 'Uzun yol kitlesine özel kampanya akışlarını mesafe odaklı kurgularsın.', icon: Route },
+      { title: 'Yayın', desc: 'Aktif ve pasif kampanyaları tek panelde açıp kapatarak ritmi kontrol edersin.', icon: Bell }
     ]
   },
   {
-    id: 'merchant-analytics',
-    title: 'Performans Paneli',
-    navLabel: 'Analitik',
-    icon: BarChart3,
+    id: 'merchant-coupon',
+    title: 'Kupon',
+    navLabel: 'Kupon',
+    icon: Tag,
+    color: 'text-[#F59E0B]',
+    glow: 'bg-[#F59E0B]/20',
+    features: [
+      { title: 'Oluştur', desc: 'Yüzde, hediye veya ürün tipi kuponları birkaç adımda üretirsin.', icon: ClipboardList },
+      { title: 'Dağıtım', desc: 'Kuponların aktiflik durumunu ve detay görünürlüğünü hedefe göre ayarlarsın.', icon: Megaphone },
+      { title: 'Analiz', desc: 'Kullanım, fayda ve dönüşüm etkisini canlı metriklerle ölçersin.', icon: BarChart3 }
+    ]
+  },
+  {
+    id: 'merchant-convoy',
+    title: 'Konvoy',
+    navLabel: 'Konvoy',
+    icon: Handshake,
+    color: 'text-[#22D3EE]',
+    glow: 'bg-[#22D3EE]/20',
+    features: [
+      { title: 'Aktif', desc: 'Canlı konvoyları rota, lider ve yakınlık bilgisiyla eşzamanlı izlersin.', icon: Users },
+      { title: 'Plan', desc: 'Planlanan konvoyları zaman ve kapasiteye göre düzenleyip hazırlık yaparsın.', icon: Route },
+      { title: 'Teklif', desc: 'Konvoy ekiplerine teklif gönderip görüşme akışını tek ekrandan yönetirsin.', icon: Handshake }
+    ]
+  },
+  {
+    id: 'merchant-target',
+    title: 'Hedef',
+    navLabel: 'Hedef',
+    icon: Target,
+    color: 'text-[#F472B6]',
+    glow: 'bg-[#F472B6]/20',
+    features: [
+      { title: 'Radar', desc: 'Yakındaki potansiyel müşterileri yarıçap ve kategoriye göre hızlıca tararsın.', icon: Radio },
+      { title: 'Mola', desc: 'Mola hedef listesine teklif bağlayıp lokasyon tabanlı aksiyon planı kurarsın.', icon: Navigation },
+      { title: 'Toplu', desc: 'Seçili hedeflere toplu kampanya ve kupon iletimini tek komutla tamamlarsın.', icon: Megaphone }
+    ]
+  },
+  {
+    id: 'merchant-revenue',
+    title: 'Gelir',
+    navLabel: 'Gelir',
+    icon: Wallet,
     color: 'text-[#FF5D5D]',
     glow: 'bg-[#FF5D5D]/20',
     features: [
-      { title: 'Gelir Özeti', desc: 'Günlük/haftalık performans kartları için boş analitik şablonu.', icon: Wallet },
-      { title: 'Dönüşüm Grafiği', desc: 'Etkileşimden satışa dönüşüm takibi için grafik alanı şablonu.', icon: BarChart3 },
-      { title: 'Karşılaştırma', desc: 'Dönemsel kıyaslama tabloları için rapor şablonu.', icon: ClipboardList }
+      { title: 'Özet', desc: 'Günlük işlem, tahsilat ve net gelir göstergelerini tek kartta toplarsın.', icon: Wallet },
+      { title: 'İşlem', desc: 'Kasa hareketlerini kupon etkisiyle birlikte detaylı biçimde incelersin.', icon: CreditCard },
+      { title: 'Ödeme', desc: 'Ödeme altyapısı ve alt üye kurulum adımlarını güvenli şekilde tamamlarsın.', icon: Smartphone }
     ]
   }
 ]
