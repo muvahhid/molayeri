@@ -12,7 +12,6 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAdminPath = pathname.startsWith('/admin')
   const isMerchantPath = pathname.startsWith('/merchant')
-  const isFuturePath = pathname === '/future' || pathname.startsWith('/future/')
   const isLoginPath = pathname.startsWith('/login')
 
   // 1. Yanıt (Response) nesnesini oluştur
@@ -75,7 +74,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // 4. KURAL: Korumalı alanlar için giriş zorunlu
-  if ((isAdminPath || isMerchantPath || isFuturePath) && !user) {
+  if ((isAdminPath || isMerchantPath) && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     return ensureAdminCsrfCookie(request, NextResponse.redirect(loginUrl))
@@ -117,8 +116,6 @@ export const config = {
   matcher: [
     '/admin/:path*', // Admin altındaki her şey
     '/merchant/:path*', // İşletmeci paneli
-    '/future', // Geçici kapalı lansman sayfası
-    '/future/:path*', // Geçici alt rotalar
     '/login', // Giriş sayfası
   ],
 }
