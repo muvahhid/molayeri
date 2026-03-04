@@ -159,12 +159,12 @@ export default function LoginPage() {
       />
 
       {/* Main Hardware Container */}
-      <section className="relative z-10 w-full max-w-5xl rounded-xl border border-[#23272f] bg-[#0c0e12] shadow-2xl overflow-hidden animate-in fade-in zoom-in-[0.98] duration-500">
+      <section className="relative z-10 w-full max-w-5xl rounded-xl border border-[#23272f] bg-[#0c0e12] shadow-2xl overflow-hidden">
         
         {/* TELEMETRY HEADER BAR */}
         <header className="flex flex-col items-start justify-between gap-4 border-b border-[#23272f] bg-[#0f1115] px-6 py-4 md:flex-row md:items-center md:gap-0">
           <div className="flex items-center gap-4">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.8)] animate-pulse" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_4px_rgba(56,189,248,0.45)]" />
             <div className="flex flex-col">
               <span className="text-[9px] uppercase tracking-[0.2em] text-[#64748b]">SISTEM</span>
               <span className="text-xs font-mono tracking-widest text-[#e2e8f0]">MOLAYERI.APP</span>
@@ -173,10 +173,10 @@ export default function LoginPage() {
 
           <div className="hidden md:flex flex-col items-center gap-1.5">
              <div className="flex gap-1.5">
-                <div className="w-1.5 h-3.5 bg-[#38bdf8] animate-pulse" style={{ animationDuration: '2.8s', animationDelay: '0s' }} />
-                <div className="w-1.5 h-3.5 bg-[#38bdf8]/70 animate-pulse" style={{ animationDuration: '2.8s', animationDelay: '0.28s' }} />
-                <div className="w-1.5 h-3.5 bg-[#38bdf8]/30 animate-pulse" style={{ animationDuration: '2.8s', animationDelay: '0.56s' }} />
-                <div className="w-1.5 h-3.5 bg-[#38bdf8]/10 animate-pulse" style={{ animationDuration: '2.8s', animationDelay: '0.84s' }} />
+                <div className="w-1.5 h-3.5 bg-[#38bdf8]/70" />
+                <div className="w-1.5 h-3.5 bg-[#38bdf8]/50" />
+                <div className="w-1.5 h-3.5 bg-[#38bdf8]/30" />
+                <div className="w-1.5 h-3.5 bg-[#38bdf8]/15" />
              </div>
              <span className="text-[9px] font-mono tracking-[0.3em] text-[#38bdf8]/50">GUVENLI HAT AKTIF</span>
           </div>
@@ -254,7 +254,7 @@ export default function LoginPage() {
               <div className="absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full bg-[#0a0c10] border border-[#2d313a]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" />
 
               {/* Top Indication Line */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-[2px] bg-[#38bdf8] shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-[2px] bg-[#38bdf8]/75" />
 
               <div className="mb-6 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-[#64748b] border-b border-[#2d313a] pb-4">
                 <div className="flex items-center gap-2">
