@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, House } from 'lucide-react'
 import type { SpatialSection } from '../../constants/spatialData'
 
 const LOGO_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/logo.png'
+  '/logo.png'
 
 const HOME_STEP_LABELS = ['Adım 1', 'Adım 2', 'Adım 3']
 

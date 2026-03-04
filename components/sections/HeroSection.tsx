@@ -6,7 +6,7 @@ import { Store, X } from 'lucide-react'
 import { SPATIAL } from '../../constants/spatialData'
 
 const LOGO_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/logo.png'
+  '/logo.png'
 const IYZICO_URL =
   'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/iyzico-white-bg.png'
 const DOWNLOAD_LOGO_URL =
@@ -159,6 +159,9 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
                   />
                 </button>
               </div>
+              <p className="mt-2 text-[7px] font-medium leading-[1.2] text-white/55 text-center">
+                *Gerçek uygulama arayüzü, İşletmeler deneme amaçlıdır
+              </p>
             </div>
 
             <div className="hidden lg:block relative mx-auto lg:ml-auto lg:mr-0 w-full max-w-[360px] sm:max-w-[460px] md:max-w-[620px] h-[360px] sm:h-[500px] md:h-[640px]">
@@ -203,6 +206,10 @@ export const HeroSection = ({ embedded = false }: HeroSectionProps = {}) => {
                   />
                 </button>
               </motion.div>
+
+              <p className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-medium text-white/55">
+                *Gerçek uygulama arayüzü, İşletmeler deneme amaçlıdır
+              </p>
             </div>
           </div>
         </div>

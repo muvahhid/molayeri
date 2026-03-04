@@ -90,7 +90,7 @@ const NAV_ITEMS: NavItem[] = [
 
 
 const PANEL_LOGO_URL =
-  'https://xhfyzlrkdvcuasprqtxw.supabase.co/storage/v1/object/public/landingpagevideos/logo.png'
+  '/logo.png'
 
 export default function MerchantLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
