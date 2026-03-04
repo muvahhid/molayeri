@@ -4,6 +4,16 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'MolaYeri Yönetim Paneli',
   description: 'MolaYeri admin ve işletmeci yönetim arayüzü',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
 }
 
 export default function RootLayout({
