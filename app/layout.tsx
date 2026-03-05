@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'MolaYeri Yönetim Paneli',
+  title: 'Molayeri | Rota işletim Sistemi | >_ routes OS',
   description: 'MolaYeri admin ve işletmeci yönetim arayüzü',
   manifest: '/manifest.webmanifest',
   icons: {
