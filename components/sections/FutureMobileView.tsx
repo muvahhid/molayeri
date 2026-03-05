@@ -144,13 +144,13 @@ export default function FutureMobileView({
         </div>
 
         {!isHomeSelected && (
-          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(168deg,rgba(255,255,255,0.08)_-18%,rgba(255,255,255,0.02)_62%)] backdrop-blur-xl p-4 shadow-[0_18px_34px_rgba(0,0,0,0.34)]">
-            <div className="mb-2.5 flex items-center justify-between">
+          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(168deg,rgba(255,255,255,0.08)_-18%,rgba(255,255,255,0.02)_62%)] backdrop-blur-xl p-3.5 sm:p-4 shadow-[0_18px_34px_rgba(0,0,0,0.34)]">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-[10px] font-black tracking-[0.12em] uppercase text-white/55">Adım Geçişi</span>
               <span className="text-[11px] font-black text-white/75">{activeStep + 1}/3</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {[0, 1, 2].map((stepIndex) => {
                 const active = activeStep === stepIndex
                 const item = stepItems[stepIndex] ?? stepItems[0]
@@ -160,20 +160,19 @@ export default function FutureMobileView({
                     type="button"
                     onClick={() => onSelectFeatureIndex(stepIndex)}
                     aria-current={active ? 'step' : undefined}
-                    className={`relative h-[60px] min-w-0 rounded-[15px] border px-2 pt-2 pb-1.5 transition-[background-color,border-color,box-shadow,color] duration-300 ease-out flex flex-col items-center justify-between ${
+                    className={`relative h-[56px] sm:h-[60px] min-w-0 overflow-hidden rounded-[13px] sm:rounded-[15px] border px-1.5 sm:px-2 pt-1.5 sm:pt-2 pb-1.5 transition-[background-color,border-color,box-shadow,color] duration-300 ease-out flex flex-col items-center justify-between ${
                       active
                         ? 'border-white/38 bg-white/[0.14] text-white shadow-[0_8px_16px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.2)]'
                         : 'border-white/16 bg-black/20 text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
                     }`}
                   >
-                    <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/25" />
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full ${active ? 'bg-white/[0.1]' : 'bg-white/[0.04]'}`}>
+                    <span className={`flex h-[18px] w-[18px] sm:h-5 sm:w-5 items-center justify-center rounded-full ${active ? 'bg-white/[0.1]' : 'bg-white/[0.04]'}`}>
                       <item.icon
-                        size={12}
+                        size={11}
                         className={active ? (audienceMode === 'user' ? 'text-[#38BDF8]' : 'text-[#FF7043]') : 'text-white/48'}
                       />
                     </span>
-                    <span className="block max-w-full truncate px-1 text-[9.5px] font-semibold leading-[1.05] tracking-[0.01em]">
+                    <span className="block max-w-full truncate px-0.5 text-[8.5px] sm:text-[9.5px] font-semibold leading-[1.1] tracking-[0.01em]">
                       {item.compactLabel}
                     </span>
                   </button>
@@ -181,7 +180,7 @@ export default function FutureMobileView({
               })}
             </div>
 
-            <div className="mt-2 flex h-8 items-center rounded-xl border border-white/12 bg-black/25 px-3 text-[11px] font-semibold text-white/78">
+            <div className="mt-2 flex h-8 items-center rounded-xl border border-white/12 bg-black/25 px-3 text-[10.5px] sm:text-[11px] font-semibold text-white/78">
               <span className="truncate">{activeStepItem.fullLabel}</span>
             </div>
           </div>
