@@ -89,7 +89,17 @@ export default function FutureMobileView({
       <div className="mx-auto max-w-[460px] space-y-4">
         <div className="rounded-[22px] border border-white/12 bg-white/[0.03] backdrop-blur-xl p-3.5 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
           <div className="flex items-center justify-between gap-2.5">
-            <img src={LOGO_URL} alt="Molayeri Logo" className="h-8 w-auto object-contain" draggable={false} />
+            <button
+              type="button"
+              onClick={() => {
+                onSelectSection('home')
+                setIsMenuOpen(false)
+              }}
+              className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45"
+              aria-label="Ana sayfaya dön"
+            >
+              <img src={LOGO_URL} alt="Molayeri Logo" className="h-8 w-auto object-contain" draggable={false} />
+            </button>
             <button
               type="button"
               onClick={onToggleAudience}
